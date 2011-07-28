@@ -1,0 +1,6 @@
+meresco-components (>= 4.0beta1)
+solr (= 3.2.0)
+python-cqlparser (>= 1.6.1)
+python-cqlparser (< 1.7)
+weightless-core (>= 0.6.2)
+weightless-core (<< 0.7)
