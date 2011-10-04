@@ -25,7 +25,6 @@
 
 from unittest import TestCase
 from meresco.solr.solrinterface import SolrInterface
-from meresco.solr.oihash import oiHash
 
 from cgi import parse_qs
 
@@ -48,7 +47,7 @@ class SolrInterfaceTest(TestCase):
         self._solrInterface._send = lambda path, text: sendData.append((path, text))
         list(self._solrInterface.delete("record&:1"))
         self.assertEquals(2, len(sendData))
-        self.assertEquals(('/solr/update', '<delete><id>%s</id></delete>' % oiHash("record&:1")), sendData[0])
+        self.assertEquals(('/solr/update', '<delete><id>%s</id></delete>' % "record&amp;:1"), sendData[0])
         self.assertEquals(('/solr/update', '<commit expungeDeletes="true"/>'), sendData[1])
 
     def testExecuteQuery(self):

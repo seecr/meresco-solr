@@ -26,7 +26,6 @@
 from cq2utils import CQ2TestCase, CallTrace
 
 from meresco.solr.fields2solrdoc import Fields2SolrDoc
-from meresco.solr.oihash import oiHash
 
 class Fields2SolrDocTest(CQ2TestCase):
 
@@ -51,7 +50,7 @@ class Fields2SolrDocTest(CQ2TestCase):
         list(self.fxf.commit())
         self.assertEquals(["add"], [m.name for m in self.observer.calledMethods])
         kwargs = self.observer.calledMethods[0].kwargs
-        self.assertEqualsWS('<doc><field name="__uri__">iden&amp;tifier</field><field name="__all__">valueOne anotherValueOne value&lt;Two&gt;</field><field name="__hash__">%s</field><field name="field_one">valueOne</field><field name="field_one">anotherValueOne</field><field name="field_two">value&lt;Two&gt;</field></doc>' % oiHash("iden&tifier"), kwargs['data'])
+        self.assertEqualsWS('<doc><field name="__id__">iden&amp;tifier</field><field name="field_one">valueOne</field><field name="field_one">anotherValueOne</field><field name="field_two">value&lt;Two&gt;</field></doc>', kwargs['data'])
 
     def testCollectAllTerms(self):
         fields = [("key_1", "value_1"), ("key_1", "value_2"), ("key_2", "value_3"), ("key_3", "value_1"), ("key_3", "value_2"), ("key_3", "value_4")]

@@ -26,8 +26,6 @@
 from meresco.core import Observable
 from xml.sax.saxutils import escape as escapeXml
 
-from oihash import oiHash
-
 class Fields2SolrDoc(Observable):
     def __init__(self, transactionName, partname):
         Observable.__init__(self)
@@ -54,9 +52,7 @@ class Fields2SolrDoc(Observable):
 
         recordIdentifier = tx.locals["id"]
         specialFields = [
-            ('__uri__', recordIdentifier), 
-            ('__all__', ' '.join(self._terms(fields))),
-            ('__hash__', str(oiHash(recordIdentifier))),    
+            ('__id__', recordIdentifier), 
         ] 
         def fieldStatement(key, value):
             return '<field name="%s">%s</field>' % (escapeXml(key), escapeXml(value))

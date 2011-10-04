@@ -30,7 +30,6 @@ from StringIO import StringIO
 from time import sleep
 from xml.sax.saxutils import escape as escapeXml
 from weightless.http import httpget, httppost
-from oihash import oiHash
 from meresco.components.facetindex import Response
 
 class SolrInterface(object):
@@ -49,7 +48,7 @@ class SolrInterface(object):
         yield self._send(path='/solr/update', text="<commit/>")
 
     def delete(self, identifier):
-        yield self._send(path='/solr/update', text="<delete><id>%s</id></delete>" % escapeXml(str(oiHash(identifier))))
+        yield self._send(path='/solr/update', text="<delete><id>%s</id></delete>" % escapeXml(identifier))
         yield self._send(path='/solr/update', text='<commit expungeDeletes="true"/>')
 
     def executeQuery(self, luceneQueryString, start=0, stop=10, sortBy=None, sortDescending=None, fieldnamesAndMaximums=None, **kwargs):
