@@ -30,6 +30,7 @@ rm -rf tmp build
 
 python setup.py install --root tmp
 
+mkdir tmp/usr/lib/python2.5/site-packages/meresco --parents
 cp meresco/__init__.py tmp/usr/lib/python2.5/site-packages/meresco
 export PYTHONPATH=`pwd`/tmp/usr/lib/python2.5/site-packages
 cp -r test tmp/test
