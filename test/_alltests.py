@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 ## begin license ##
 # 
 # "Meresco Solr" is a set of components and tools
