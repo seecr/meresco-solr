@@ -26,7 +26,7 @@
 from meresco.core import Observable
 
 from meresco.components.statistics import Logger
-from meresco.components.facetindex.clausecollector import ClauseCollector
+from meresco.components.clausecollector import ClauseCollector
 from meresco.solr.solrlucenequerycomposer import SolrLuceneQueryComposer
 
 class CQL2SolrLuceneQuery(Observable, Logger):
