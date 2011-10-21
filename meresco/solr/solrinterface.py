@@ -64,7 +64,7 @@ class SolrInterface(object):
         body = yield self._read('/solr/select?%s' % (urlencode(arguments, doseq=True)))
         xml = parse(StringIO(body))
         recordCount = int(xml.xpath('/response/result/@numFound')[0])
-        identifiers = xml.xpath('/response/result/doc/arr/str/text()')
+        identifiers = xml.xpath('/response/result/doc/str[@name="__id__"]/text()')
         response = Response(total=recordCount, hits=identifiers)
         if fieldnamesAndMaximums is not None:
             _updateResponseWithDrilldownData(arguments, xml, response)

@@ -1,0 +1,55 @@
+Changeset created on Fri Oct 21 09:30:30 UTC 2011 by Seecr (Seek You Too B.V.)
+
+Description: Fixed bug with solr query response
+
+    The parsing of output of queries by solr was miss-implemented. This changeset fixes the problem. Also a deprecation warning for python2.6 was resolved.
+
+Baseline version: https://meresco.svn.sourceforge.net/svnroot/meresco/meresco-solr/workingsets/0.1-Seecr/version_1
+
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_1/meresco/solr/solrinterface.py version_2/meresco/solr/solrinterface.py
+--- version_1/meresco/solr/solrinterface.py	2011-10-21 10:11:32.000000000 +0200
++++ version_2/meresco/solr/solrinterface.py	2011-10-21 11:30:29.000000000 +0200
+@@ -64,7 +64,7 @@
+         body = yield self._read('/solr/select?%s' % (urlencode(arguments, doseq=True)))
+         xml = parse(StringIO(body))
+         recordCount = int(xml.xpath('/response/result/@numFound')[0])
+-        identifiers = xml.xpath('/response/result/doc/arr/str/text()')
++        identifiers = xml.xpath('/response/result/doc/str[@name="__id__"]/text()')
+         response = Response(total=recordCount, hits=identifiers)
+         if fieldnamesAndMaximums is not None:
+             _updateResponseWithDrilldownData(arguments, xml, response)
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_1/test/solrinterfacetest.py version_2/test/solrinterfacetest.py
+--- version_1/test/solrinterfacetest.py	2011-10-21 10:11:32.000000000 +0200
++++ version_2/test/solrinterfacetest.py	2011-10-21 11:30:29.000000000 +0200
+@@ -87,7 +87,7 @@
+         try:
+             gen.send(response)
+         except StopIteration, e:
+-            response = e.message
++            (response,) = e.args 
+             if getattr(response, 'drilldownData', None) is not None:
+                 return response.total, response.hits, response.drilldownData, readData[0]
+             return response.total, response.hits, readData[0]
+@@ -115,19 +115,13 @@
+     </lst>
+     <result name="response" numFound="3" start="0">
+         <doc>
+-            <arr name="__id__">
+-                <str>1</str>
+-            </arr>
++            <str name="__id__">1</str>
+         </doc>
+         <doc>
+-            <arr name="__id__">
+-                <str>3</str>
+-            </arr>
++            <str name="__id__">3</str>
+         </doc>
+         <doc>
+-            <arr name="__id__">
+-                <str>5</str>
+-            </arr>
++            <str name="__id__">5</str>
+         </doc>
+     </result>
+     %s

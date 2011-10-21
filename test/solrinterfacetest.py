@@ -87,7 +87,7 @@ class SolrInterfaceTest(TestCase):
         try:
             gen.send(response)
         except StopIteration, e:
-            response = e.message
+            (response,) = e.args 
             if getattr(response, 'drilldownData', None) is not None:
                 return response.total, response.hits, response.drilldownData, readData[0]
             return response.total, response.hits, readData[0]
@@ -115,19 +115,13 @@ RESPONSE = """
     </lst>
     <result name="response" numFound="3" start="0">
         <doc>
-            <arr name="__id__">
-                <str>1</str>
-            </arr>
+            <str name="__id__">1</str>
         </doc>
         <doc>
-            <arr name="__id__">
-                <str>3</str>
-            </arr>
+            <str name="__id__">3</str>
         </doc>
         <doc>
-            <arr name="__id__">
-                <str>5</str>
-            </arr>
+            <str name="__id__">5</str>
         </doc>
     </result>
     %s
