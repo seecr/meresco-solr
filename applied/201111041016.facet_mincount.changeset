@@ -1,0 +1,19 @@
+Changeset created on Fri Nov 04 10:16:49 UTC 2011 by Seecr (Seek You Too B.V.)
+
+Description: mincount for facets
+
+    Default Solr facet behaviour is to return empty facets; by setting the minimum count to 1, empty facets will be skipped
+
+Baseline version: https://meresco.svn.sourceforge.net/svnroot/meresco/meresco-solr/workingsets/0.2-Seecr/version_0
+
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_0/meresco/solr/solrinterface.py version_1/meresco/solr/solrinterface.py
+--- version_0/meresco/solr/solrinterface.py	2011-11-04 09:26:12.000000000 +0100
++++ version_1/meresco/solr/solrinterface.py	2011-11-04 11:16:45.000000000 +0100
+@@ -83,6 +83,7 @@
+     arguments = {}
+     if fieldnamesAndMaximums is not None:
+         arguments['facet'] = "on"
++        arguments['facet.mincount'] = "1"
+         arguments['facet.field'] = []
+         for fieldname, maximumResults, howToSort in fieldnamesAndMaximums:
+             arguments['facet.field'].append(fieldname)
