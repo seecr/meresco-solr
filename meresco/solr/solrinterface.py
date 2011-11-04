@@ -83,6 +83,7 @@ def _drilldownArguments(fieldnamesAndMaximums):
     arguments = {}
     if fieldnamesAndMaximums is not None:
         arguments['facet'] = "on"
+        arguments['facet.mincount'] = "1"
         arguments['facet.field'] = []
         for fieldname, maximumResults, howToSort in fieldnamesAndMaximums:
             arguments['facet.field'].append(fieldname)
