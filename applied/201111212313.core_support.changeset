@@ -1,0 +1,102 @@
+Changeset created on Mon Nov 21 23:13:51 UTC 2011 by Seecr (Seek You Too B.V.)
+
+Description: Core support for SOLR 
+
+    Solr support multiple cores. The Meresco interface to Solr now provides a mechanism to select which core to use per interface instance.
+
+Baseline version: https://meresco.svn.sourceforge.net/svnroot/meresco/meresco-solr/workingsets/0.2.1-Seecr/version_0
+
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_0/meresco/solr/solrinterface.py version_1/meresco/solr/solrinterface.py
+--- version_0/meresco/solr/solrinterface.py	2011-11-21 23:41:55.565421019 +0100
++++ version_1/meresco/solr/solrinterface.py	2011-11-22 00:13:46.756918282 +0100
+@@ -33,9 +33,10 @@
+ from meresco.components.facetindex import Response
+ 
+ class SolrInterface(object):
+-    def __init__(self, host, port):
++    def __init__(self, host, port, core=None):
+         self._host = host
+         self._port = port
++        self._core = core
+ 
+     def unknown(self, message, *args, **kwargs):
+         print 'Unexpected unknown for:', message, args, kwargs
+@@ -43,13 +44,18 @@
+     def docsetFromQuery(self, *args, **kwargs):
+         return None
+ 
++    def _path(self, action):
++        return '/solr/%s' % action if self._core is None else '/solr/%s/%s' % (self._core, action)
++
+     def add(self, identifier, partname, data):
+-        yield self._send(path='/solr/update', text="<add>%s</add>" % data)
+-        yield self._send(path='/solr/update', text="<commit/>")
++        path = self._path('update')
++        yield self._send(path=path, text="<add>%s</add>" % data)
++        yield self._send(path=path, text="<commit/>")
+ 
+     def delete(self, identifier):
+-        yield self._send(path='/solr/update', text="<delete><id>%s</id></delete>" % escapeXml(identifier))
+-        yield self._send(path='/solr/update', text='<commit expungeDeletes="true"/>')
++        path = self._path('update')
++        yield self._send(path=path, text="<delete><id>%s</id></delete>" % escapeXml(identifier))
++        yield self._send(path=path, text='<commit expungeDeletes="true"/>')
+ 
+     def executeQuery(self, luceneQueryString, start=0, stop=10, sortBy=None, sortDescending=None, fieldnamesAndMaximums=None, **kwargs):
+         arguments = dict(
+@@ -61,7 +67,8 @@
+             arguments["sort"] = "%s %s" % (sortBy, 'desc' if sortDescending else 'asc')
+         arguments.update(_drilldownArguments(fieldnamesAndMaximums))
+ 
+-        body = yield self._read('/solr/select?%s' % (urlencode(arguments, doseq=True)))
++        path = self._path('select')
++        body = yield self._read('%s?%s' % (path, urlencode(arguments, doseq=True)))
+         xml = parse(StringIO(body))
+         recordCount = int(xml.xpath('/response/result/@numFound')[0])
+         identifiers = xml.xpath('/response/result/doc/str[@name="__id__"]/text()')
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_0/test/solrinterfacetest.py version_1/test/solrinterfacetest.py
+--- version_0/test/solrinterfacetest.py	2011-11-21 23:02:00.005166538 +0100
++++ version_1/test/solrinterfacetest.py	2011-11-22 00:13:46.725770086 +0100
+@@ -34,6 +34,17 @@
+         TestCase.setUp(self)
+         self._solrInterface = SolrInterface("localhost", 8888)
+ 
++    def testCoreSupport(self):
++        sendData = []
++        interface = SolrInterface("localhost", "8888", core="THE_CORE")
++        interface._send = lambda path, text: sendData.append((path, text))
++        list(interface.add("recordId", "ignored", "<record><data>recordData</data></record>"))
++        self.assertEquals(2, len(sendData))
++        self.assertEquals(('/solr/THE_CORE/update', '<add><record><data>recordData</data></record></add>'), sendData[0])
++        self.assertEquals(('/solr/THE_CORE/update', '<commit/>'), sendData[1])
++        total, hits, path = self.executeQuery("meresco.exists:true", start=5, stop=10, sortBy="field", sortDescending=True, response=RESPONSE, solrInterface=interface)
++        self.assertQuery("/solr/THE_CORE/select?q=meresco.exists%3Atrue&start=5&rows=5&sort=field+desc", path)
++
+     def testAdd(self):
+         sendData = []
+         self._solrInterface._send = lambda path, text: sendData.append((path, text))
+@@ -71,18 +82,20 @@
+     def testDrilldown(self):
+         total, hits, drilldownData, path = self.executeQuery("meresco.exists:true", fieldnamesAndMaximums=[('__all__', 5, False)], response=RESPONSE % FACET_COUNTS)
+         result = dict(drilldownData)
+-        self.assertQuery("/solr/select?q=meresco.exists%3Atrue&start=0&rows=10&facet=on&facet.field=__all__&f.__all__.facet.sort=index&f.__all__.facet.limit=5", path)
++        self.assertQuery("/solr/select?facet.mincount=1&q=meresco.exists%3Atrue&start=0&rows=10&facet=on&facet.field=__all__&f.__all__.facet.sort=index&f.__all__.facet.limit=5", path)
+         self.assertEquals(3, total)
+         self.assertEquals(['1', '3', '5'], hits)
+         self.assertEquals(['__all__'], result.keys())
+         self.assertEquals([("term_0", 1), ("term_1", 2)], list(result['__all__']))
+ 
+-    def executeQuery(self, query, response, **kwargs):
++    def executeQuery(self, query, response, solrInterface=None, **kwargs):
++        if solrInterface is None:
++            solrInterface = self._solrInterface
+         readData = []
+         def read(path):
+             readData.append(path)
+-        self._solrInterface._read = read
+-        gen = self._solrInterface.executeQuery(luceneQueryString=query, **kwargs)
++        solrInterface._read = read
++        gen = solrInterface.executeQuery(luceneQueryString=query, **kwargs)
+         gen.next()
+         try:
+             gen.send(response)
