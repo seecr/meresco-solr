@@ -44,12 +44,12 @@ class SolrInterface(object):
         return None
 
     def add(self, identifier, partname, data):
-        yield self._send(path='/solr/update', text="<add>%s</add>" % data)
-        yield self._send(path='/solr/update', text="<commit/>")
+        yield self._send(path='/solr/openindex/update', text="<add>%s</add>" % data)
+        yield self._send(path='/solr/openindex/update', text="<commit/>")
 
     def delete(self, identifier):
-        yield self._send(path='/solr/update', text="<delete><id>%s</id></delete>" % escapeXml(identifier))
-        yield self._send(path='/solr/update', text='<commit expungeDeletes="true"/>')
+        yield self._send(path='/solr/openindex/update', text="<delete><id>%s</id></delete>" % escapeXml(identifier))
+        yield self._send(path='/solr/openindex/update', text='<commit expungeDeletes="true"/>')
 
     def executeQuery(self, luceneQueryString, start=0, stop=10, sortBy=None, sortDescending=None, fieldnamesAndMaximums=None, **kwargs):
         arguments = dict(
@@ -61,7 +61,7 @@ class SolrInterface(object):
             arguments["sort"] = "%s %s" % (sortBy, 'desc' if sortDescending else 'asc')
         arguments.update(_drilldownArguments(fieldnamesAndMaximums))
 
-        body = yield self._read('/solr/select?%s' % (urlencode(arguments, doseq=True)))
+        body = yield self._read('/solr/openindex/select?%s' % (urlencode(arguments, doseq=True)))
         xml = parse(StringIO(body))
         recordCount = int(xml.xpath('/response/result/@numFound')[0])
         identifiers = xml.xpath('/response/result/doc/str[@name="__id__"]/text()')
