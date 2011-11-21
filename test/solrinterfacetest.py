@@ -34,6 +34,17 @@ class SolrInterfaceTest(TestCase):
         TestCase.setUp(self)
         self._solrInterface = SolrInterface("localhost", 8888)
 
+    def testCoreSupport(self):
+        sendData = []
+        interface = SolrInterface("localhost", "8888", core="THE_CORE")
+        interface._send = lambda path, text: sendData.append((path, text))
+        list(interface.add("recordId", "ignored", "<record><data>recordData</data></record>"))
+        self.assertEquals(2, len(sendData))
+        self.assertEquals(('/solr/THE_CORE/update', '<add><record><data>recordData</data></record></add>'), sendData[0])
+        self.assertEquals(('/solr/THE_CORE/update', '<commit/>'), sendData[1])
+        total, hits, path = self.executeQuery("meresco.exists:true", start=5, stop=10, sortBy="field", sortDescending=True, response=RESPONSE, solrInterface=interface)
+        self.assertQuery("/solr/THE_CORE/select?q=meresco.exists%3Atrue&start=5&rows=5&sort=field+desc", path)
+
     def testAdd(self):
         sendData = []
         self._solrInterface._send = lambda path, text: sendData.append((path, text))
@@ -71,18 +82,20 @@ class SolrInterfaceTest(TestCase):
     def testDrilldown(self):
         total, hits, drilldownData, path = self.executeQuery("meresco.exists:true", fieldnamesAndMaximums=[('__all__', 5, False)], response=RESPONSE % FACET_COUNTS)
         result = dict(drilldownData)
-        self.assertQuery("/solr/select?q=meresco.exists%3Atrue&start=0&rows=10&facet=on&facet.field=__all__&f.__all__.facet.sort=index&f.__all__.facet.limit=5", path)
+        self.assertQuery("/solr/select?facet.mincount=1&q=meresco.exists%3Atrue&start=0&rows=10&facet=on&facet.field=__all__&f.__all__.facet.sort=index&f.__all__.facet.limit=5", path)
         self.assertEquals(3, total)
         self.assertEquals(['1', '3', '5'], hits)
         self.assertEquals(['__all__'], result.keys())
         self.assertEquals([("term_0", 1), ("term_1", 2)], list(result['__all__']))
 
-    def executeQuery(self, query, response, **kwargs):
+    def executeQuery(self, query, response, solrInterface=None, **kwargs):
+        if solrInterface is None:
+            solrInterface = self._solrInterface
         readData = []
         def read(path):
             readData.append(path)
-        self._solrInterface._read = read
-        gen = self._solrInterface.executeQuery(luceneQueryString=query, **kwargs)
+        solrInterface._read = read
+        gen = solrInterface.executeQuery(luceneQueryString=query, **kwargs)
         gen.next()
         try:
             gen.send(response)

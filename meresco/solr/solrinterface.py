@@ -33,9 +33,10 @@ from weightless.http import httpget, httppost
 from meresco.components.facetindex import Response
 
 class SolrInterface(object):
-    def __init__(self, host, port):
+    def __init__(self, host, port, core=None):
         self._host = host
         self._port = port
+        self._core = core
 
     def unknown(self, message, *args, **kwargs):
         print 'Unexpected unknown for:', message, args, kwargs
@@ -43,13 +44,18 @@ class SolrInterface(object):
     def docsetFromQuery(self, *args, **kwargs):
         return None
 
+    def _path(self, action):
+        return '/solr/%s' % action if self._core is None else '/solr/%s/%s' % (self._core, action)
+
     def add(self, identifier, partname, data):
-        yield self._send(path='/solr/openindex/update', text="<add>%s</add>" % data)
-        yield self._send(path='/solr/openindex/update', text="<commit/>")
+        path = self._path('update')
+        yield self._send(path=path, text="<add>%s</add>" % data)
+        yield self._send(path=path, text="<commit/>")
 
     def delete(self, identifier):
-        yield self._send(path='/solr/openindex/update', text="<delete><id>%s</id></delete>" % escapeXml(identifier))
-        yield self._send(path='/solr/openindex/update', text='<commit expungeDeletes="true"/>')
+        path = self._path('update')
+        yield self._send(path=path, text="<delete><id>%s</id></delete>" % escapeXml(identifier))
+        yield self._send(path=path, text='<commit expungeDeletes="true"/>')
 
     def executeQuery(self, luceneQueryString, start=0, stop=10, sortBy=None, sortDescending=None, fieldnamesAndMaximums=None, **kwargs):
         arguments = dict(
@@ -61,7 +67,8 @@ class SolrInterface(object):
             arguments["sort"] = "%s %s" % (sortBy, 'desc' if sortDescending else 'asc')
         arguments.update(_drilldownArguments(fieldnamesAndMaximums))
 
-        body = yield self._read('/solr/openindex/select?%s' % (urlencode(arguments, doseq=True)))
+        path = self._path('select')
+        body = yield self._read('%s?%s' % (path, urlencode(arguments, doseq=True)))
         xml = parse(StringIO(body))
         recordCount = int(xml.xpath('/response/result/@numFound')[0])
         identifiers = xml.xpath('/response/result/doc/str[@name="__id__"]/text()')
