@@ -24,6 +24,7 @@
 ## end license ##
 
 from unittest import TestCase
+from meresco.core import Observable
 from meresco.solr.solrinterface import SolrInterface
 
 from cgi import parse_qs
@@ -52,6 +53,23 @@ class SolrInterfaceTest(TestCase):
         self.assertEquals(2, len(sendData))
         self.assertEquals(('/solr/update', '<add><record><data>recordData</data></record></add>'), sendData[0])
         self.assertEquals(('/solr/update', '<commit/>'), sendData[1])
+
+    def testObservableName(self):
+        sendData = []
+        observable = Observable()
+        solrInterface1 = SolrInterface("localhost", 1234, core="index1")
+        solrInterface2 = SolrInterface("localhost", 1234, core="index2")
+        solrInterface1._send = lambda path, text: sendData.append(("1", path, text))
+        solrInterface2._send = lambda path, text: sendData.append(("2", path, text))
+        observable.addObserver(solrInterface1)
+        observable.addObserver(solrInterface2)
+
+        list(observable.all['index1'].add(identifier="recordId", partname="partname", data="data"))
+
+        self.assertEquals([
+                ('1', '/solr/index1/update', '<add>data</add>'),
+                ('1', '/solr/index1/update', '<commit/>')
+            ], sendData)
 
     def testDelete(self):
         sendData = []
