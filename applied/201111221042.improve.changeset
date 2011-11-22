@@ -1,0 +1,35 @@
+Changeset created on Tue Nov 22 10:42:51 UTC 2011 by Seecr (Seek You Too B.V.)
+
+Description: Assertion on non 200 codes
+
+    Code now asserts that HTTP responses are 200 OK
+
+Baseline version: https://meresco.svn.sourceforge.net/svnroot/meresco/meresco-solr/workingsets/0.2.1-Seecr/version_1
+
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_1/meresco/solr/solrinterface.py version_2/meresco/solr/solrinterface.py
+--- version_1/meresco/solr/solrinterface.py	2011-11-22 09:17:31.123058531 +0100
++++ version_2/meresco/solr/solrinterface.py	2011-11-22 11:42:22.817421560 +0100
+@@ -32,6 +32,8 @@
+ from weightless.http import httpget, httppost
+ from meresco.components.facetindex import Response
+ 
++CRLF = '\r\n'
++
+ class SolrInterface(object):
+     def __init__(self, host, port, core=None):
+         self._host = host
+@@ -81,11 +83,14 @@
+ 
+     def _send(self, path, text):
+         response = yield httppost(self._host, self._port, path, text, headers={'Content-Type': 'text/xml', 'Content-Length': len(text)})
++        header, body = response.split(CRLF * 2, 1)
++        assert header.startswith('HTTP/1.1 200 OK')
+         raise StopIteration(response)
+ 
+     def _read(self, path):
+         response = yield httpget(self._host, self._port, path)
+         header, body = response.split('\r\n\r\n', 1)
++        assert header.startswith('HTTP/1.1 200 OK')
+         raise StopIteration(body)
+ 
+ def _drilldownArguments(fieldnamesAndMaximums):
