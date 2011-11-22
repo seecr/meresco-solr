@@ -37,6 +37,8 @@ class SolrInterface(object):
         self._host = host
         self._port = port
         self._core = core
+        if core is not None:
+            self.observable_name = lambda: core
 
     def unknown(self, message, *args, **kwargs):
         print 'Unexpected unknown for:', message, args, kwargs
