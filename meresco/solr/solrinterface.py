@@ -32,6 +32,8 @@ from xml.sax.saxutils import escape as escapeXml
 from weightless.http import httpget, httppost
 from meresco.components.facetindex import Response
 
+CRLF = '\r\n'
+
 class SolrInterface(object):
     def __init__(self, host, port, core=None):
         self._host = host
@@ -81,11 +83,14 @@ class SolrInterface(object):
 
     def _send(self, path, text):
         response = yield httppost(self._host, self._port, path, text, headers={'Content-Type': 'text/xml', 'Content-Length': len(text)})
+        header, body = response.split(CRLF * 2, 1)
+        assert header.startswith('HTTP/1.1 200 OK')
         raise StopIteration(response)
 
     def _read(self, path):
         response = yield httpget(self._host, self._port, path)
         header, body = response.split('\r\n\r\n', 1)
+        assert header.startswith('HTTP/1.1 200 OK')
         raise StopIteration(body)
 
 def _drilldownArguments(fieldnamesAndMaximums):
