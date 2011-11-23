@@ -85,6 +85,9 @@ class SolrInterfaceTest(TestCase):
         self.assertEquals(3, total)
         self.assertEquals(['1','3','5'], hits)
 
+    def testExecuteEmptyQuery(self):
+        self.assertRaises(ValueError, self.executeQuery, '', response=RESPONSE)
+
     def testExecuteQueryWithStartStopAndSortKeys(self):
         total, hits, path = self.executeQuery("meresco.exists:true", start=5, stop=10, sortBy="field", sortDescending=True, response=RESPONSE)
         self.assertQuery("/solr/select?q=meresco.exists%3Atrue&start=5&rows=5&sort=field+desc", path)

@@ -62,6 +62,8 @@ class SolrInterface(object):
         yield self._send(path=path, text='<commit expungeDeletes="true"/>')
 
     def executeQuery(self, luceneQueryString, start=0, stop=10, sortBy=None, sortDescending=None, fieldnamesAndMaximums=None, **kwargs):
+        if not luceneQueryString:
+            raise ValueError("Empty luceneQueryString not allowed.")
         arguments = dict(
                 q=luceneQueryString, 
                 start=start, 
@@ -84,13 +86,13 @@ class SolrInterface(object):
     def _send(self, path, text):
         response = yield httppost(self._host, self._port, path, text, headers={'Content-Type': 'text/xml', 'Content-Length': len(text)})
         header, body = response.split(CRLF * 2, 1)
-        assert header.startswith('HTTP/1.1 200 OK')
+        assert header.startswith('HTTP/1.1 200 OK'), response
         raise StopIteration(response)
 
     def _read(self, path):
         response = yield httpget(self._host, self._port, path)
         header, body = response.split('\r\n\r\n', 1)
-        assert header.startswith('HTTP/1.1 200 OK')
+        assert header.startswith('HTTP/1.1 200 OK'), response
         raise StopIteration(body)
 
 def _drilldownArguments(fieldnamesAndMaximums):
