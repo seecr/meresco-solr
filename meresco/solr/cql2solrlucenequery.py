@@ -36,7 +36,8 @@ class CQL2SolrLuceneQuery(Observable, Logger):
         self._cqlComposer = SolrLuceneQueryComposer(unqualifiedFields)
 
     def executeQuery(self, cqlAbstractSyntaxTree, *args, **kwargs):
-        return self.asyncany.executeQuery(luceneQueryString=self._convert(cqlAbstractSyntaxTree), *args, **kwargs)
+        response = yield self.any.executeQuery(luceneQueryString=self._convert(cqlAbstractSyntaxTree), *args, **kwargs)
+        raise StopIteration(response)
 
     def _convert(self, ast):
         ClauseCollector(ast, self.log).visit()

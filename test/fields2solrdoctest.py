@@ -25,7 +25,9 @@
 
 from cq2utils import CQ2TestCase, CallTrace
 
+from meresco.core import Observable, TransactionScope
 from meresco.solr.fields2solrdoc import Fields2SolrDoc
+from weightless.core import be, compose
 
 class Fields2SolrDocTest(CQ2TestCase):
 
@@ -43,11 +45,11 @@ class Fields2SolrDocTest(CQ2TestCase):
         self.fxf.addObserver(self.observer)
 
     def testCreateXml(self):
-        self.fxf.begin()
+        self.fxf.begin(name="tsName")
         self.fxf.addField("field_one", "valueOne")
         self.fxf.addField("field_one", "anotherValueOne")
         self.fxf.addField("field_two", "value<Two>")
-        list(self.fxf.commit())
+        list(compose(self.fxf.commit(self.fxf.ctx.tx.getId())))
         self.assertEquals(["add"], [m.name for m in self.observer.calledMethods])
         kwargs = self.observer.calledMethods[0].kwargs
         self.assertEqualsWS('<doc><field name="__id__">iden&amp;tifier</field><field name="field_one">valueOne</field><field name="field_one">anotherValueOne</field><field name="field_two">value&lt;Two&gt;</field></doc>', kwargs['data'])
@@ -58,3 +60,34 @@ class Fields2SolrDocTest(CQ2TestCase):
         self.assertEquals(set([]), self.fxf._terms([]))
         self.assertEquals(set(['value_1', 'value_2', 'value_3', 'value_4']), self.fxf._terms(fields))
 
+    def testWorksWithRealTransactionScope(self):
+        intercept = CallTrace('Intercept', ignoredAttributes=['begin', 'commit', 'rollback'])
+        class MockVenturi(Observable):
+            def all_unknown(self, message, *args, **kwargs):
+                self.ctx.tx.locals['id'] = 'an:identifier'
+                yield self.all.unknown(message, *args, **kwargs)
+        class MockMultiFielder(Observable):
+            def add(self, *args, **kwargs):
+                self.do.addField('field.name', 'MyName')
+                self.do.addField('field.name', 'AnotherName')
+                self.do.addField('field.title', 'MyDocument')
+                yield 'ok'
+        root = be( 
+            (Observable(),
+                (TransactionScope(transactionName="solrDoc"),
+                    (MockVenturi(),
+                        (MockMultiFielder(),
+                            (Fields2SolrDoc("solrDoc", "fields-partname"),
+                                (intercept,),
+                            )   
+                        )   
+                    )   
+                )   
+            )   
+        )   
+        list(compose(root.all.add('some', 'arguments')))
+        self.assertEquals(['add'], [m.name for m in intercept.calledMethods])
+        method = intercept.calledMethods[0]
+        expectedXml = """<doc><field name="__id__">an:identifier</field><field name="field.name">MyName</field><field name="field.name">AnotherName</field><field name="field.title">MyDocument</field></doc>"""
+        self.assertEquals(((), {'identifier': 'an:identifier', 'partname': 'fields-partname', 'data': expectedXml}), (method.args, method.kwargs))
+ 

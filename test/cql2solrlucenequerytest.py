@@ -27,7 +27,8 @@ from unittest import TestCase
 from cq2utils import CallTrace
 from cqlparser import parseString
 from meresco.solr.cql2solrlucenequery import CQL2SolrLuceneQuery
-from meresco.core import be, Observable
+from meresco.core import Observable
+from weightless.core import be
 
 class CQL2SolrLuceneQueryTest(TestCase):
     def setUp(self):

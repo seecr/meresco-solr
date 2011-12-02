@@ -33,10 +33,10 @@ class Fields2SolrDoc(Observable):
         self._partname = partname
         self.txs = {}
 
-    def begin(self):
-        tx = self.ctx.tx
-        if tx.name != self._transactionName:
+    def begin(self, name):
+        if name != self._transactionName:
             return
+        tx = self.ctx.tx
         tx.join(self)
         self.txs[tx.getId()] = []
 
@@ -44,12 +44,12 @@ class Fields2SolrDoc(Observable):
         tx = self.ctx.tx
         self.txs[tx.getId()].append((name, value))
 
-    def commit(self):
-        tx = self.ctx.tx
-        fields = self.txs.pop(tx.getId())
+    def commit(self, id):
+        fields = self.txs.pop(id)
         if not fields:
             return
 
+        tx = self.ctx.tx
         recordIdentifier = tx.locals["id"]
         specialFields = [
             ('__id__', recordIdentifier), 
@@ -58,7 +58,7 @@ class Fields2SolrDoc(Observable):
             return '<field name="%s">%s</field>' % (escapeXml(key), escapeXml(value))
 
         xml = "<doc>%s</doc>" % ''.join(fieldStatement(*args) for args in specialFields+fields)
-        return self.asyncdo.add(identifier=recordIdentifier, partname=self._partname, data=xml)
+        yield self.all.add(identifier=recordIdentifier, partname=self._partname, data=xml)
 
     def _terms(self, fields):
         return set([value for (name, value) in fields])

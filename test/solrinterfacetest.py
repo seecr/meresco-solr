@@ -26,6 +26,7 @@
 from unittest import TestCase
 from meresco.core import Observable
 from meresco.solr.solrinterface import SolrInterface
+from weightless.core import compose
 
 from cgi import parse_qs
 
@@ -64,7 +65,7 @@ class SolrInterfaceTest(TestCase):
         observable.addObserver(solrInterface1)
         observable.addObserver(solrInterface2)
 
-        list(observable.all['index1'].add(identifier="recordId", partname="partname", data="data"))
+        list(compose(observable.all['index1'].add(identifier="recordId", partname="partname", data="data")))
 
         self.assertEquals([
                 ('1', '/solr/index1/update', '<add>data</add>'),
