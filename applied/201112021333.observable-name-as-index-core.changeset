@@ -1,0 +1,92 @@
+Changeset created on Fri Dec 02 13:33:13 UTC 2011 by Seecr (Seek You Too B.V.)
+
+Description: Use the observable_name as the core name of a SolrIndex
+
+    - If your Solr instance has multiple cores you can set the observable_name to 
+      the core name and call it using labeled message invocation.
+    - Empty queries are not allowed anymore
+
+Baseline version: https://meresco.svn.sourceforge.net/svnroot/meresco/meresco-solr/workingsets/0.2.1-Seecr/version_2
+
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_2/meresco/solr/solrinterface.py version_3/meresco/solr/solrinterface.py
+--- version_2/meresco/solr/solrinterface.py	2011-12-02 14:29:04.000000000 +0100
++++ version_3/meresco/solr/solrinterface.py	2011-12-02 14:32:16.000000000 +0100
+@@ -39,6 +39,8 @@
+         self._host = host
+         self._port = port
+         self._core = core
++        if core is not None:
++            self.observable_name = lambda: core
+ 
+     def unknown(self, message, *args, **kwargs):
+         print 'Unexpected unknown for:', message, args, kwargs
+@@ -60,6 +62,8 @@
+         yield self._send(path=path, text='<commit expungeDeletes="true"/>')
+ 
+     def executeQuery(self, luceneQueryString, start=0, stop=10, sortBy=None, sortDescending=None, fieldnamesAndMaximums=None, **kwargs):
++        if not luceneQueryString:
++            raise ValueError("Empty luceneQueryString not allowed.")
+         arguments = dict(
+                 q=luceneQueryString, 
+                 start=start, 
+@@ -82,13 +86,13 @@
+     def _send(self, path, text):
+         response = yield httppost(self._host, self._port, path, text, headers={'Content-Type': 'text/xml', 'Content-Length': len(text)})
+         header, body = response.split(CRLF * 2, 1)
+-        assert header.startswith('HTTP/1.1 200 OK')
++        assert header.startswith('HTTP/1.1 200 OK'), response
+         raise StopIteration(response)
+ 
+     def _read(self, path):
+         response = yield httpget(self._host, self._port, path)
+         header, body = response.split('\r\n\r\n', 1)
+-        assert header.startswith('HTTP/1.1 200 OK')
++        assert header.startswith('HTTP/1.1 200 OK'), response
+         raise StopIteration(body)
+ 
+ def _drilldownArguments(fieldnamesAndMaximums):
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_2/test/solrinterfacetest.py version_3/test/solrinterfacetest.py
+--- version_2/test/solrinterfacetest.py	2011-12-02 14:29:04.000000000 +0100
++++ version_3/test/solrinterfacetest.py	2011-12-02 14:32:16.000000000 +0100
+@@ -24,6 +24,7 @@
+ ## end license ##
+ 
+ from unittest import TestCase
++from meresco.core import Observable
+ from meresco.solr.solrinterface import SolrInterface
+ 
+ from cgi import parse_qs
+@@ -53,6 +54,23 @@
+         self.assertEquals(('/solr/update', '<add><record><data>recordData</data></record></add>'), sendData[0])
+         self.assertEquals(('/solr/update', '<commit/>'), sendData[1])
+ 
++    def testObservableName(self):
++        sendData = []
++        observable = Observable()
++        solrInterface1 = SolrInterface("localhost", 1234, core="index1")
++        solrInterface2 = SolrInterface("localhost", 1234, core="index2")
++        solrInterface1._send = lambda path, text: sendData.append(("1", path, text))
++        solrInterface2._send = lambda path, text: sendData.append(("2", path, text))
++        observable.addObserver(solrInterface1)
++        observable.addObserver(solrInterface2)
++
++        list(observable.all['index1'].add(identifier="recordId", partname="partname", data="data"))
++
++        self.assertEquals([
++                ('1', '/solr/index1/update', '<add>data</add>'),
++                ('1', '/solr/index1/update', '<commit/>')
++            ], sendData)
++
+     def testDelete(self):
+         sendData = []
+         self._solrInterface._send = lambda path, text: sendData.append((path, text))
+@@ -67,6 +85,9 @@
+         self.assertEquals(3, total)
+         self.assertEquals(['1','3','5'], hits)
+ 
++    def testExecuteEmptyQuery(self):
++        self.assertRaises(ValueError, self.executeQuery, '', response=RESPONSE)
++
+     def testExecuteQueryWithStartStopAndSortKeys(self):
+         total, hits, path = self.executeQuery("meresco.exists:true", start=5, stop=10, sortBy="field", sortDescending=True, response=RESPONSE)
+         self.assertQuery("/solr/select?q=meresco.exists%3Atrue&start=5&rows=5&sort=field+desc", path)
