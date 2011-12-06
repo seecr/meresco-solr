@@ -42,11 +42,13 @@ class SolrInterface(object):
         if core is not None:
             self.observable_name = lambda: core
 
-    def unknown(self, message, *args, **kwargs):
-        print 'Unexpected unknown for:', message, args, kwargs
+    def all_unknown(self, message, *args, **kwargs):
+        print 'Unexpected all.unknown for:', message, args, kwargs
+        return
+        yield
 
-    def docsetFromQuery(self, *args, **kwargs):
-        return None
+    def do_unknown(self, message, *args, **kwargs):
+        print 'Unexpected do.unknown for:', message, args, kwargs
 
     def _path(self, action):
         return '/solr/%s' % action if self._core is None else '/solr/%s/%s' % (self._core, action)
