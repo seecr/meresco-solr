@@ -61,7 +61,7 @@ class SolrInterface(object):
         yield self._send(path=path, text="<delete><id>%s</id></delete>" % escapeXml(identifier))
         yield self._send(path=path, text='<commit expungeDeletes="true"/>')
 
-    def executeQuery(self, luceneQueryString, start=0, stop=10, sortBy=None, sortDescending=None, fieldnamesAndMaximums=None, **kwargs):
+    def executeQuery(self, luceneQueryString, start=0, stop=10, sortBy=None, sortDescending=None, fieldnamesAndMaximums=None, solrParameters=None, **kwargs):
         if not luceneQueryString:
             raise ValueError("Empty luceneQueryString not allowed.")
         arguments = dict(
@@ -72,6 +72,8 @@ class SolrInterface(object):
         if sortBy is not None:
             arguments["sort"] = "%s %s" % (sortBy, 'desc' if sortDescending else 'asc')
         arguments.update(_drilldownArguments(fieldnamesAndMaximums))
+        if solrParameters is not None:
+            arguments.update(solrParameters)
 
         path = self._path('select')
         body = yield self._read('%s?%s' % (path, urlencode(arguments, doseq=True)))
