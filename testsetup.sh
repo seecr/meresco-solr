@@ -31,10 +31,12 @@ rm -rf tmp build
 python setup.py install --root tmp
 fullPythonVersion=$(pyversions --default)
 
-mkdir tmp/usr/lib/${fullPythonVersion}/site-packages/meresco --parents
+mkdir tmp/usr/local/lib/${fullPythonVersion}/dist-packages/meresco --parents
 cp meresco/__init__.py tmp/usr/lib/${fullPythonVersion}/site-packages/meresco
 export PYTHONPATH=`pwd`/tmp/usr/lib/${fullPythonVersion}/site-packages
 cp -r test tmp/test
+echo $PYTHONPATH
+read
 
 (
 cd tmp/test
