@@ -24,23 +24,31 @@
 # 
 ## end license ##
 
-set -e
+set -o errexit
 
 rm -rf tmp build
 
 python setup.py install --root tmp
 fullPythonVersion=$(pyversions --default)
 
-mkdir tmp/usr/local/lib/${fullPythonVersion}/dist-packages/meresco --parents
-cp meresco/__init__.py tmp/usr/lib/${fullPythonVersion}/site-packages/meresco
-export PYTHONPATH=`pwd`/tmp/usr/lib/${fullPythonVersion}/site-packages
-cp -r test tmp/test
-echo $PYTHONPATH
-read
+#mkdir tmp/usr/local/lib/${fullPythonVersion}/dist-packages/meresco --parents
 
+VERSION="x.y.z"
+
+find tmp -name '*.py' -exec sed -r -e \
+    "/DO_NOT_DISTRIBUTE/ d;
+    s/\\\$Version:[^\\\$]*\\\$/\\\$Version: ${VERSION}\\\$/" -i '{}' \;
+
+cp meresco/__init__.py tmp/usr/local/lib/${fullPythonVersion}/dist-packages/meresco
+export PYTHONPATH=`pwd`/tmp/usr/local/lib/${fullPythonVersion}/dist-packages:${PYTHONPATH}
+cp -r test tmp/test
+
+set +o errexit
 (
 cd tmp/test
 ./alltests.sh
 )
+set -o errexit
 
 rm -rf tmp build
+
