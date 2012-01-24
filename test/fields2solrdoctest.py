@@ -29,6 +29,10 @@ from meresco.core import Observable, TransactionScope
 from meresco.solr.fields2solrdoc import Fields2SolrDoc
 from weightless.core import be, compose
 
+def add(identifier, partname, data):
+    return
+    yield
+
 class Fields2SolrDocTest(CQ2TestCase):
 
     def setUp(self):
@@ -41,7 +45,7 @@ class Fields2SolrDocTest(CQ2TestCase):
         self.fxf = Fields2SolrDoc("tsName", "fields-partname")
         self.fxf.ctx = ctx 
         self.fxf.ctx.tx = tx
-        self.observer = CallTrace()
+        self.observer = CallTrace(methods={'add': add})
         self.fxf.addObserver(self.observer)
 
     def testCreateXml(self):
@@ -61,7 +65,7 @@ class Fields2SolrDocTest(CQ2TestCase):
         self.assertEquals(set(['value_1', 'value_2', 'value_3', 'value_4']), self.fxf._terms(fields))
 
     def testWorksWithRealTransactionScope(self):
-        intercept = CallTrace('Intercept', ignoredAttributes=['begin', 'commit', 'rollback'])
+        intercept = CallTrace('Intercept', ignoredAttributes=['begin', 'commit', 'rollback'], methods={'add': add})
         class MockVenturi(Observable):
             def all_unknown(self, message, *args, **kwargs):
                 self.ctx.tx.locals['id'] = 'an:identifier'

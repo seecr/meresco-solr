@@ -32,6 +32,7 @@ from xml.sax.saxutils import escape as escapeXml
 from weightless.http import httpget, httppost
 from meresco.components.facetindex import Response
 
+
 CRLF = '\r\n'
 
 class SolrInterface(object):
@@ -88,14 +89,19 @@ class SolrInterface(object):
     def _send(self, path, text):
         response = yield httppost(self._host, self._port, path, text, headers={'Content-Type': 'text/xml', 'Content-Length': len(text)})
         header, body = response.split(CRLF * 2, 1)
-        assert header.startswith('HTTP/1.1 200 OK'), response
+        self._verify200(header, reponse)
         raise StopIteration(response)
 
     def _read(self, path):
         response = yield httpget(self._host, self._port, path)
         header, body = response.split('\r\n\r\n', 1)
-        assert header.startswith('HTTP/1.1 200 OK'), response
+        self._verify200(header, response)
         raise StopIteration(body)
+
+    def _verify200(self, header, response):
+        if not header.startswith('HTTP/1.1 200'):
+            raise IOError("Expected status '200' from Owlim triplestore, but got: %s" + response)
+
 
 def _drilldownArguments(fieldnamesAndMaximums):
     arguments = {}
