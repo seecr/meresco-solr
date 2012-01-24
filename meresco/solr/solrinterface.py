@@ -56,13 +56,13 @@ class SolrInterface(object):
 
     def add(self, identifier, partname, data):
         path = self._path('update')
-        yield self._send(path=path, text="<add>%s</add>" % data)
-        yield self._send(path=path, text="<commit/>")
+        yield self._send(path=path, body="<add>%s</add>" % data)
+        yield self._send(path=path, body="<commit/>")
 
     def delete(self, identifier):
         path = self._path('update')
-        yield self._send(path=path, text="<delete><id>%s</id></delete>" % escapeXml(identifier))
-        yield self._send(path=path, text='<commit expungeDeletes="true"/>')
+        yield self._send(path=path, body="<delete><id>%s</id></delete>" % escapeXml(identifier))
+        yield self._send(path=path, body='<commit expungeDeletes="true"/>')
 
     def executeQuery(self, luceneQueryString, start=0, stop=10, sortBy=None, sortDescending=None, fieldnamesAndMaximums=None, **kwargs):
         if not luceneQueryString:
@@ -86,11 +86,13 @@ class SolrInterface(object):
             _updateResponseWithDrilldownData(arguments, xml, response)
         raise StopIteration(response)
 
-    def _send(self, path, text):
-        response = yield httppost(self._host, self._port, path, text, headers={'Content-Type': 'text/xml', 'Content-Length': len(text)})
-        header, body = response.split(CRLF * 2, 1)
-        self._verify200(header, reponse)
-        raise StopIteration(response)
+    def _send(self, path, body):
+        headers = None
+        if body:
+            headers={'Content-Type': 'text/xml', 'Content-Length': len(body)}
+        response = yield httppost(host=self._host, port=self._port, request=path, body=body, headers=headers)
+        header, body = response.split("\r\n\r\n", 1)
+        self._verify200(header, response)
 
     def _read(self, path):
         response = yield httpget(self._host, self._port, path)
@@ -100,7 +102,7 @@ class SolrInterface(object):
 
     def _verify200(self, header, response):
         if not header.startswith('HTTP/1.1 200'):
-            raise IOError("Expected status '200' from Owlim triplestore, but got: " + response)
+            raise IOError("Expected status '200' from Solr, but got: " + response)
 
 
 def _drilldownArguments(fieldnamesAndMaximums):
