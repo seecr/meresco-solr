@@ -28,7 +28,7 @@ from cq2utils import CallTrace
 from cqlparser import parseString
 from meresco.solr.cql2solrlucenequery import CQL2SolrLuceneQuery
 from meresco.core import Observable
-from weightless.core import be
+from weightless.core import be, compose
 
 def executeQueryMock(luceneQueryString, *args, **kwargs):
     return
@@ -48,33 +48,33 @@ class CQL2SolrLuceneQueryTest(TestCase):
             self.loggedClauses.append(clause)
         self.convertor.log = logShunt
 
-    def assertLog(self, expectedClauses, query):
+    def assertConversion(self, expectedClauses, query):
         self.loggedClauses = []
-        list(self.dna.any.executeQuery(cqlAbstractSyntaxTree=parseString(query)))
+        list(compose(self.dna.any.executeQuery(cqlAbstractSyntaxTree=parseString(query))))
         self.assertEquals(expectedClauses, self.loggedClauses)
 
     def testOneTerm(self):
-        self.assertLog(['term'], 'term')
+        self.assertConversion(['term'], 'term')
         self.assertEquals(1, len(self.observer.calledMethods))
         self.assertEquals("executeQuery", self.observer.calledMethods[0].name)
         self.assertEquals("field:term", self.observer.calledMethods[0].kwargs['luceneQueryString'])
 
     def testIndexRelationTerm(self):
-        self.assertLog(['field = term'], 'field=term')
+        self.assertConversion(['field = term'], 'field=term')
 
     def testIndexRelationBoostTerm(self):
-        self.assertLog(['field =/boost=1.1 term'], "field =/boost=1.1 term")
+        self.assertConversion(['field =/boost=1.1 term'], "field =/boost=1.1 term")
 
     def testIndexExactTerm(self):
-        self.assertLog(['field exact term'], 'field exact term')
-        self.assertLog(['field exact "term with spaces"'], 'field exact "term with spaces"')
+        self.assertConversion(['field exact term'], 'field exact term')
+        self.assertConversion(['field exact "term with spaces"'], 'field exact "term with spaces"')
 
     def testTermAndTerm(self):
-        self.assertLog(['term1', 'term2'], 'term1 AND term2')
-        self.assertLog(['term1', 'term2', 'term3'], 'term1 AND term2 OR term3')
-        self.assertLog(['term1', 'term2', 'term3'], 'term1 AND (term2 OR term3)')
-        self.assertLog(['term1', 'term2', 'term3'], 'term1 OR term2 AND term3')
+        self.assertConversion(['term1', 'term2'], 'term1 AND term2')
+        self.assertConversion(['term1', 'term2', 'term3'], 'term1 AND term2 OR term3')
+        self.assertConversion(['term1', 'term2', 'term3'], 'term1 AND (term2 OR term3)')
+        self.assertConversion(['term1', 'term2', 'term3'], 'term1 OR term2 AND term3')
 
     def testBraces(self):
-        self.assertLog(['term'], '(term)')
+        self.assertConversion(['term'], '(term)')
 
