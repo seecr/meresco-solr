@@ -1,0 +1,34 @@
+Changeset created on Thu Feb 02 14:29:35 UTC 2012 by Seecr (Seek You Too B.V.)
+
+Description: escaping colons in fieldnames in query to Solr
+
+    Colons inside fieldnames need to be escaped in query to Solr.
+
+Baseline version: https://meresco.svn.sourceforge.net/svnroot/meresco/meresco-solr/workingsets/0.2.2-oas/version_0
+
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_0/meresco/solr/solrlucenequerycomposer.py /home/oas/developement/meresco-solr-0.2.2-oas/version_1/meresco/solr/solrlucenequerycomposer.py
+--- version_0/meresco/solr/solrlucenequerycomposer.py	2012-01-30 14:30:10.000000000 +0100
++++ version_1/meresco/solr/solrlucenequerycomposer.py	2012-02-02 15:29:30.000000000 +0100
+@@ -42,6 +42,10 @@
+     def visitSCOPED_CLAUSE(self, node):
+         clause = CqlVisitor.visitSCOPED_CLAUSE(self, node)
+         return ' '.join(clause)
++    
++    def visitINDEX(self, node):
++        results = CqlVisitor.visitINDEX(self, node)
++        return results.replace(':', '\\:')
+ 
+     def visitSEARCH_CLAUSE(self, node):
+         # possible children:
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_0/test/solrlucenequerycomposertest.py /home/oas/developement/meresco-solr-0.2.2-oas/version_1/test/solrlucenequerycomposertest.py
+--- version_0/test/solrlucenequerycomposertest.py	2012-01-30 14:30:10.000000000 +0100
++++ version_1/test/solrlucenequerycomposertest.py	2012-02-02 15:29:30.000000000 +0100
+@@ -50,6 +50,8 @@
+         self.assertEquals('field:"term:term1"', printer.compose(ast))
+         ast = parseString('field exact term')
+         self.assertEquals('field:"term"', printer.compose(ast))
++        ast = parseString('dc:title exact term')
++        self.assertEquals(r'dc\:title:"term"', printer.compose(ast))
+ 
+     def testMultipleUnqualifiedTermFields(self):
+         printer = SolrLuceneQueryComposer(unqualifiedTermFields=[("__all__", 1.0), ("__extra__", 1.0)])

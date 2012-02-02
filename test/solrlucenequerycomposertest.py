@@ -50,6 +50,8 @@ class SolrLuceneQueryComposerTest(CQ2TestCase):
         self.assertEquals('field:"term:term1"', printer.compose(ast))
         ast = parseString('field exact term')
         self.assertEquals('field:"term"', printer.compose(ast))
+        ast = parseString('dc:title exact term')
+        self.assertEquals(r'dc\:title:"term"', printer.compose(ast))
 
     def testMultipleUnqualifiedTermFields(self):
         printer = SolrLuceneQueryComposer(unqualifiedTermFields=[("__all__", 1.0), ("__extra__", 1.0)])

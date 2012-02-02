@@ -42,6 +42,10 @@ class Cql2LuceneQueryVisitor(CqlVisitor):
     def visitSCOPED_CLAUSE(self, node):
         clause = CqlVisitor.visitSCOPED_CLAUSE(self, node)
         return ' '.join(clause)
+    
+    def visitINDEX(self, node):
+        results = CqlVisitor.visitINDEX(self, node)
+        return results.replace(':', '\\:')
 
     def visitSEARCH_CLAUSE(self, node):
         # possible children:
