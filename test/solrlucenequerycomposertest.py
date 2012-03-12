@@ -45,6 +45,8 @@ class SolrLuceneQueryComposerTest(SeecrTestCase):
         self.assertEquals('__all__:fiets AND (__all__:auto OR __all__:boot)', printer.compose(ast))
         ast = parseString('fiets AND auto OR boot')
         self.assertEquals('(__all__:fiets AND __all__:auto) OR __all__:boot', printer.compose(ast))
+        ast = parseString('fiets AND (auto OR boot)')
+        self.assertEquals('__all__:fiets AND (__all__:auto OR __all__:boot)', printer.compose(ast))
         ast = parseString('fiets OR auto AND boot')
         self.assertEquals('__all__:fiets OR __all__:auto AND __all__:boot', printer.compose(ast))
 
@@ -87,5 +89,5 @@ class SolrLuceneQueryComposerTest(SeecrTestCase):
             printer.compose(ast)
             self.fail("must raise UnsupportedCQL")
         except UnsupportedCQL, e:
-            self.assertEquals("%s only supports =, == and exact." % SolrLuceneQueryComposer.__name__, str(e))
+            self.assertEquals("Only =, == and exact are supported.", str(e))
 

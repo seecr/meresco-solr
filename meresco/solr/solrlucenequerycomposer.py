@@ -67,7 +67,7 @@ class Cql2LuceneQueryVisitor(CqlVisitor):
             elif relation == '=':
                 query = _formatTerm(index, term)
             else:
-                raise UnsupportedCQL("Only =, == and exact are supported." % SolrLuceneQueryComposer.__name__)
+                raise UnsupportedCQL("Only =, == and exact are supported.")
             return _formatBoost(query, boost)
         else:
             query = "(%s)" % results[0][0]
