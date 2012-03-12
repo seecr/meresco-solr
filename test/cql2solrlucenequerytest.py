@@ -24,7 +24,7 @@
 ## end license ##
 
 from unittest import TestCase
-from cq2utils import CallTrace
+from seecr.test import CallTrace
 from cqlparser import parseString
 from meresco.solr.cql2solrlucenequery import CQL2SolrLuceneQuery
 from meresco.core import Observable

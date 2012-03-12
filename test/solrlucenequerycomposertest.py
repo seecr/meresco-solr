@@ -23,12 +23,12 @@
 # 
 ## end license ##
 
-from cq2utils import CQ2TestCase
+from seecr.test import SeecrTestCase
 
 from cqlparser import parseString, UnsupportedCQL
 from meresco.solr.solrlucenequerycomposer import SolrLuceneQueryComposer
 
-class SolrLuceneQueryComposerTest(CQ2TestCase):
+class SolrLuceneQueryComposerTest(SeecrTestCase):
     def testOne(self):
         printer = SolrLuceneQueryComposer(unqualifiedTermFields=[("__all__", 1.0)])
         ast = parseString("term")
@@ -41,6 +41,12 @@ class SolrLuceneQueryComposerTest(CQ2TestCase):
         self.assertEquals('__all__:fi*', printer.compose(ast))
         ast = parseString('fi*')
         self.assertEquals('__all__:fi*', printer.compose(ast))
+        ast = parseString('fiets AND (auto OR boot)')
+        self.assertEquals('__all__:fiets AND (__all__:auto OR __all__:boot)', printer.compose(ast))
+        ast = parseString('fiets AND auto OR boot')
+        self.assertEquals('(__all__:fiets AND __all__:auto) OR __all__:boot', printer.compose(ast))
+        ast = parseString('fiets OR auto AND boot')
+        self.assertEquals('__all__:fiets OR __all__:auto AND __all__:boot', printer.compose(ast))
 
     def testEscaping(self):
         printer = SolrLuceneQueryComposer(unqualifiedTermFields=[])

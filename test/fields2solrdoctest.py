@@ -23,7 +23,7 @@
 # 
 ## end license ##
 
-from cq2utils import CQ2TestCase, CallTrace
+from seecr.test import SeecrTestCase, CallTrace
 
 from meresco.core import Observable, TransactionScope
 from meresco.solr.fields2solrdoc import Fields2SolrDoc
@@ -33,10 +33,10 @@ def add(identifier, partname, data):
     return
     yield
 
-class Fields2SolrDocTest(CQ2TestCase):
+class Fields2SolrDocTest(SeecrTestCase):
 
     def setUp(self):
-        CQ2TestCase.setUp(self)
+        SeecrTestCase.setUp(self)
 
         ctx = CallTrace('CTX')
         tx = CallTrace('TX')
