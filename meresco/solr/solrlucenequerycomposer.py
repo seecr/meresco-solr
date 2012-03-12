@@ -41,7 +41,9 @@ class Cql2LuceneQueryVisitor(CqlVisitor):
 
     def visitSCOPED_CLAUSE(self, node):
         clause = CqlVisitor.visitSCOPED_CLAUSE(self, node)
-        return ' '.join(clause)
+        if len(clause) == 1:
+            return clause[0]
+        return "(%s)" % ' '.join(clause)
     
     def visitINDEX(self, node):
         results = CqlVisitor.visitINDEX(self, node)
@@ -70,7 +72,7 @@ class Cql2LuceneQueryVisitor(CqlVisitor):
                 raise UnsupportedCQL("Only =, == and exact are supported.")
             return _formatBoost(query, boost)
         else:
-            query = "(%s)" % results[0][0]
+            ((query,),) = results
             return query
 
     def visitRELATION(self, node):
