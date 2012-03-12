@@ -58,10 +58,13 @@ class Cql2LuceneQueryVisitor(CqlVisitor):
         results = CqlVisitor.visitSEARCH_CLAUSE(self, node)
         if firstChild == 'SEARCH_TERM':
             (unqualifiedRhs,) = results
-            return ' OR '.join(
+            unqualifiedTermFields = [
                 _formatBoost(_formatTerm(fieldname, unqualifiedRhs), boost) 
                     for fieldname, boost in self._unqualifiedTermFields
-            )
+                ]
+            if len(unqualifiedTermFields) == 1:
+                return unqualifiedTermFields[0]
+            return "(%s)" % ' OR '.join(unqualifiedTermFields)
         elif firstChild == 'INDEX':
             (index, (relation, boost), term) = results
             if relation in ['==', 'exact']:

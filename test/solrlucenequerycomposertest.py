@@ -66,7 +66,9 @@ class SolrLuceneQueryComposerTest(SeecrTestCase):
     def testMultipleUnqualifiedTermFields(self):
         printer = SolrLuceneQueryComposer(unqualifiedTermFields=[("__all__", 1.0), ("__extra__", 1.0)])
         ast = parseString("term")
-        self.assertEquals('__all__:term OR __extra__:term', printer.compose(ast))
+        self.assertEquals('(__all__:term OR __extra__:term)', printer.compose(ast))
+        ast = parseString("term AND otherterm")
+        self.assertEquals('((__all__:term OR __extra__:term) AND (__all__:otherterm OR __extra__:otherterm))', printer.compose(ast))
 
     def testBoost(self):
         printer = SolrLuceneQueryComposer(unqualifiedTermFields=[("__all__", 4.0)])
@@ -78,7 +80,7 @@ class SolrLuceneQueryComposerTest(SeecrTestCase):
 
         printer = SolrLuceneQueryComposer(unqualifiedTermFields=[("__all__", 4.0), ("__extra__", 2.0), ("__uri__", 1.0)])
         ast = parseString("term")
-        self.assertEquals('__all__:term^4.0 OR __extra__:term^2.0 OR __uri__:term', printer.compose(ast))
+        self.assertEquals('(__all__:term^4.0 OR __extra__:term^2.0 OR __uri__:term)', printer.compose(ast))
 
         printer=SolrLuceneQueryComposer(unqualifiedTermFields=[("all", 1)])
         ast = parseString("field exact/boost=2 term")
