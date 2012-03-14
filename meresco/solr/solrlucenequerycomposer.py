@@ -24,8 +24,13 @@
 ## end license ##
 
 from cqlparser import CqlVisitor, UnsupportedCQL
+from re import compile
+
+prefixRegexp = compile(r'^([\w-]{2,})\*$') # pr*, prefix* ....
 
 def _formatTerm(index, termString):
+    if prefixRegexp.match(termString):
+        termString = termString.lower()
     if ':' in termString or ' ' in termString:
         termString = '"%s"' % termString
     return '%s:%s' % (index, termString)
