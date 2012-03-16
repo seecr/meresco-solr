@@ -1,0 +1,177 @@
+Changeset created on Fri Mar 16 10:07:40 UTC 2012 by Seecr (Seek You Too B.V.)
+
+Description: Some fixes for conversion from cql to solrLucene query
+
+    Fixed precedence of boolean operators in solr to be the same as in CQL
+    Lower case all prefix queries (Solr is case sensitive for prefix queries)
+
+Baseline version: https://meresco.svn.sourceforge.net/svnroot/meresco/meresco-solr/workingsets/4.0-Edurep/version_0
+
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_0/meresco/solr/solrlucenequerycomposer.py /home/hendrik/development/meresco/meresco-solr/workingsets/4.0-Edurep/version_1/meresco/solr/solrlucenequerycomposer.py
+--- version_0/meresco/solr/solrlucenequerycomposer.py	2012-03-12 11:15:34.000000000 +0100
++++ version_1/meresco/solr/solrlucenequerycomposer.py	2012-03-16 11:07:03.000000000 +0100
+@@ -24,8 +24,13 @@
+ ## end license ##
+ 
+ from cqlparser import CqlVisitor, UnsupportedCQL
++from re import compile
++
++prefixRegexp = compile(r'^([\w-]{2,})\*$') # pr*, prefix* ....
+ 
+ def _formatTerm(index, termString):
++    if prefixRegexp.match(termString):
++        termString = termString.lower()
+     if ':' in termString or ' ' in termString:
+         termString = '"%s"' % termString
+     return '%s:%s' % (index, termString)
+@@ -41,7 +46,9 @@
+ 
+     def visitSCOPED_CLAUSE(self, node):
+         clause = CqlVisitor.visitSCOPED_CLAUSE(self, node)
+-        return ' '.join(clause)
++        if len(clause) == 1:
++            return clause[0]
++        return "(%s)" % ' '.join(clause)
+     
+     def visitINDEX(self, node):
+         results = CqlVisitor.visitINDEX(self, node)
+@@ -56,10 +63,13 @@
+         results = CqlVisitor.visitSEARCH_CLAUSE(self, node)
+         if firstChild == 'SEARCH_TERM':
+             (unqualifiedRhs,) = results
+-            return ' OR '.join(
++            unqualifiedTermFields = [
+                 _formatBoost(_formatTerm(fieldname, unqualifiedRhs), boost) 
+                     for fieldname, boost in self._unqualifiedTermFields
+-            )
++                ]
++            if len(unqualifiedTermFields) == 1:
++                return unqualifiedTermFields[0]
++            return "(%s)" % ' OR '.join(unqualifiedTermFields)
+         elif firstChild == 'INDEX':
+             (index, (relation, boost), term) = results
+             if relation in ['==', 'exact']:
+@@ -67,7 +77,7 @@
+             elif relation == '=':
+                 query = _formatTerm(index, term)
+             else:
+-                raise UnsupportedCQL("%s only supports =, == and exact." % SolrLuceneQueryComposer.__name__)
++                raise UnsupportedCQL("Only =, == and exact are supported.")
+             return _formatBoost(query, boost)
+         else:
+             ((query,),) = results
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_0/test/cql2solrlucenequerytest.py /home/hendrik/development/meresco/meresco-solr/workingsets/4.0-Edurep/version_1/test/cql2solrlucenequerytest.py
+--- version_0/test/cql2solrlucenequerytest.py	2012-03-12 11:15:34.000000000 +0100
++++ version_1/test/cql2solrlucenequerytest.py	2012-03-16 11:07:03.000000000 +0100
+@@ -24,7 +24,7 @@
+ ## end license ##
+ 
+ from unittest import TestCase
+-from cq2utils import CallTrace
++from seecr.test import CallTrace
+ from cqlparser import parseString
+ from meresco.solr.cql2solrlucenequery import CQL2SolrLuceneQuery
+ from meresco.core import Observable
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_0/test/fields2solrdoctest.py /home/hendrik/development/meresco/meresco-solr/workingsets/4.0-Edurep/version_1/test/fields2solrdoctest.py
+--- version_0/test/fields2solrdoctest.py	2012-03-12 11:15:34.000000000 +0100
++++ version_1/test/fields2solrdoctest.py	2012-03-16 11:07:03.000000000 +0100
+@@ -23,7 +23,7 @@
+ # 
+ ## end license ##
+ 
+-from cq2utils import CQ2TestCase, CallTrace
++from seecr.test import SeecrTestCase, CallTrace
+ 
+ from meresco.core import Observable, TransactionScope
+ from meresco.solr.fields2solrdoc import Fields2SolrDoc
+@@ -33,10 +33,10 @@
+     return
+     yield
+ 
+-class Fields2SolrDocTest(CQ2TestCase):
++class Fields2SolrDocTest(SeecrTestCase):
+ 
+     def setUp(self):
+-        CQ2TestCase.setUp(self)
++        SeecrTestCase.setUp(self)
+ 
+         ctx = CallTrace('CTX')
+         tx = CallTrace('TX')
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_0/test/solrlucenequerycomposertest.py /home/hendrik/development/meresco/meresco-solr/workingsets/4.0-Edurep/version_1/test/solrlucenequerycomposertest.py
+--- version_0/test/solrlucenequerycomposertest.py	2012-03-12 11:15:34.000000000 +0100
++++ version_1/test/solrlucenequerycomposertest.py	2012-03-16 11:07:03.000000000 +0100
+@@ -23,24 +23,34 @@
+ # 
+ ## end license ##
+ 
+-from cq2utils import CQ2TestCase
++from seecr.test import SeecrTestCase
+ 
+ from cqlparser import parseString, UnsupportedCQL
+ from meresco.solr.solrlucenequerycomposer import SolrLuceneQueryComposer
+ 
+-class SolrLuceneQueryComposerTest(CQ2TestCase):
++class SolrLuceneQueryComposerTest(SeecrTestCase):
+     def testOne(self):
+         printer = SolrLuceneQueryComposer(unqualifiedTermFields=[("__all__", 1.0)])
+         ast = parseString("term")
+         self.assertEquals('__all__:term', printer.compose(ast))
+         ast = parseString("fiets AND auto")
+-        self.assertEquals('__all__:fiets AND __all__:auto', printer.compose(ast))
++        self.assertEquals('(__all__:fiets AND __all__:auto)', printer.compose(ast))
+         ast = parseString('"fiets auto"')
+         self.assertEquals('__all__:"fiets auto"', printer.compose(ast))
+         ast = parseString('"fi*"')
+         self.assertEquals('__all__:fi*', printer.compose(ast))
+         ast = parseString('fi*')
+         self.assertEquals('__all__:fi*', printer.compose(ast))
++        ast = parseString('fiets AND (auto OR boot)')
++        self.assertEquals('(__all__:fiets AND (__all__:auto OR __all__:boot))', printer.compose(ast))
++        ast = parseString('fiets AND auto OR boot')
++        self.assertEquals('((__all__:fiets AND __all__:auto) OR __all__:boot)', printer.compose(ast))
++        ast = parseString('fiets AND (auto OR boot)')
++        self.assertEquals('(__all__:fiets AND (__all__:auto OR __all__:boot))', printer.compose(ast))
++        ast = parseString('(fiets AND auto) OR (boot AND other)')
++        self.assertEquals('((__all__:fiets AND __all__:auto) OR (__all__:boot AND __all__:other))', printer.compose(ast))
++        ast = parseString('fiets OR auto AND boot')
++        self.assertEquals('(__all__:fiets OR (__all__:auto AND __all__:boot))', printer.compose(ast))
+ 
+     def testEscaping(self):
+         printer = SolrLuceneQueryComposer(unqualifiedTermFields=[])
+@@ -53,10 +63,19 @@
+         ast = parseString('dc:title exact term')
+         self.assertEquals(r'dc\:title:"term"', printer.compose(ast))
+ 
++    def testPrefixQuery(self):
++        printer = SolrLuceneQueryComposer(unqualifiedTermFields=[("__all__", 1.0)])
++        ast = parseString('term*')
++        self.assertEquals('__all__:term*', printer.compose(ast))
++        ast = parseString('TERM*')
++        self.assertEquals('__all__:term*', printer.compose(ast))
++
+     def testMultipleUnqualifiedTermFields(self):
+         printer = SolrLuceneQueryComposer(unqualifiedTermFields=[("__all__", 1.0), ("__extra__", 1.0)])
+         ast = parseString("term")
+-        self.assertEquals('__all__:term OR __extra__:term', printer.compose(ast))
++        self.assertEquals('(__all__:term OR __extra__:term)', printer.compose(ast))
++        ast = parseString("term AND otherterm")
++        self.assertEquals('((__all__:term OR __extra__:term) AND (__all__:otherterm OR __extra__:otherterm))', printer.compose(ast))
+ 
+     def testBoost(self):
+         printer = SolrLuceneQueryComposer(unqualifiedTermFields=[("__all__", 4.0)])
+@@ -68,7 +87,7 @@
+ 
+         printer = SolrLuceneQueryComposer(unqualifiedTermFields=[("__all__", 4.0), ("__extra__", 2.0), ("__uri__", 1.0)])
+         ast = parseString("term")
+-        self.assertEquals('__all__:term^4.0 OR __extra__:term^2.0 OR __uri__:term', printer.compose(ast))
++        self.assertEquals('(__all__:term^4.0 OR __extra__:term^2.0 OR __uri__:term)', printer.compose(ast))
+ 
+         printer=SolrLuceneQueryComposer(unqualifiedTermFields=[("all", 1)])
+         ast = parseString("field exact/boost=2 term")
+@@ -81,5 +100,5 @@
+             printer.compose(ast)
+             self.fail("must raise UnsupportedCQL")
+         except UnsupportedCQL, e:
+-            self.assertEquals("%s only supports =, == and exact." % SolrLuceneQueryComposer.__name__, str(e))
++            self.assertEquals("Only =, == and exact are supported.", str(e))
+ 
