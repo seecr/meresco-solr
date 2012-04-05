@@ -3,7 +3,8 @@
 # "Meresco Solr" is a set of components and tools
 #  to integrate Solr into "Meresco." 
 # 
-# Copyright (C) 2011 Seecr (Seek You Too B.V.) http://seecr.nl
+# Copyright (C) 2011-2012 Seecr (Seek You Too B.V.) http://seecr.nl
+# Copyright (C) 2012 Stichting Kennisnet http://www.kennisnet.nl
 # 
 # This file is part of "Meresco Solr"
 # 
@@ -25,12 +26,14 @@
 
 from meresco.core import Observable
 from xml.sax.saxutils import escape as escapeXml
+from itertools import chain
 
 class Fields2SolrDoc(Observable):
-    def __init__(self, transactionName, partname):
+    def __init__(self, transactionName, partname, singularValueFields=None):
         Observable.__init__(self)
         self._transactionName = transactionName
         self._partname = partname
+        self._singularValueFields = set(singularValueFields) if singularValueFields else set()
         self.txs = {}
 
     def begin(self, name):
@@ -38,11 +41,14 @@ class Fields2SolrDoc(Observable):
             return
         tx = self.ctx.tx
         tx.join(self)
-        self.txs[tx.getId()] = []
+        self.txs[tx.getId()] = {}
 
     def addField(self, name, value):
         tx = self.ctx.tx
-        self.txs[tx.getId()].append((name, value))
+        valueList = self.txs[tx.getId()].setdefault(name, [])
+        if len(valueList) == 1 and name in self._singularValueFields:
+            return
+        valueList.append(value)
 
     def commit(self, id):
         fields = self.txs.pop(id)
@@ -56,10 +62,8 @@ class Fields2SolrDoc(Observable):
         ] 
         def fieldStatement(key, value):
             return '<field name="%s">%s</field>' % (escapeXml(key), escapeXml(value))
+        allFields = ((k,v) for k,vs in fields.items() for v in vs)
 
-        xml = "<doc>%s</doc>" % ''.join(fieldStatement(*args) for args in specialFields+fields)
+        xml = "<doc>%s</doc>" % ''.join(fieldStatement(*args) for args in chain(iter(specialFields), allFields))
         yield self.all.add(identifier=recordIdentifier, partname=self._partname, data=xml)
-
-    def _terms(self, fields):
-        return set([value for (name, value) in fields])
 

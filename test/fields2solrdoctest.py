@@ -4,6 +4,7 @@
 #  to integrate Solr into "Meresco." 
 # 
 # Copyright (C) 2011-2012 Seecr (Seek You Too B.V.) http://seecr.nl
+# Copyright (C) 2012 Stichting Kennisnet http://www.kennisnet.nl
 # 
 # This file is part of "Meresco Solr"
 # 
@@ -25,13 +26,21 @@
 
 from seecr.test import SeecrTestCase, CallTrace
 
-from meresco.core import Observable, TransactionScope
+from meresco.core import Observable, TransactionScope, Transaction
 from meresco.solr.fields2solrdoc import Fields2SolrDoc
 from weightless.core import be, compose
+from StringIO import StringIO
+from lxml.etree import parse
 
 def add(identifier, partname, data):
     return
     yield
+
+def todict(data):
+    result = {}
+    for field in parse(StringIO(data)).xpath('/doc/field'):
+        result.setdefault(field.attrib['name'], []).append(field.text)
+    return result
 
 class Fields2SolrDocTest(SeecrTestCase):
 
@@ -56,13 +65,7 @@ class Fields2SolrDocTest(SeecrTestCase):
         list(compose(self.fxf.commit(self.fxf.ctx.tx.getId())))
         self.assertEquals(["add"], [m.name for m in self.observer.calledMethods])
         kwargs = self.observer.calledMethods[0].kwargs
-        self.assertEqualsWS('<doc><field name="__id__">iden&amp;tifier</field><field name="field_one">valueOne</field><field name="field_one">anotherValueOne</field><field name="field_two">value&lt;Two&gt;</field></doc>', kwargs['data'])
-
-    def testCollectAllTerms(self):
-        fields = [("key_1", "value_1"), ("key_1", "value_2"), ("key_2", "value_3"), ("key_3", "value_1"), ("key_3", "value_2"), ("key_3", "value_4")]
-
-        self.assertEquals(set([]), self.fxf._terms([]))
-        self.assertEquals(set(['value_1', 'value_2', 'value_3', 'value_4']), self.fxf._terms(fields))
+        self.assertEquals({'__id__':['iden&tifier'], 'field_one':['valueOne', 'anotherValueOne'], 'field_two': ['value<Two>']}, todict(kwargs['data']))
 
     def testWorksWithRealTransactionScope(self):
         intercept = CallTrace('Intercept', ignoredAttributes=['begin', 'commit', 'rollback'], methods={'add': add})
@@ -93,5 +96,22 @@ class Fields2SolrDocTest(SeecrTestCase):
         self.assertEquals(['add'], [m.name for m in intercept.calledMethods])
         method = intercept.calledMethods[0]
         expectedXml = """<doc><field name="__id__">an:identifier</field><field name="field.name">MyName</field><field name="field.name">AnotherName</field><field name="field.title">MyDocument</field></doc>"""
-        self.assertEquals(((), {'identifier': 'an:identifier', 'partname': 'fields-partname', 'data': expectedXml}), (method.args, method.kwargs))
- 
+        self.assertEquals((), method.args)
+        self.assertEquals('an:identifier', method.kwargs['identifier'])
+        self.assertEquals('fields-partname', method.kwargs['partname'])
+        self.assertEquals({'__id__': ['an:identifier'], 'field.name':['MyName', 'AnotherName'], 'field.title': ['MyDocument']}, todict(method.kwargs['data']))
+
+    def testSingularValueFields(self):
+        __callstack_var_tx__ = Transaction('name') 
+        __callstack_var_tx__.locals['id'] = 'identifier'
+        observer = CallTrace('observer', emptyGeneratorMethods=['add'])
+        fxf = Fields2SolrDoc('name', 'partname', singularValueFields=['once'])
+        fxf.addObserver(observer)
+        fxf.begin(name='name')
+        fxf.addField('once', 'one')
+        fxf.addField('once', 'two')
+        fxf.addField('twice', 'one')
+        fxf.addField('twice', 'two')
+        list(compose(fxf.commit(__callstack_var_tx__.getId())))
+        method = observer.calledMethods[0]
+        self.assertEquals({'__id__': ['identifier'], 'once':['one'], 'twice': ['one', 'two']}, todict(method.kwargs['data']))
