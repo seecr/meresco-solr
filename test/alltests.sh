@@ -27,6 +27,5 @@
 export LANG=en_US.UTF-8
 export PYTHONPATH=.:"$PYTHONPATH"
 
-fullPythonVersion=$(pyversions --default)
-${fullPythonVersion} _alltests.py "$@"
+python2.6 _alltests.py "$@"
 
