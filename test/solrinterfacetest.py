@@ -97,7 +97,7 @@ class SolrInterfaceTest(TestCase):
         list(self._solrInterface.delete("record&:1"))
         self.assertEquals(2, len(sendData))
         self.assertEquals(('/solr/update', '<delete><id>%s</id></delete>' % "record&amp;:1"), sendData[0])
-        self.assertEquals(('/solr/update', '<commit expungeDeletes="true"/>'), sendData[1])
+        self.assertEquals(('/solr/update', '<commit/>'), sendData[1])
 
     def testExecuteQuery(self):
         total, hits, path = self.executeQuery("meresco.exists:true", start=0, stop=10, sortBy=None, sortDescending=False, response=RESPONSE) 

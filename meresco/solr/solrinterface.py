@@ -62,7 +62,7 @@ class SolrInterface(object):
     def delete(self, identifier):
         path = self._path('update')
         yield self._send(path=path, body="<delete><id>%s</id></delete>" % escapeXml(identifier))
-        yield self._send(path=path, body='<commit expungeDeletes="true"/>')
+        yield self._send(path=path, body='<commit/>')
 
     def executeQuery(self, luceneQueryString, start=0, stop=10, sortBy=None, sortDescending=None, fieldnamesAndMaximums=None, **kwargs):
         if not luceneQueryString:
