@@ -95,11 +95,13 @@ class Fields2SolrDocTest(SeecrTestCase):
         list(compose(root.all.add('some', 'arguments')))
         self.assertEquals(['add'], [m.name for m in intercept.calledMethods])
         method = intercept.calledMethods[0]
-        expectedXml = """<doc><field name="__id__">an:identifier</field><field name="field.name">MyName</field><field name="field.name">AnotherName</field><field name="field.title">MyDocument</field></doc>"""
         self.assertEquals((), method.args)
         self.assertEquals('an:identifier', method.kwargs['identifier'])
         self.assertEquals('fields-partname', method.kwargs['partname'])
         self.assertEquals({'__id__': ['an:identifier'], 'field.name':['MyName', 'AnotherName'], 'field.title': ['MyDocument']}, todict(method.kwargs['data']))
+
+        expectedXml = """<doc xmlns=''><field name="__id__">an:identifier</field><field name="field.title">MyDocument</field><field name="field.name">MyName</field><field name="field.name">AnotherName</field></doc>"""
+        self.assertEquals(expectedXml, method.kwargs['data'])
 
     def testSingularValueFields(self):
         __callstack_var_tx__ = Transaction('name') 

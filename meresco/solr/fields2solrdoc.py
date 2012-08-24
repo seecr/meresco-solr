@@ -64,6 +64,6 @@ class Fields2SolrDoc(Observable):
             return '<field name="%s">%s</field>' % (escapeXml(key), escapeXml(value))
         allFields = ((k,v) for k,vs in fields.items() for v in vs)
 
-        xml = "<doc>%s</doc>" % ''.join(fieldStatement(*args) for args in chain(iter(specialFields), allFields))
+        xml = "<doc xmlns=''>%s</doc>" % ''.join(fieldStatement(*args) for args in chain(iter(specialFields), allFields))
         yield self.all.add(identifier=recordIdentifier, partname=self._partname, data=xml)
 
