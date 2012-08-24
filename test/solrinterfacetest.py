@@ -129,6 +129,43 @@ class SolrInterfaceTest(TestCase):
         self.assertEquals(['__all__'], result.keys())
         self.assertEquals([("term_0", 1), ("term_1", 2)], list(result['__all__']))
 
+    def testExecuteQuerySolrHostFromObserver(self):
+        solrInterface = SolrInterface()
+        observer = CallTrace(returnValues={'solrServer': ('localhost', 1234)})
+        solrInterface.addObserver(observer)
+        args = []
+        def httpget(*_args):
+            args.append(_args)
+            s = Suspend()
+            response = yield s
+            result = s.getResult()
+            raise StopIteration(result)
+        solrInterface._httpget = httpget
+
+        g = compose(solrInterface.executeQuery("meresco.exists:true"))
+        self._resultFromServerResponses(g, [RESPONSE])
+        self.assertEquals(['solrServer'], observer.calledMethodNames())
+        self.assertEquals([('localhost', 1234, '/solr/select?q=meresco.exists%3Atrue&start=0&rows=10')], args)
+
+    def testAddWithSolrServerFromObserver(self):
+        solrInterface = SolrInterface()
+        observer = CallTrace(returnValues={'solrServer': ('localhost', 1234)})
+        solrInterface.addObserver(observer)
+        kwargs = []
+        def httppost(**_kwargs):
+            kwargs.append(_kwargs)
+            s = Suspend()
+            response = yield s
+            result = s.getResult()
+            raise StopIteration(result)
+        solrInterface._httppost = httppost
+
+        g = compose(solrInterface.add("recordId", "ignored", "<record><data>recordData</data></record>"))
+        self._resultFromServerResponses(g, 2 * ["SOME RESPONSE"])
+        self.assertEquals(['solrServer'] * 2, observer.calledMethodNames())
+        self.assertEquals('localhost', kwargs[0]['host'])
+        self.assertEquals(1234, kwargs[0]['port'])
+
     def executeQuery(self, query, response, solrInterface=None, **kwargs):
         if solrInterface is None:
             solrInterface = self._solrInterface

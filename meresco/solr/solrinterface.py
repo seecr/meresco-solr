@@ -31,12 +31,13 @@ from time import sleep
 from xml.sax.saxutils import escape as escapeXml
 from weightless.http import httpget, httppost
 from meresco.components.facetindex import Response
-
+from meresco.core import Observable
 
 CRLF = '\r\n'
 
-class SolrInterface(object):
-    def __init__(self, host, port, core=None):
+class SolrInterface(Observable):
+    def __init__(self, host=None, port=None, core=None):
+        Observable.__init__(self)
         self._host = host
         self._port = port
         self._core = core
@@ -90,19 +91,30 @@ class SolrInterface(object):
         headers = None
         if body:
             headers={'Content-Type': 'text/xml', 'Content-Length': len(body)}
-        response = yield httppost(host=self._host, port=self._port, request=path, body=body, headers=headers)
+        host, port = self._solrServer()
+        response = yield self._httppost(host=host, port=port, request=path, body=body, headers=headers)
         header, body = response.split("\r\n\r\n", 1)
         self._verify200(header, response)
 
     def _read(self, path):
-        response = yield httpget(self._host, self._port, path)
+        host, port = self._solrServer()
+        response = yield self._httpget(host, port, path)
         header, body = response.split('\r\n\r\n', 1)
         self._verify200(header, response)
         raise StopIteration(body)
 
+    def _httpget(self, *args):
+        return httpget(*args)
+
+    def _httppost(self, **kwargs):
+        return httppost(**kwargs)
+
     def _verify200(self, header, response):
         if not header.startswith('HTTP/1.1 200'):
             raise IOError("Expected status '200' from Solr, but got: " + response)
+
+    def _solrServer(self):
+        return (self._host, self._port) if self._host else self.call.solrServer()
 
 
 def _drilldownArguments(fieldnamesAndMaximums):

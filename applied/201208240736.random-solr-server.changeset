@@ -1,0 +1,109 @@
+Changeset created on Fri Aug 24 07:36:35 UTC 2012 by Seecr (Seek You Too B.V.)
+
+Description: Pick a random solr server support
+
+    Pick a random solr server if no specific one has been given. This is done by calling solrServer on its observers.
+
+Baseline version: https://meresco.svn.sourceforge.net/svnroot/meresco/meresco-solr/workingsets/4.0.4-ZP/version_0
+
+diff --unidirectional-new-file --recursive --unified --exclude='*.so' --exclude='*.o' --exclude=.svn --exclude='*.pyc' --exclude=deps.d --exclude=applied version_0/meresco/solr/solrinterface.py /home/zp/development/meresco-solr/workingsets/4.0.4-ZP/version_1/meresco/solr/solrinterface.py
+--- version_0/meresco/solr/solrinterface.py	2012-08-22 12:50:32.000000000 +0100
++++ version_1/meresco/solr/solrinterface.py	2012-08-24 08:36:29.000000000 +0100
+@@ -31,12 +31,13 @@
+ from xml.sax.saxutils import escape as escapeXml
+ from weightless.http import httpget, httppost
+ from meresco.components.facetindex import Response
+-
++from meresco.core import Observable
+ 
+ CRLF = '\r\n'
+ 
+-class SolrInterface(object):
+-    def __init__(self, host, port, core=None):
++class SolrInterface(Observable):
++    def __init__(self, host=None, port=None, core=None):
++        Observable.__init__(self)
+         self._host = host
+         self._port = port
+         self._core = core
+@@ -90,20 +91,31 @@
+         headers = None
+         if body:
+             headers={'Content-Type': 'text/xml', 'Content-Length': len(body)}
+-        response = yield httppost(host=self._host, port=self._port, request=path, body=body, headers=headers)
++        host, port = self._solrServer()
++        response = yield self._httppost(host=host, port=port, request=path, body=body, headers=headers)
+         header, body = response.split("\r\n\r\n", 1)
+         self._verify200(header, response)
+ 
+     def _read(self, path):
+-        response = yield httpget(self._host, self._port, path)
++        host, port = self._solrServer()
++        response = yield self._httpget(host, port, path)
+         header, body = response.split('\r\n\r\n', 1)
+         self._verify200(header, response)
+         raise StopIteration(body)
+ 
++    def _httpget(self, *args):
++        return httpget(*args)
++
++    def _httppost(self, **kwargs):
++        return httppost(**kwargs)
++
+     def _verify200(self, header, response):
+         if not header.startswith('HTTP/1.1 200'):
+             raise IOError("Expected status '200' from Solr, but got: " + response)
+ 
++    def _solrServer(self):
++        return (self._host, self._port) if self._host else self.call.solrServer()
++
+ 
+ def _drilldownArguments(fieldnamesAndMaximums):
+     arguments = {}
+diff --unidirectional-new-file --recursive --unified --exclude='*.so' --exclude='*.o' --exclude=.svn --exclude='*.pyc' --exclude=deps.d --exclude=applied version_0/test/solrinterfacetest.py /home/zp/development/meresco-solr/workingsets/4.0.4-ZP/version_1/test/solrinterfacetest.py
+--- version_0/test/solrinterfacetest.py	2012-08-22 12:50:32.000000000 +0100
++++ version_1/test/solrinterfacetest.py	2012-08-24 08:36:29.000000000 +0100
+@@ -129,6 +129,43 @@
+         self.assertEquals(['__all__'], result.keys())
+         self.assertEquals([("term_0", 1), ("term_1", 2)], list(result['__all__']))
+ 
++    def testExecuteQuerySolrHostFromObserver(self):
++        solrInterface = SolrInterface()
++        observer = CallTrace(returnValues={'solrServer': ('localhost', 1234)})
++        solrInterface.addObserver(observer)
++        args = []
++        def httpget(*_args):
++            args.append(_args)
++            s = Suspend()
++            response = yield s
++            result = s.getResult()
++            raise StopIteration(result)
++        solrInterface._httpget = httpget
++
++        g = compose(solrInterface.executeQuery("meresco.exists:true"))
++        self._resultFromServerResponses(g, [RESPONSE])
++        self.assertEquals(['solrServer'], observer.calledMethodNames())
++        self.assertEquals([('localhost', 1234, '/solr/select?q=meresco.exists%3Atrue&start=0&rows=10')], args)
++
++    def testAddWithSolrServerFromObserver(self):
++        solrInterface = SolrInterface()
++        observer = CallTrace(returnValues={'solrServer': ('localhost', 1234)})
++        solrInterface.addObserver(observer)
++        kwargs = []
++        def httppost(**_kwargs):
++            kwargs.append(_kwargs)
++            s = Suspend()
++            response = yield s
++            result = s.getResult()
++            raise StopIteration(result)
++        solrInterface._httppost = httppost
++
++        g = compose(solrInterface.add("recordId", "ignored", "<record><data>recordData</data></record>"))
++        self._resultFromServerResponses(g, 2 * ["SOME RESPONSE"])
++        self.assertEquals(['solrServer'] * 2, observer.calledMethodNames())
++        self.assertEquals('localhost', kwargs[0]['host'])
++        self.assertEquals(1234, kwargs[0]['port'])
++
+     def executeQuery(self, query, response, solrInterface=None, **kwargs):
+         if solrInterface is None:
+             solrInterface = self._solrInterface
