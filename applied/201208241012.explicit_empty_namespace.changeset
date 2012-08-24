@@ -1,0 +1,39 @@
+Changeset created on Fri Aug 24 10:12:24 UTC 2012 by Seecr (Seek You Too B.V.)
+
+Description: Explicit empty-namespace for a Solr document
+
+    Explicit empty-namespace for a Solr document, to prevent enclosing XML
+    to add it's default namespace.
+
+Baseline version: https://meresco.svn.sourceforge.net/svnroot/meresco/meresco-solr/workingsets/4.0.5-zp/version_0
+
+diff --unidirectional-new-file --recursive --unified --exclude='*.so' --exclude='*.o' --exclude=.svn --exclude='*.pyc' --exclude=deps.d --exclude=applied version_0/meresco/solr/fields2solrdoc.py /home/zp/development/meresco-solr/workingsets/4.0.5-zp/version_1/meresco/solr/fields2solrdoc.py
+--- version_0/meresco/solr/fields2solrdoc.py	2012-08-24 10:59:55.000000000 +0100
++++ version_1/meresco/solr/fields2solrdoc.py	2012-08-24 11:12:02.000000000 +0100
+@@ -64,6 +64,6 @@
+             return '<field name="%s">%s</field>' % (escapeXml(key), escapeXml(value))
+         allFields = ((k,v) for k,vs in fields.items() for v in vs)
+ 
+-        xml = "<doc>%s</doc>" % ''.join(fieldStatement(*args) for args in chain(iter(specialFields), allFields))
++        xml = "<doc xmlns=''>%s</doc>" % ''.join(fieldStatement(*args) for args in chain(iter(specialFields), allFields))
+         yield self.all.add(identifier=recordIdentifier, partname=self._partname, data=xml)
+ 
+diff --unidirectional-new-file --recursive --unified --exclude='*.so' --exclude='*.o' --exclude=.svn --exclude='*.pyc' --exclude=deps.d --exclude=applied version_0/test/fields2solrdoctest.py /home/zp/development/meresco-solr/workingsets/4.0.5-zp/version_1/test/fields2solrdoctest.py
+--- version_0/test/fields2solrdoctest.py	2012-08-24 10:59:55.000000000 +0100
++++ version_1/test/fields2solrdoctest.py	2012-08-24 11:12:02.000000000 +0100
+@@ -95,12 +95,14 @@
+         list(compose(root.all.add('some', 'arguments')))
+         self.assertEquals(['add'], [m.name for m in intercept.calledMethods])
+         method = intercept.calledMethods[0]
+-        expectedXml = """<doc><field name="__id__">an:identifier</field><field name="field.name">MyName</field><field name="field.name">AnotherName</field><field name="field.title">MyDocument</field></doc>"""
+         self.assertEquals((), method.args)
+         self.assertEquals('an:identifier', method.kwargs['identifier'])
+         self.assertEquals('fields-partname', method.kwargs['partname'])
+         self.assertEquals({'__id__': ['an:identifier'], 'field.name':['MyName', 'AnotherName'], 'field.title': ['MyDocument']}, todict(method.kwargs['data']))
+ 
++        expectedXml = """<doc xmlns=''><field name="__id__">an:identifier</field><field name="field.title">MyDocument</field><field name="field.name">MyName</field><field name="field.name">AnotherName</field></doc>"""
++        self.assertEquals(expectedXml, method.kwargs['data'])
++
+     def testSingularValueFields(self):
+         __callstack_var_tx__ = Transaction('name') 
+         __callstack_var_tx__.locals['id'] = 'identifier'
