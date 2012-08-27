@@ -1,0 +1,85 @@
+Changeset created on Mon Aug 27 14:35:43 UTC 2012 by Seecr (Seek You Too B.V.)
+
+Description: Timing information in response
+
+    The timing information returned by solr is included in the response for upstream use.
+
+Baseline version: https://meresco.svn.sourceforge.net/svnroot/meresco/meresco-solr/workingsets/4.0.5-zp/version_1
+
+diff --unidirectional-new-file --recursive --unified --exclude='*.so' --exclude='*.o' --exclude=.svn --exclude='*.pyc' --exclude=deps.d --exclude=applied version_1/meresco/solr/solrinterface.py /home/zp/development/meresco-solr/workingsets/4.0.5-zp/version_2/meresco/solr/solrinterface.py
+--- version_1/meresco/solr/solrinterface.py	2012-08-24 11:12:02.000000000 +0100
++++ version_2/meresco/solr/solrinterface.py	2012-08-27 15:35:27.000000000 +0100
+@@ -30,9 +30,10 @@
+ from time import sleep
+ from xml.sax.saxutils import escape as escapeXml
+ from weightless.http import httpget, httppost
+-from meresco.components.facetindex import Response
+ from meresco.core import Observable
+ 
++from solrresponse import SolrResponse
++
+ CRLF = '\r\n'
+ 
+ class SolrInterface(Observable):
+@@ -82,7 +83,8 @@
+         xml = parse(StringIO(body))
+         recordCount = int(xml.xpath('/response/result/@numFound')[0])
+         identifiers = xml.xpath('/response/result/doc/str[@name="__id__"]/text()')
+-        response = Response(total=recordCount, hits=identifiers)
++        qtime = int(xml.xpath('/response/lst[@name="responseHeader"]/int[@name="QTime"]/text()')[0])
++        response = SolrResponse(total=recordCount, hits=identifiers, queryTime=qtime)
+         if fieldnamesAndMaximums is not None:
+             _updateResponseWithDrilldownData(arguments, xml, response)
+         raise StopIteration(response)
+diff --unidirectional-new-file --recursive --unified --exclude='*.so' --exclude='*.o' --exclude=.svn --exclude='*.pyc' --exclude=deps.d --exclude=applied version_1/meresco/solr/solrresponse.py /home/zp/development/meresco-solr/workingsets/4.0.5-zp/version_2/meresco/solr/solrresponse.py
+--- version_1/meresco/solr/solrresponse.py	1970-01-01 01:00:00.000000000 +0100
++++ version_2/meresco/solr/solrresponse.py	2012-08-27 15:35:27.000000000 +0100
+@@ -0,0 +1,6 @@
++
++class SolrResponse(object):
++    def __init__(self, **kwargs):
++        self.__dict__.update(kwargs)
++
++
+diff --unidirectional-new-file --recursive --unified --exclude='*.so' --exclude='*.o' --exclude=.svn --exclude='*.pyc' --exclude=deps.d --exclude=applied version_1/test/solrinterfacetest.py /home/zp/development/meresco-solr/workingsets/4.0.5-zp/version_2/test/solrinterfacetest.py
+--- version_1/test/solrinterfacetest.py	2012-08-24 11:12:02.000000000 +0100
++++ version_2/test/solrinterfacetest.py	2012-08-27 15:35:27.000000000 +0100
+@@ -166,7 +166,11 @@
+         self.assertEquals('localhost', kwargs[0]['host'])
+         self.assertEquals(1234, kwargs[0]['port'])
+ 
+-    def executeQuery(self, query, response, solrInterface=None, **kwargs):
++    def testQueryResponseTime(self):
++        response, readData = self.executeQueryResponse("meresco.exists:true", response=RESPONSE % "")
++        self.assertEquals(6, response.queryTime)
++
++    def executeQueryResponse(self, query, response, solrInterface=None, **kwargs):
+         if solrInterface is None:
+             solrInterface = self._solrInterface
+         readData = []
+@@ -179,9 +183,13 @@
+             gen.send(response)
+         except StopIteration, e:
+             (response,) = e.args 
+-            if getattr(response, 'drilldownData', None) is not None:
+-                return response.total, response.hits, response.drilldownData, readData[0]
+-            return response.total, response.hits, readData[0]
++            return response, readData
++    
++    def executeQuery(self, query, response, solrInterface=None, **kwargs):
++        response, readData = self.executeQueryResponse(query, response, solrInterface=solrInterface, **kwargs)
++        if getattr(response, 'drilldownData', None) is not None:
++            return response.total, response.hits, response.drilldownData, readData[0]
++        return response.total, response.hits, readData[0]
+ 
+     def _resultFromServerResponses(self, g, serverResponses, responseStatus='200'):
+         for response in serverResponses:
+@@ -208,7 +216,7 @@
+ <response>
+     <lst name="responseHeader">
+         <int name="status">0</int>
+-        <int name="QTime">1</int>
++        <int name="QTime">6</int>
+         <lst name="params">
+             <str name="indent">on</str>
+             <str name="start">0</str>
