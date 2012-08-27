@@ -30,8 +30,9 @@ from StringIO import StringIO
 from time import sleep
 from xml.sax.saxutils import escape as escapeXml
 from weightless.http import httpget, httppost
-from meresco.components.facetindex import Response
 from meresco.core import Observable
+
+from solrresponse import SolrResponse
 
 CRLF = '\r\n'
 
@@ -82,7 +83,8 @@ class SolrInterface(Observable):
         xml = parse(StringIO(body))
         recordCount = int(xml.xpath('/response/result/@numFound')[0])
         identifiers = xml.xpath('/response/result/doc/str[@name="__id__"]/text()')
-        response = Response(total=recordCount, hits=identifiers)
+        qtime = int(xml.xpath('/response/lst[@name="responseHeader"]/int[@name="QTime"]/text()')[0])
+        response = SolrResponse(total=recordCount, hits=identifiers, queryTime=qtime)
         if fieldnamesAndMaximums is not None:
             _updateResponseWithDrilldownData(arguments, xml, response)
         raise StopIteration(response)

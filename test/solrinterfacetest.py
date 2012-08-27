@@ -166,7 +166,11 @@ class SolrInterfaceTest(TestCase):
         self.assertEquals('localhost', kwargs[0]['host'])
         self.assertEquals(1234, kwargs[0]['port'])
 
-    def executeQuery(self, query, response, solrInterface=None, **kwargs):
+    def testQueryResponseTime(self):
+        response, readData = self.executeQueryResponse("meresco.exists:true", response=RESPONSE % "")
+        self.assertEquals(6, response.queryTime)
+
+    def executeQueryResponse(self, query, response, solrInterface=None, **kwargs):
         if solrInterface is None:
             solrInterface = self._solrInterface
         readData = []
@@ -179,9 +183,13 @@ class SolrInterfaceTest(TestCase):
             gen.send(response)
         except StopIteration, e:
             (response,) = e.args 
-            if getattr(response, 'drilldownData', None) is not None:
-                return response.total, response.hits, response.drilldownData, readData[0]
-            return response.total, response.hits, readData[0]
+            return response, readData
+    
+    def executeQuery(self, query, response, solrInterface=None, **kwargs):
+        response, readData = self.executeQueryResponse(query, response, solrInterface=solrInterface, **kwargs)
+        if getattr(response, 'drilldownData', None) is not None:
+            return response.total, response.hits, response.drilldownData, readData[0]
+        return response.total, response.hits, readData[0]
 
     def _resultFromServerResponses(self, g, serverResponses, responseStatus='200'):
         for response in serverResponses:
@@ -208,7 +216,7 @@ RESPONSE = """
 <response>
     <lst name="responseHeader">
         <int name="status">0</int>
-        <int name="QTime">1</int>
+        <int name="QTime">6</int>
         <lst name="params">
             <str name="indent">on</str>
             <str name="start">0</str>
