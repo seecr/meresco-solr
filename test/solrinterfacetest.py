@@ -116,14 +116,6 @@ class SolrInterfaceTest(TestCase):
         response, path = self.executePrefixSearch(prefix="ho", field="afield", limit=5, response=TERMS_PREFIX_RESPONSE) 
         self.assertEquals('/solr/terms?terms.limit=5&terms.prefix=ho&terms.fl=afield', path)
 
-    def testPrefixSearchMinimalLengthOf10(self):
-        solrInterface = SolrInterface(minimumPrefixLength=10)
-        try:
-            self.executePrefixSearch(prefix="ho", field="afield", limit=5, response=TERMS_PREFIX_RESPONSE, solrInterface=solrInterface)
-            self.fail()
-        except ValueError, e:
-            self.assertEquals("Prefix should be at least 10 characters", str(e))
-
     def testExecuteEmptyQuery(self):
         self.assertRaises(ValueError, self.executeQuery, '', response=RESPONSE)
 
