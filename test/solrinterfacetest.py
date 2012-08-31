@@ -105,6 +105,25 @@ class SolrInterfaceTest(TestCase):
         self.assertEquals(3, total)
         self.assertEquals(['1','3','5'], hits)
 
+    def testPrefixSearch(self):
+        response, path = self.executePrefixSearch(prefix="ho", field="afield", response=TERMS_PREFIX_RESPONSE) 
+        self.assertEquals(['hoogte', 'holland', 'hoe', 'horticulture', 'houden', 'housing', 'houdt', 'hoge', 'hoofd', 'houten'], response.hits)
+        self.assertEquals(10, response.total)
+        self.assertEquals(76, response.queryTime)
+        self.assertEquals('/solr/terms?terms.limit=10&terms.prefix=ho&terms.fl=afield', path)
+
+    def testPrefixSearchWithLimit(self):
+        response, path = self.executePrefixSearch(prefix="ho", field="afield", limit=5, response=TERMS_PREFIX_RESPONSE) 
+        self.assertEquals('/solr/terms?terms.limit=5&terms.prefix=ho&terms.fl=afield', path)
+
+    def testPrefixSearchMinimalLengthOf10(self):
+        solrInterface = SolrInterface(minimumPrefixLength=10)
+        try:
+            self.executePrefixSearch(prefix="ho", field="afield", limit=5, response=TERMS_PREFIX_RESPONSE, solrInterface=solrInterface)
+            self.fail()
+        except ValueError, e:
+            self.assertEquals("Prefix should be at least 10 characters", str(e))
+
     def testExecuteEmptyQuery(self):
         self.assertRaises(ValueError, self.executeQuery, '', response=RESPONSE)
 
@@ -184,6 +203,21 @@ class SolrInterfaceTest(TestCase):
         except StopIteration, e:
             (response,) = e.args 
             return response, readData
+
+    def executePrefixSearch(self, response, solrInterface=None, **kwargs):
+        if solrInterface is None:
+            solrInterface = self._solrInterface
+        readData = []
+        def read(path):
+            readData.append(path)
+        solrInterface._read = read
+        gen = solrInterface.prefixSearch(**kwargs)
+        gen.next()
+        try:
+            gen.send(response)
+        except StopIteration, e:
+            (response,) = e.args 
+            return response, readData[0]
     
     def executeQuery(self, query, response, solrInterface=None, **kwargs):
         response, readData = self.executeQueryResponse(query, response, solrInterface=solrInterface, **kwargs)
@@ -238,6 +272,29 @@ RESPONSE = """
     </result>
     %s
 </response>"""
+
+TERMS_PREFIX_RESPONSE = """
+<response>
+    <lst name="responseHeader">
+        <int name="status">0</int>
+        <int name="QTime">76</int>
+    </lst>
+    <lst name="terms">
+        <lst name="afield">
+            <int name="hoogte">221194</int>
+            <int name="holland">162140</int>
+            <int name="hoe">57391</int>
+            <int name="horticulture">30914</int>
+            <int name="houden">15239</int>
+            <int name="housing">14980</int>
+            <int name="houdt">14178</int>
+            <int name="hoge">12870</int>
+            <int name="hoofd">12583</int>
+            <int name="houten">10945</int>
+        </lst>
+    </lst>
+</response>"""
+
 
 FACET_COUNTS="""
 <lst name="facet_counts">

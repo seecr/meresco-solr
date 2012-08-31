@@ -37,13 +37,14 @@ from solrresponse import SolrResponse
 CRLF = '\r\n'
 
 class SolrInterface(Observable):
-    def __init__(self, host=None, port=None, core=None):
+    def __init__(self, host=None, port=None, core=None, minimumPrefixLength=2):
         Observable.__init__(self)
         self._host = host
         self._port = port
         self._core = core
         if core is not None:
             self.observable_name = lambda: core
+        self._minimumPrefixLength = minimumPrefixLength
 
     def all_unknown(self, message, *args, **kwargs):
         print 'Unexpected all.unknown for:', message, args, kwargs
@@ -87,6 +88,18 @@ class SolrInterface(Observable):
         response = SolrResponse(total=recordCount, hits=identifiers, queryTime=qtime)
         if fieldnamesAndMaximums is not None:
             _updateResponseWithDrilldownData(arguments, xml, response)
+        raise StopIteration(response)
+
+    def prefixSearch(self, field, prefix, limit=10):
+        if len(prefix) < self._minimumPrefixLength:
+            raise ValueError("Prefix should be at least %s characters" % self._minimumPrefixLength)
+        arguments = {'terms.fl': field, 'terms.prefix': prefix, 'terms.limit': limit}
+        path = self._path('terms')
+        body = yield self._read('%s?%s' % (path, urlencode(arguments, doseq=True)))
+        xml = parse(StringIO(body))
+        terms = xml.xpath('/response/lst[@name="terms"]/lst[@name="%s"]/int/@name' % field)
+        qtime = int(xml.xpath('/response/lst[@name="responseHeader"]/int[@name="QTime"]/text()')[0])
+        response = SolrResponse(total=len(terms), hits=terms, queryTime=qtime)
         raise StopIteration(response)
 
     def _send(self, path, body):
