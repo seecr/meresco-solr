@@ -1,0 +1,105 @@
+Changeset created on Fri Aug 31 14:16:37 UTC 2012 by Seecr (Seek You Too B.V.)
+
+Description: Added autocomplete suggestions
+
+    On /autocomplete?prefix=<prefix> a list of all suggestions can be retrieved. 
+    Therefore the TermsComponents of Solr is used. 
+    Optional you can configure the field to complete on and the maximum limit 
+    of suggestions.
+
+Baseline version: https://meresco.svn.sourceforge.net/svnroot/meresco/meresco-solr/workingsets/4.0.6-Edurep/version_0
+
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_0/meresco/solr/solrinterface.py /home/edurep/development/meresco-solr/workingsets/4.0.6-Edurep/version_1/meresco/solr/solrinterface.py
+--- version_0/meresco/solr/solrinterface.py	2012-08-31 09:40:33.000000000 +0200
++++ version_1/meresco/solr/solrinterface.py	2012-08-31 16:16:27.000000000 +0200
+@@ -89,6 +89,16 @@
+             _updateResponseWithDrilldownData(arguments, xml, response)
+         raise StopIteration(response)
+ 
++    def prefixSearch(self, field, prefix, limit=10):
++        arguments = {'terms.fl': field, 'terms.prefix': prefix, 'terms.limit': limit}
++        path = self._path('terms')
++        body = yield self._read('%s?%s' % (path, urlencode(arguments, doseq=True)))
++        xml = parse(StringIO(body))
++        terms = xml.xpath('/response/lst[@name="terms"]/lst[@name="%s"]/int/@name' % field)
++        qtime = int(xml.xpath('/response/lst[@name="responseHeader"]/int[@name="QTime"]/text()')[0])
++        response = SolrResponse(total=len(terms), hits=terms, queryTime=qtime)
++        raise StopIteration(response)
++
+     def _send(self, path, body):
+         headers = None
+         if body:
+Binary files version_0/meresco/solr/.solrinterface.py.swp and /home/edurep/development/meresco-solr/workingsets/4.0.6-Edurep/version_1/meresco/solr/.solrinterface.py.swp differ
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_0/test/solrinterfacetest.py /home/edurep/development/meresco-solr/workingsets/4.0.6-Edurep/version_1/test/solrinterfacetest.py
+--- version_0/test/solrinterfacetest.py	2012-08-31 09:40:33.000000000 +0200
++++ version_1/test/solrinterfacetest.py	2012-08-31 16:16:27.000000000 +0200
+@@ -105,6 +105,17 @@
+         self.assertEquals(3, total)
+         self.assertEquals(['1','3','5'], hits)
+ 
++    def testPrefixSearch(self):
++        response, path = self.executePrefixSearch(prefix="ho", field="afield", response=TERMS_PREFIX_RESPONSE) 
++        self.assertEquals(['hoogte', 'holland', 'hoe', 'horticulture', 'houden', 'housing', 'houdt', 'hoge', 'hoofd', 'houten'], response.hits)
++        self.assertEquals(10, response.total)
++        self.assertEquals(76, response.queryTime)
++        self.assertEquals('/solr/terms?terms.limit=10&terms.prefix=ho&terms.fl=afield', path)
++
++    def testPrefixSearchWithLimit(self):
++        response, path = self.executePrefixSearch(prefix="ho", field="afield", limit=5, response=TERMS_PREFIX_RESPONSE) 
++        self.assertEquals('/solr/terms?terms.limit=5&terms.prefix=ho&terms.fl=afield', path)
++
+     def testExecuteEmptyQuery(self):
+         self.assertRaises(ValueError, self.executeQuery, '', response=RESPONSE)
+ 
+@@ -184,6 +195,21 @@
+         except StopIteration, e:
+             (response,) = e.args 
+             return response, readData
++
++    def executePrefixSearch(self, response, solrInterface=None, **kwargs):
++        if solrInterface is None:
++            solrInterface = self._solrInterface
++        readData = []
++        def read(path):
++            readData.append(path)
++        solrInterface._read = read
++        gen = solrInterface.prefixSearch(**kwargs)
++        gen.next()
++        try:
++            gen.send(response)
++        except StopIteration, e:
++            (response,) = e.args 
++            return response, readData[0]
+     
+     def executeQuery(self, query, response, solrInterface=None, **kwargs):
+         response, readData = self.executeQueryResponse(query, response, solrInterface=solrInterface, **kwargs)
+@@ -239,6 +265,29 @@
+     %s
+ </response>"""
+ 
++TERMS_PREFIX_RESPONSE = """
++<response>
++    <lst name="responseHeader">
++        <int name="status">0</int>
++        <int name="QTime">76</int>
++    </lst>
++    <lst name="terms">
++        <lst name="afield">
++            <int name="hoogte">221194</int>
++            <int name="holland">162140</int>
++            <int name="hoe">57391</int>
++            <int name="horticulture">30914</int>
++            <int name="houden">15239</int>
++            <int name="housing">14980</int>
++            <int name="houdt">14178</int>
++            <int name="hoge">12870</int>
++            <int name="hoofd">12583</int>
++            <int name="houten">10945</int>
++        </lst>
++    </lst>
++</response>"""
++
++
+ FACET_COUNTS="""
+ <lst name="facet_counts">
+     <lst name="facet_queries"/>
