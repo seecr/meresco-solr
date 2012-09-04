@@ -182,10 +182,10 @@ class SolrInterfaceTest(TestCase):
         self.assertEquals(6, response.queryTime)
 
     def testSolrGivesSpellCheckResults(self):
-        total, hits, suggestions, query = self.executeQuery(query="__all__:aap AND __all__:bo", response=RESPONSE % SUGGESTIONS, suggestionsCount=2)
-        self.assertEquals('/solr/select?q=__all__%3Aaap+AND+__all__%3Abo&start=0&spellchecker.count=2&rows=10&spellchecker=true', query)
+        total, hits, suggestions, query = self.executeQuery(query="__all__:aap AND __all__:bo", response=RESPONSE % SUGGESTIONS, suggestionsCount=2, suggestionsQuery="aap AND bo")
+        self.assertEquals('/solr/select?spellcheck.count=2&rows=10&spellcheck=true&spellcheck.q=aap+AND+bo&q=__all__%3Aaap+AND+__all__%3Abo&start=0', query)
         self.assertEquals(['1','3','5'], hits)
-        self.assertEquals({'aap': (8, 11, ['aapje', 'raap']), 'bo': (24, 26, ['bio', 'bon'])}, suggestions)
+        self.assertEquals({'aap': (0, 3, ['aapje', 'raap']), 'bo': (8, 10, ['bio', 'bon'])}, suggestions)
 
     def executeQueryResponse(self, query, response, solrInterface=None, **kwargs):
         if solrInterface is None:
@@ -302,8 +302,8 @@ SUGGESTIONS="""
     <lst name="suggestions">
         <lst name="aap">
             <int name="numFound">2</int>
-            <int name="startOffset">8</int>
-            <int name="endOffset">11</int>
+            <int name="startOffset">0</int>
+            <int name="endOffset">3</int>
             <arr name="suggestion">
                 <str>aapje</str>
                 <str>raap</str>
@@ -311,8 +311,8 @@ SUGGESTIONS="""
         </lst>
         <lst name="bo">
             <int name="numFound">2</int>
-            <int name="startOffset">24</int>
-            <int name="endOffset">26</int>
+            <int name="startOffset">8</int>
+            <int name="endOffset">10</int>
             <arr name="suggestion">
                 <str>bio</str>
                 <str>bon</str>
