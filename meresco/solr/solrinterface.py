@@ -66,7 +66,7 @@ class SolrInterface(Observable):
         yield self._send(path=path, body="<delete><id>%s</id></delete>" % escapeXml(identifier))
         yield self._send(path=path, body='<commit/>')
 
-    def executeQuery(self, luceneQueryString, start=0, stop=10, sortBy=None, sortDescending=None, fieldnamesAndMaximums=None, **kwargs):
+    def executeQuery(self, luceneQueryString, start=0, stop=10, sortBy=None, sortDescending=None, fieldnamesAndMaximums=None, suggestionsCount=0, **kwargs):
         if not luceneQueryString:
             raise ValueError("Empty luceneQueryString not allowed.")
         arguments = dict(
@@ -77,6 +77,9 @@ class SolrInterface(Observable):
         if sortBy is not None:
             arguments["sort"] = "%s %s" % (sortBy, 'desc' if sortDescending else 'asc')
         arguments.update(_drilldownArguments(fieldnamesAndMaximums))
+        if suggestionsCount > 0:
+            arguments["spellchecker"] = 'true'
+            arguments["spellchecker.count"] = suggestionsCount
 
         path = self._path('select')
         body = yield self._read('%s?%s' % (path, urlencode(arguments, doseq=True)))
@@ -87,6 +90,8 @@ class SolrInterface(Observable):
         response = SolrResponse(total=recordCount, hits=identifiers, queryTime=qtime)
         if fieldnamesAndMaximums is not None:
             _updateResponseWithDrilldownData(arguments, xml, response)
+        if suggestionsCount > 0:
+            _updateResponseWithSuggestionData(arguments, xml, response)
         raise StopIteration(response)
 
     def prefixSearch(self, field, prefix, limit=10):
@@ -147,3 +152,11 @@ def _updateResponseWithDrilldownData(arguments, xml, response):
         drilldownResult = xml.xpath('/response/lst[@name="facet_counts"]/lst[@name="facet_fields"]/lst[@name="%s"]/int' % fieldname)
         drilldownData.append((fieldname, ((termCount.attrib['name'], int(termCount.text)) for termCount in drilldownResult)))
     response.drilldownData = drilldownData
+
+def _updateResponseWithSuggestionData(arguments, xml, response):
+    suggestions = {}
+    for suggestion in xml.xpath('/response/lst[@name="spellcheck"]/lst[@name="suggestions"]/lst'):
+        startOffset = int(suggestion.xpath('int[@name="startOffset"]/text()')[0])
+        endOffset = int(suggestion.xpath('int[@name="endOffset"]/text()')[0])
+        suggestions[suggestion.attrib['name']] = (startOffset, endOffset, suggestion.xpath('arr[@name="suggestion"]/str/text()'))
+    response.suggestions = suggestions

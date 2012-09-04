@@ -182,10 +182,10 @@ class SolrInterfaceTest(TestCase):
         self.assertEquals(6, response.queryTime)
 
     def testSolrGivesSpellCheckResults(self):
-        # EXAMPLE: http://solr.dev.zp.seecr.nl/solr/records/select/?q=__all__:harrie&version=2.2&start=0&rows=10&indent=on&spellcheck=true&spellcheck.build=true
-        total, hits, suggestions, query = self.executeQuery(query="__all__:aap", response=RESPONSE % SUGGESTIONS)
-        self.assertEquals(['1','3','5'], response.hits)
-        self.assertEquals(['aapje', 'raap'], response.suggestions)
+        total, hits, suggestions, query = self.executeQuery(query="__all__:aap AND __all__:bo", response=RESPONSE % SUGGESTIONS, suggestionsCount=2)
+        self.assertEquals('/solr/select?q=__all__%3Aaap+AND+__all__%3Abo&start=0&spellchecker.count=2&rows=10&spellchecker=true', query)
+        self.assertEquals(['1','3','5'], hits)
+        self.assertEquals({'aap': (8, 11, ['aapje', 'raap']), 'bo': (24, 26, ['bio', 'bon'])}, suggestions)
 
     def executeQueryResponse(self, query, response, solrInterface=None, **kwargs):
         if solrInterface is None:
@@ -300,13 +300,22 @@ TERMS_PREFIX_RESPONSE = """
 SUGGESTIONS="""
 <lst name="spellcheck">
     <lst name="suggestions">
-        <lst name="__all__:aap">
-            <int name="numFound">1</int>
+        <lst name="aap">
+            <int name="numFound">2</int>
             <int name="startOffset">8</int>
             <int name="endOffset">11</int>
             <arr name="suggestion">
                 <str>aapje</str>
                 <str>raap</str>
+            </arr>
+        </lst>
+        <lst name="bo">
+            <int name="numFound">2</int>
+            <int name="startOffset">24</int>
+            <int name="endOffset">26</int>
+            <arr name="suggestion">
+                <str>bio</str>
+                <str>bon</str>
             </arr>
         </lst>
     </lst>
