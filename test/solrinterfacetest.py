@@ -181,6 +181,12 @@ class SolrInterfaceTest(TestCase):
         response, readData = self.executeQueryResponse("meresco.exists:true", response=RESPONSE % "")
         self.assertEquals(6, response.queryTime)
 
+    def testSolrGivesSpellCheckResults(self):
+        # EXAMPLE: http://solr.dev.zp.seecr.nl/solr/records/select/?q=__all__:harrie&version=2.2&start=0&rows=10&indent=on&spellcheck=true&spellcheck.build=true
+        total, hits, suggestions, query = self.executeQuery(query="__all__:aap", response=RESPONSE % SUGGESTIONS)
+        self.assertEquals(['1','3','5'], response.hits)
+        self.assertEquals(['aapje', 'raap'], response.suggestions)
+
     def executeQueryResponse(self, query, response, solrInterface=None, **kwargs):
         if solrInterface is None:
             solrInterface = self._solrInterface
@@ -213,9 +219,13 @@ class SolrInterfaceTest(TestCase):
     
     def executeQuery(self, query, response, solrInterface=None, **kwargs):
         response, readData = self.executeQueryResponse(query, response, solrInterface=solrInterface, **kwargs)
+        result = [response.total, response.hits]
         if getattr(response, 'drilldownData', None) is not None:
-            return response.total, response.hits, response.drilldownData, readData[0]
-        return response.total, response.hits, readData[0]
+            result.append(response.drilldownData)
+        if getattr(response, 'suggestions', None) is not None:
+            result.append(response.suggestions)
+        result.append(readData[0])
+        return result
 
     def _resultFromServerResponses(self, g, serverResponses, responseStatus='200'):
         for response in serverResponses:
@@ -287,6 +297,20 @@ TERMS_PREFIX_RESPONSE = """
     </lst>
 </response>"""
 
+SUGGESTIONS="""
+<lst name="spellcheck">
+    <lst name="suggestions">
+        <lst name="__all__:aap">
+            <int name="numFound">1</int>
+            <int name="startOffset">8</int>
+            <int name="endOffset">11</int>
+            <arr name="suggestion">
+                <str>aapje</str>
+                <str>raap</str>
+            </arr>
+        </lst>
+    </lst>
+</lst>"""
 
 FACET_COUNTS="""
 <lst name="facet_counts">
