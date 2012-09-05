@@ -4,6 +4,7 @@
 #  to integrate Solr into "Meresco." 
 # 
 # Copyright (C) 2011-2012 Seecr (Seek You Too B.V.) http://seecr.nl
+# Copyright (C) 2012 Stichting Bibliotheek.nl (BNL) http://www.bibliotheek.nl
 # 
 # This file is part of "Meresco Solr"
 # 
@@ -37,11 +38,14 @@ from solrresponse import SolrResponse
 CRLF = '\r\n'
 
 class SolrInterface(Observable):
-    def __init__(self, host=None, port=None, core=None):
+    def __init__(self, host=None, port=None, core=None, commitTimeout=1):
         Observable.__init__(self)
         self._host = host
         self._port = port
         self._core = core
+        self._commitWithin = int(commitTimeout * 1000)
+        if self._commitWithin <= 0:
+            raise ValueError("Value commitTimeout should be greater then zero")
         if core is not None:
             self.observable_name = lambda: core
 
@@ -58,13 +62,13 @@ class SolrInterface(Observable):
 
     def add(self, identifier, partname, data):
         path = self._path('update')
+        path += "?commitWithin=%d" % self._commitWithin
         yield self._send(path=path, body="<add>%s</add>" % data)
-        yield self._send(path=path, body="<commit/>")
 
     def delete(self, identifier):
         path = self._path('update')
+        path += "?commitWithin=%d" % self._commitWithin
         yield self._send(path=path, body="<delete><id>%s</id></delete>" % escapeXml(identifier))
-        yield self._send(path=path, body='<commit/>')
 
     def executeQuery(self, luceneQueryString, start=0, stop=10, sortBy=None, sortDescending=None, fieldnamesAndMaximums=None, **kwargs):
         if not luceneQueryString:
@@ -103,7 +107,7 @@ class SolrInterface(Observable):
         headers = None
         if body:
             headers={'Content-Type': 'text/xml', 'Content-Length': len(body)}
-        host, port = self._solrServer()
+        host, port = self._solrServer() # WARNING: can return a different server each time.
         response = yield self._httppost(host=host, port=port, request=path, body=body, headers=headers)
         header, body = response.split("\r\n\r\n", 1)
         self._verify200(header, response)
