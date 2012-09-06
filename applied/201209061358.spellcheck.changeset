@@ -1,0 +1,124 @@
+Changeset created on Thu Sep 06 13:58:21 UTC 2012 by Seecr (Seek You Too B.V.)
+
+Description: Spellcheck support
+
+    Spellcheck support that can be used to offer suggestions
+
+Baseline version: https://meresco.svn.sourceforge.net/svnroot/meresco/meresco-solr/workingsets/4.0.7-ZP/version_0
+
+diff --unidirectional-new-file --recursive --unified --exclude='*.so' --exclude='*.o' --exclude=.svn --exclude='*.pyc' --exclude='*.swp' --exclude=deps.d --exclude=applied version_0/deps.txt /home/zp/development/meresco-solr/workingsets/4.0.7-ZP/version_1/deps.txt
+--- version_0/deps.txt	2012-09-03 14:49:24.000000000 +0100
++++ version_1/deps.txt	2012-09-06 14:58:19.000000000 +0100
+@@ -1,5 +1,5 @@
+ python-meresco-components (>= 4.0)
+-python-meresco-components (<< 4.1)
++python-meresco-components (<< 4.2)
+ python-meresco-core (>= 4.0)
+ python-meresco-core (<< 4.1)
+ python-cqlparser (>= 1.7)
+diff --unidirectional-new-file --recursive --unified --exclude='*.so' --exclude='*.o' --exclude=.svn --exclude='*.pyc' --exclude='*.swp' --exclude=deps.d --exclude=applied version_0/meresco/solr/solrinterface.py /home/zp/development/meresco-solr/workingsets/4.0.7-ZP/version_1/meresco/solr/solrinterface.py
+--- version_0/meresco/solr/solrinterface.py	2012-09-03 14:49:24.000000000 +0100
++++ version_1/meresco/solr/solrinterface.py	2012-09-06 14:58:19.000000000 +0100
+@@ -66,7 +66,7 @@
+         yield self._send(path=path, body="<delete><id>%s</id></delete>" % escapeXml(identifier))
+         yield self._send(path=path, body='<commit/>')
+ 
+-    def executeQuery(self, luceneQueryString, start=0, stop=10, sortBy=None, sortDescending=None, fieldnamesAndMaximums=None, **kwargs):
++    def executeQuery(self, luceneQueryString, start=0, stop=10, sortBy=None, sortDescending=None, fieldnamesAndMaximums=None, suggestionsCount=0, suggestionsQuery=None, **kwargs):
+         if not luceneQueryString:
+             raise ValueError("Empty luceneQueryString not allowed.")
+         arguments = dict(
+@@ -77,6 +77,10 @@
+         if sortBy is not None:
+             arguments["sort"] = "%s %s" % (sortBy, 'desc' if sortDescending else 'asc')
+         arguments.update(_drilldownArguments(fieldnamesAndMaximums))
++        if suggestionsCount > 0 and suggestionsQuery:
++            arguments["spellcheck"] = 'true'
++            arguments["spellcheck.count"] = suggestionsCount
++            arguments["spellcheck.q"] = suggestionsQuery
+ 
+         path = self._path('select')
+         body = yield self._read('%s?%s' % (path, urlencode(arguments, doseq=True)))
+@@ -87,6 +91,8 @@
+         response = SolrResponse(total=recordCount, hits=identifiers, queryTime=qtime)
+         if fieldnamesAndMaximums is not None:
+             _updateResponseWithDrilldownData(arguments, xml, response)
++        if suggestionsCount > 0 and suggestionsQuery:
++            _updateResponseWithSuggestionData(arguments, xml, response)
+         raise StopIteration(response)
+ 
+     def prefixSearch(self, field, prefix, limit=10):
+@@ -147,3 +153,11 @@
+         drilldownResult = xml.xpath('/response/lst[@name="facet_counts"]/lst[@name="facet_fields"]/lst[@name="%s"]/int' % fieldname)
+         drilldownData.append((fieldname, ((termCount.attrib['name'], int(termCount.text)) for termCount in drilldownResult)))
+     response.drilldownData = drilldownData
++
++def _updateResponseWithSuggestionData(arguments, xml, response):
++    suggestions = {}
++    for suggestion in xml.xpath('/response/lst[@name="spellcheck"]/lst[@name="suggestions"]/lst'):
++        startOffset = int(suggestion.xpath('int[@name="startOffset"]/text()')[0])
++        endOffset = int(suggestion.xpath('int[@name="endOffset"]/text()')[0])
++        suggestions[suggestion.attrib['name']] = (startOffset, endOffset, suggestion.xpath('arr[@name="suggestion"]/str/text()'))
++    response.suggestions = suggestions
+diff --unidirectional-new-file --recursive --unified --exclude='*.so' --exclude='*.o' --exclude=.svn --exclude='*.pyc' --exclude='*.swp' --exclude=deps.d --exclude=applied version_0/test/solrinterfacetest.py /home/zp/development/meresco-solr/workingsets/4.0.7-ZP/version_1/test/solrinterfacetest.py
+--- version_0/test/solrinterfacetest.py	2012-09-03 14:49:24.000000000 +0100
++++ version_1/test/solrinterfacetest.py	2012-09-06 14:58:19.000000000 +0100
+@@ -181,6 +181,12 @@
+         response, readData = self.executeQueryResponse("meresco.exists:true", response=RESPONSE % "")
+         self.assertEquals(6, response.queryTime)
+ 
++    def testSolrGivesSpellCheckResults(self):
++        total, hits, suggestions, query = self.executeQuery(query="__all__:aap AND __all__:bo", response=RESPONSE % SUGGESTIONS, suggestionsCount=2, suggestionsQuery="aap AND bo")
++        self.assertEquals('/solr/select?spellcheck.count=2&rows=10&spellcheck=true&spellcheck.q=aap+AND+bo&q=__all__%3Aaap+AND+__all__%3Abo&start=0', query)
++        self.assertEquals(['1','3','5'], hits)
++        self.assertEquals({'aap': (0, 3, ['aapje', 'raap']), 'bo': (8, 10, ['bio', 'bon'])}, suggestions)
++
+     def executeQueryResponse(self, query, response, solrInterface=None, **kwargs):
+         if solrInterface is None:
+             solrInterface = self._solrInterface
+@@ -213,9 +219,13 @@
+     
+     def executeQuery(self, query, response, solrInterface=None, **kwargs):
+         response, readData = self.executeQueryResponse(query, response, solrInterface=solrInterface, **kwargs)
++        result = [response.total, response.hits]
+         if getattr(response, 'drilldownData', None) is not None:
+-            return response.total, response.hits, response.drilldownData, readData[0]
+-        return response.total, response.hits, readData[0]
++            result.append(response.drilldownData)
++        if getattr(response, 'suggestions', None) is not None:
++            result.append(response.suggestions)
++        result.append(readData[0])
++        return result
+ 
+     def _resultFromServerResponses(self, g, serverResponses, responseStatus='200'):
+         for response in serverResponses:
+@@ -287,6 +297,29 @@
+     </lst>
+ </response>"""
+ 
++SUGGESTIONS="""
++<lst name="spellcheck">
++    <lst name="suggestions">
++        <lst name="aap">
++            <int name="numFound">2</int>
++            <int name="startOffset">0</int>
++            <int name="endOffset">3</int>
++            <arr name="suggestion">
++                <str>aapje</str>
++                <str>raap</str>
++            </arr>
++        </lst>
++        <lst name="bo">
++            <int name="numFound">2</int>
++            <int name="startOffset">8</int>
++            <int name="endOffset">10</int>
++            <arr name="suggestion">
++                <str>bio</str>
++                <str>bon</str>
++            </arr>
++        </lst>
++    </lst>
++</lst>"""
+ 
+ FACET_COUNTS="""
+ <lst name="facet_counts">
