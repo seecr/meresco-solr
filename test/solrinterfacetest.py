@@ -4,6 +4,7 @@
 #  to integrate Solr into "Meresco." 
 # 
 # Copyright (C) 2011-2012 Seecr (Seek You Too B.V.) http://seecr.nl
+# Copyright (C) 2012 Stichting Bibliotheek.nl (BNL) http://www.bibliotheek.nl
 # 
 # This file is part of "Meresco Solr"
 # 
@@ -44,27 +45,34 @@ class SolrInterfaceTest(TestCase):
         interface = SolrInterface("localhost", "8888", core="THE_CORE")
         interface._send = lambda path, body: sendData.append((path, body))
         list(interface.add("recordId", "ignored", "<record><data>recordData</data></record>"))
-        self.assertEquals(2, len(sendData))
-        self.assertEquals(('/solr/THE_CORE/update', '<add><record><data>recordData</data></record></add>'), sendData[0])
-        self.assertEquals(('/solr/THE_CORE/update', '<commit/>'), sendData[1])
+        self.assertEquals(1, len(sendData))
+        self.assertEquals(('/solr/THE_CORE/update?commitWithin=1000', '<add><record><data>recordData</data></record></add>'), sendData[0])
         total, hits, path = self.executeQuery("meresco.exists:true", start=5, stop=10, sortBy="field", sortDescending=True, response=RESPONSE, solrInterface=interface)
         self.assertQuery("/solr/THE_CORE/select?q=meresco.exists%3Atrue&start=5&rows=5&sort=field+desc", path)
 
     def testAdd(self):
         g = compose(self._solrInterface.add("recordId", "ignored", "<record><data>recordData</data></record>"))
-        self._resultFromServerResponses(g, 2 * ["SOME RESPONSE"])
+        self._returnValueFromGenerator(g, ["SOME RESPONSE"])
 
         g = compose(self._solrInterface.add("recordId", "ignored", "<record><data>recordData</data></record>"))
         self.assertRaises(
             IOError,
-            lambda: self._resultFromServerResponses(g, ["ERROR"], '500'))
+            lambda: self._returnValueFromGenerator(g, ["ERROR"], '500'))
 
         sendData = []
         self._solrInterface._send = lambda path, body: sendData.append((path, body))
         list(self._solrInterface.add("recordId", "ignored", "<record><data>recordData</data></record>"))
-        self.assertEquals(2, len(sendData))
-        self.assertEquals(('/solr/update', '<add><record><data>recordData</data></record></add>'), sendData[0])
-        self.assertEquals(('/solr/update', '<commit/>'), sendData[1])
+        self.assertEquals(1, len(sendData))
+        self.assertEquals(('/solr/update?commitWithin=1000', '<add><record><data>recordData</data></record></add>'), sendData[0])
+
+    def testAddWithTimeOut(self):
+        sent_data = []
+        iSolr = SolrInterface("localhost", "8889", commitTimeout=10)
+        iSolr._send = lambda path, body: sent_data.append((path, body))
+        r = iSolr.add("record1", "part0", "<record><data>data here</data></record>")
+        list(r)
+        self.assertEquals('/solr/update?commitWithin=10000', sent_data[0][0])
+        self.assertEquals(1, len(sent_data))
 
     def testObservableName(self):
         sendData = []
@@ -79,25 +87,39 @@ class SolrInterfaceTest(TestCase):
         list(compose(observable.all['index1'].add(identifier="recordId", partname="partname", data="data")))
 
         self.assertEquals([
-                ('1', '/solr/index1/update', '<add>data</add>'),
-                ('1', '/solr/index1/update', '<commit/>')
+                ('1', '/solr/index1/update?commitWithin=1000', '<add>data</add>'),
             ], sendData)
 
     def testDelete(self):
         g = compose(self._solrInterface.delete("record&:1"))
-        self._resultFromServerResponses(g, 2 * ["SOME RESPONSE"])
+        self._returnValueFromGenerator(g, ["SOME RESPONSE"])
 
         g = compose(self._solrInterface.delete("record&:1"))
         self.assertRaises(
             IOError,
-            lambda: self._resultFromServerResponses(g, "ERROR", '500'))
+            lambda: self._returnValueFromGenerator(g, "ERROR", '500'))
 
         sendData = []
         self._solrInterface._send = lambda path, body: sendData.append((path, body))
         list(self._solrInterface.delete("record&:1"))
-        self.assertEquals(2, len(sendData))
-        self.assertEquals(('/solr/update', '<delete><id>%s</id></delete>' % "record&amp;:1"), sendData[0])
-        self.assertEquals(('/solr/update', '<commit/>'), sendData[1])
+        self.assertEquals(1, len(sendData))
+        self.assertEquals(('/solr/update?commitWithin=1000', '<delete><id>%s</id></delete>' % "record&amp;:1"), sendData[0])
+
+    def testDeleteWithTimeOut(self):
+        sent_data = []
+        iSolr = SolrInterface("localhost", "8889", commitTimeout=10)
+        iSolr._send = lambda path, body: sent_data.append((path, body))
+        r = iSolr.delete("record1")
+        list(r)
+        self.assertEquals('/solr/update?commitWithin=10000', sent_data[0][0])
+        self.assertEquals(1, len(sent_data))
+
+    def testSolrTimeoutShouldBeGreaterThenZero(self):
+        try:
+            iSolr = SolrInterface("localhost", "8889", commitTimeout=-1)
+            self.fail()
+        except ValueError, e:
+            self.assertEquals('Value commitTimeout should be greater then zero', str(e))
 
     def testExecuteQuery(self):
         total, hits, path = self.executeQuery("meresco.exists:true", start=0, stop=10, sortBy=None, sortDescending=False, response=RESPONSE) 
@@ -154,7 +176,7 @@ class SolrInterfaceTest(TestCase):
         solrInterface._httpget = httpget
 
         g = compose(solrInterface.executeQuery("meresco.exists:true"))
-        self._resultFromServerResponses(g, [RESPONSE])
+        self._returnValueFromGenerator(g, [RESPONSE])
         self.assertEquals(['solrServer'], observer.calledMethodNames())
         self.assertEquals([('localhost', 1234, '/solr/select?q=meresco.exists%3Atrue&start=0&rows=10')], args)
 
@@ -172,8 +194,8 @@ class SolrInterfaceTest(TestCase):
         solrInterface._httppost = httppost
 
         g = compose(solrInterface.add("recordId", "ignored", "<record><data>recordData</data></record>"))
-        self._resultFromServerResponses(g, 2 * ["SOME RESPONSE"])
-        self.assertEquals(['solrServer'] * 2, observer.calledMethodNames())
+        self._returnValueFromGenerator(g, ["SOME RESPONSE"])
+        self.assertEquals(['solrServer'], observer.calledMethodNames())
         self.assertEquals('localhost', kwargs[0]['host'])
         self.assertEquals(1234, kwargs[0]['port'])
 
@@ -227,7 +249,7 @@ class SolrInterfaceTest(TestCase):
         result.append(readData[0])
         return result
 
-    def _resultFromServerResponses(self, g, serverResponses, responseStatus='200'):
+    def _returnValueFromGenerator(self, g, serverResponses, responseStatus='200'):
         for response in serverResponses:
             s = g.next()
             self.assertEquals(Suspend, type(s))
