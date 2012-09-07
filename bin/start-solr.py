@@ -39,7 +39,7 @@ def setupSolrConfig(stateDir, port, cores):
 
     system(r"""sed 's,<SystemProperty name="jetty.port"[^/]*/>,<SystemProperty name="jetty.port" default="%s"/>,' -i %s""" % (
             port,
-            join(stateDir, 'jetty.xml')
+            join(stateDir, 'etc', 'jetty.xml')
         ))
 
     system(r"""sed 's,^jetty\.home=.*$,jetty.home=%s,' -i %s""" % (
