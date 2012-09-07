@@ -2,7 +2,7 @@
 from unittest import main, TestCase
 from StringIO import StringIO
 from os import mkdir, listdir, system
-from os.path import join, dirname, abspath, basename
+from os.path import join, dirname, abspath, basename, isdir
 from shutil import rmtree
 from lxml.etree import parse
 import sys
@@ -130,6 +130,14 @@ class SolrRunTest(TestCase):
             self.assertEquals({}, execCalled[0][1])
         finally:
             start_solr._execvp = _original_execvp
+
+    def testStartSolrReally(self):
+        tempdir = "/tmp/testSetupSolrConfig"
+        isdir(tempdir) and rmtree(tempdir)
+        mkdir(tempdir)
+        solrDataDir = join(tempdir, 'solr-data')
+        start_solr.setupSolrConfig(stateDir=solrDataDir, port=8000, cores=["test"])
+        start_solr.startSolr(stateDir=solrDataDir, port=8000, javaMX="1024M")
 
 if __name__ == '__main__':
     main()
