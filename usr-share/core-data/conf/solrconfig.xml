@@ -52,50 +52,7 @@
     <httpCaching never304="true" />
   </requestDispatcher>
 
-  <requestHandler name="/update" class="solr.XmlUpdateRequestHandler"/>
-
-  <requestHandler name="/admin/" class="solr.admin.AdminHandlers" />
-
-  <requestHandler name="/admin/ping" class="solr.PingRequestHandler">
-    <lst name="invariants">
-      <str name="q">solrpingquery</str>
-    </lst>
-    <lst name="defaults">
-      <str name="echoParams">all</str>
-    </lst>
-  </requestHandler>
-
-  <searchComponent name="spellcheck" class="solr.SpellCheckComponent">
-    <str name="queryAnalyzerFieldType">textSpell</str>
-    <lst name="spellchecker">
-      <str name="name">default</str>
-      <str name="field">name</str>
-      <str name="spellcheckIndexDir">spellchecker</str>
-      <str name="buildOnCommit">true</str>
-    </lst>
-  </searchComponent>
-
-  <requestHandler name="/select" class="solr.SearchHandler" startup="lazy">
-    <arr name="last-components">
-      <str>spellcheck</str>
-    </arr>
-  </requestHandler>
-
-  <searchComponent name="terms" class="solr.TermsComponent"/>
-
-  <!-- A request handler for demonstrating the terms component -->
-  <requestHandler name="/terms" class="solr.SearchHandler" startup="lazy">
-     <lst name="defaults">
-      <bool name="terms">true</bool>
-    </lst>     
-    <arr name="components">
-      <str>terms</str>
-    </arr>
-  </requestHandler>
-
-  <!-- Legacy config for the admin interface -->
-  <admin>
-    <defaultQuery>*:*</defaultQuery>
-  </admin>
+  <requestHandler name="/update" class="solr.XmlUpdateRequestHandler" />
+  <requestHandler name="/select" class="solr.SearchHandler" />
 
 </config>
