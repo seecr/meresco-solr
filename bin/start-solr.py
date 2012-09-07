@@ -7,7 +7,7 @@ from lxml.etree import parse, SubElement, tostring
 from subprocess import Popen
 
 mydir = dirname(abspath(__file__))
-configdir = join(mydir, 'usr-share') # is replaced by makeDeb.sh
+configdir = join(dirname(mydir), 'usr-share') # is replaced by makeDeb.sh
 SOLR_VERSION = "3.6.0"
 
 def parseArguments(args):
