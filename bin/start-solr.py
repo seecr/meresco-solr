@@ -26,7 +26,7 @@ def copyDir(src, dst):
     system('cp -r %s/* %s/' % (src, dst))
     system('find %s -name ".svn" | xargs rm -rf' % dst) # DO_NOT_DISTRIBUTE
 
-def setupSolrConfig(stateDir, port, cores):
+def setupSolrConfig(stateDir, port, cores, drilldown=None, admin=None):
     if not isdir(stateDir):
         makedirs(stateDir)
         copyDir(join(configdir, 'solr-data'), stateDir)
@@ -37,23 +37,32 @@ def setupSolrConfig(stateDir, port, cores):
             if currentMatchVersion != newMatchVersion:
                 raise ValueError("LuceneMatchVersion in core '%s' does not match the new configuration. Remove the old index." % coreDir)
 
-    system(r"""sed 's,<SystemProperty name="jetty.port"[^/]*/>,<SystemProperty name="jetty.port" default="%s"/>,' -i %s""" % (
-            port,
-            join(stateDir, 'etc', 'jetty.xml')
-        ))
+    _setupJettyXml(port, stateDir)
+    _setupStartConfig(stateDir)
+    _setupSolrXml(stateDir)
+    _setupCoreData(stateDir, cores)
+    if drilldown:
+        _setupDrilldown(stateDir, drilldown)
+    if admin:
+        _setupAdmin(stateDir, admin)
 
-    system(r"""sed 's,^jetty\.home=.*$,jetty.home=%s,' -i %s""" % (
-            stateDir,
-            join(stateDir, 'start.config')
-        ))
+def _setupDrilldown(stateDir, cores):
+    drilldown_xml = parse(open(join(configdir, 'solrconfig.d', 'drilldown.xml')))
+    for core in cores:
+        solrconfig_file = join(stateDir, 'cores', core, 'conf', 'solrconfig.xml')
+        core_sorlconfig = parse(open(solrconfig_file))
+        core_sorlconfig.getroot().extend(drilldown_xml.xpath('/config/*'))
+        open(solrconfig_file, 'w').write(tostring(core_sorlconfig, pretty_print=True, encoding="UTF-8"))
 
-    system(r"""sed 's,^/.*$,/usr/share/java/solr%s/*,' -i %s""" % (
-            SOLR_VERSION,
-            join(stateDir, 'start.config')
-        ))
+def _setupAdmin(stateDir, cores):
+    admin_xml = parse(open(join(configdir, 'solrconfig.d', 'admin.xml')))
+    for core in cores:
+        solrconfig_file = join(stateDir, 'cores', core, 'conf', 'solrconfig.xml')
+        core_sorlconfig = parse(open(solrconfig_file))
+        core_sorlconfig.getroot().extend(admin_xml.xpath('/config/*'))
+        open(solrconfig_file, 'w').write(tostring(core_sorlconfig, pretty_print=True, encoding="UTF-8"))
 
-    system(r"""sed -e "s,<Set name=\"war\">.*</Set>,<Set name=\"war\">/usr/share/java/webapps/apache-solr-%s.war</Set>," -i %s/contexts/solr.xml""" % (SOLR_VERSION, stateDir))
-
+def _setupCoreData(stateDir, cores):
     solr_xml = parse(open(join(stateDir, 'solr.xml')))
     for core in cores:
         coreDir = join(stateDir, 'cores', core)
@@ -65,9 +74,29 @@ def setupSolrConfig(stateDir, port, cores):
             schema_xml_path = join(coreDir, 'conf', 'schema.xml')
             schema_xml = parse(open(schema_xml_path))
             schema_xml.xpath("/schema")[0].attrib['name'] = unicode("meresco-%s" % core)
-            open(schema_xml_path, 'w').write(tostring(schema_xml))
+            open(schema_xml_path, 'w').write(tostring(schema_xml, pretty_print=True, encoding="UTF-8"))
 
-    open(join(stateDir, 'solr.xml'), 'w').write(tostring(solr_xml, pretty_print=True))
+    open(join(stateDir, 'solr.xml'), 'w').write(tostring(solr_xml, pretty_print=True, encoding="UTF-8"))
+
+def _setupJettyXml(port, stateDir):
+    system(r"""sed 's,<SystemProperty name="jetty.port"[^/]*/>,<SystemProperty name="jetty.port" default="%s"/>,' -i %s""" % (
+            port,
+            join(stateDir, 'etc', 'jetty.xml')
+        ))
+
+def _setupStartConfig(stateDir):
+    system(r"""sed 's,^jetty\.home=.*$,jetty.home=%s,' -i %s""" % (
+            stateDir,
+            join(stateDir, 'start.config')
+        ))
+
+    system(r"""sed 's,^/.*$,/usr/share/java/solr%s/*,' -i %s""" % (
+            SOLR_VERSION,
+            join(stateDir, 'start.config')
+        ))
+
+def _setupSolrXml(stateDir):
+    system(r"""sed -e "s,<Set name=\"war\">.*</Set>,<Set name=\"war\">/usr/share/java/webapps/apache-solr-%s.war</Set>," -i %s/contexts/solr.xml""" % (SOLR_VERSION, stateDir))
 
 def startSolr(stateDir, port, javaMX):
     _execvp('java', [
