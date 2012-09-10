@@ -133,6 +133,6 @@ if __name__ == '__main__':
         print "Don't use GCJ as the default java JRE."
         exit(1)
 
-    setupSolrConfig(stateDir=options.stateDir, port=options.port, config=load(options.config))
+    setupSolrConfig(stateDir=options.stateDir, port=options.port, config=load(open(options.config)))
     startSolr(stateDir=options.stateDir, port=options.port, javaMX=options.javaMX)
 
