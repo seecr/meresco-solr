@@ -12,13 +12,22 @@ configdir = join(dirname(mydir), 'usr-share') # is replaced by makeDeb.sh
 SOLR_VERSION = "3.6.0"
 
 def parseArguments(args):
-    parser = OptionParser()
+    features = [f.rsplit('.', 1)[0] for f in listdir(join(configdir, 'solrconfig.d'))]
+    parser = OptionParser(description="""Available features: %s.""" % ', '.join(features), epilog="""
+Example config: 
+{
+    "core1": {},
+    "core2": {"feature": {"option": "value"}},
+    "core3": {"booleanFeature": true}
+}
+""")
+    parser.format_epilog = lambda formatter: parser.epilog
     parser.add_option(Option('', '--port', type='int', help='Solr port number', dest='port'))
     parser.add_option(Option('', '--stateDir', type='string', help='Solr state directory', dest='stateDir'))
-    parser.add_option(Option('', '--core', type='string', action='append', help='Solr cores', dest='core'))
+    parser.add_option(Option('', '--config', type='string', help="Filename with json configuration file for solr", dest="config"))
     parser.add_option(Option('', '--javaMX', type='string', help="Value for -Xmx setting for java", dest="javaMX", default="1024M"))
     options, arguments = parser.parse_args(args)
-    if not all([options.port, options.stateDir, options.core]):
+    if not all([options.port, options.stateDir, options.config]):
         parser.print_help()
         raise ValueError("Missing required option (all except javaMX are required)")
     return options, arguments
@@ -123,6 +132,6 @@ if __name__ == '__main__':
         print "Don't use GCJ as the default java JRE."
         exit(1)
 
-    setupSolrConfig(stateDir=options.stateDir, port=options.port, cores=options.core)
+    setupSolrConfig(stateDir=options.stateDir, port=options.port, config=options.config)
     startSolr(stateDir=options.stateDir, port=options.port, javaMX=options.javaMX)
 
