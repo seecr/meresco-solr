@@ -1,17 +1,17 @@
 <config>
-  <searchComponent name="spellcheck" class="solr.SpellCheckComponent">
+  <searchComponent name="suggestions" class="solr.SpellCheckComponent">
     <str name="queryAnalyzerFieldType">textSpell</str>
     <lst name="spellchecker">
-      <str name="name">default</str>
-      <str name="field">name</str>
-      <str name="spellcheckIndexDir">spellchecker</str>
+      <str name="name">suggestions</str>
+      <str name="field">%(field)s</str>
+      <str name="spellcheckIndexDir">suggestions</str>
       <str name="buildOnCommit">true</str>
     </lst>
   </searchComponent>
 
   <requestHandler name="/select" class="solr.SearchHandler" startup="lazy">
     <arr name="last-components">
-      <str>spellcheck</str>
+      <str>suggestions</str>
     </arr>
   </requestHandler>
 </config>

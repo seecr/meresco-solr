@@ -117,6 +117,19 @@ class SolrRunTest(SeecrTestCase):
         self.assertFalse('/admin/ping' in solrconfig_xml.xpath("/config/requestHandler/@name"))
         self.assertFalse('*:*' in solrconfig_xml.xpath("/config/admin/defaultQuery/text()"))
 
+    def testSetupSolrConfigWithSuggestions(self):
+        solrDataDir = join(self.tempdir, 'solr-data')
+        config = {'suggestions': {'core2': {'field': 'afieldname'}}}
+        start_solr.setupSolrConfig(stateDir=solrDataDir, port=8042, cores=['core1', 'core2'], suggestions=['core2'], config=config)
+        solrconfig_xml = parse(open(join(solrDataDir, 'cores', 'core2', 'conf', 'solrconfig.xml')))
+        self.assertTrue('suggestions' in solrconfig_xml.xpath("/config/requestHandler[@name='/select']/arr/str/text()"))
+        self.assertTrue('suggestions' in solrconfig_xml.xpath("/config/searchComponent/@name"))
+        self.assertEquals(['afieldname'], solrconfig_xml.xpath('/config/searchComponent[@name="suggestions"]/lst/str[@name="field"]/text()'))
+
+        solrconfig_xml = parse(open(join(solrDataDir, 'cores', 'core1', 'conf', 'solrconfig.xml')))
+        self.assertFalse('suggestions' in solrconfig_xml.xpath("/config/requestHandler[@name='/select']/arr/str/text()"))
+        self.assertFalse('suggestions' in solrconfig_xml.xpath("/config/searchComponent/@name"))
+
     def testNotMatchingLuceneMatchVersion(self):
         solrDataDir = join(self.tempdir, 'solr-data')
         start_solr.setupSolrConfig(stateDir=solrDataDir, port=8042, cores=['core1'])

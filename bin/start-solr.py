@@ -4,6 +4,7 @@ from os import execvp, system, makedirs, listdir
 from os.path import dirname, abspath, isdir, join
 from optparse import OptionParser, Option
 from lxml.etree import parse, SubElement, tostring
+from StringIO import StringIO
 from subprocess import Popen
 
 mydir = dirname(abspath(__file__))
@@ -26,7 +27,7 @@ def copyDir(src, dst):
     system('cp -r %s/* %s/' % (src, dst))
     system('find %s -name ".svn" | xargs rm -rf' % dst) # DO_NOT_DISTRIBUTE
 
-def setupSolrConfig(stateDir, port, cores, drilldown=None, admin=None):
+def setupSolrConfig(stateDir, port, cores, drilldown=None, admin=None, suggestions=None, config=None):
     if not isdir(stateDir):
         makedirs(stateDir)
         copyDir(join(configdir, 'solr-data'), stateDir)
@@ -45,6 +46,8 @@ def setupSolrConfig(stateDir, port, cores, drilldown=None, admin=None):
         _setupDrilldown(stateDir, drilldown)
     if admin:
         _setupAdmin(stateDir, admin)
+    if suggestions:
+        _setupSuggestions(stateDir, suggestions, config=config)
 
 def _setupDrilldown(stateDir, cores):
     drilldown_xml = parse(open(join(configdir, 'solrconfig.d', 'drilldown.xml')))
@@ -60,6 +63,17 @@ def _setupAdmin(stateDir, cores):
         solrconfig_file = join(stateDir, 'cores', core, 'conf', 'solrconfig.xml')
         core_sorlconfig = parse(open(solrconfig_file))
         core_sorlconfig.getroot().extend(admin_xml.xpath('/config/*'))
+        open(solrconfig_file, 'w').write(tostring(core_sorlconfig, pretty_print=True, encoding="UTF-8"))
+
+def _setupSuggestions(stateDir, cores, config):
+    for core in cores:
+        if core not in config['suggestions']:
+            continue
+        suggestions = open(join(configdir, 'solrconfig.d', 'suggestions.xml')).read() % config['suggestions'][core]
+        suggestions_xml = parse(StringIO(suggestions))
+        solrconfig_file = join(stateDir, 'cores', core, 'conf', 'solrconfig.xml')
+        core_sorlconfig = parse(open(solrconfig_file))
+        core_sorlconfig.getroot().extend(suggestions_xml.xpath('/config/*'))
         open(solrconfig_file, 'w').write(tostring(core_sorlconfig, pretty_print=True, encoding="UTF-8"))
 
 def _setupCoreData(stateDir, cores):
