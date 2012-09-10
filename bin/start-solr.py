@@ -27,7 +27,9 @@ def copyDir(src, dst):
     system('cp -r %s/* %s/' % (src, dst))
     system('find %s -name ".svn" | xargs rm -rf' % dst) # DO_NOT_DISTRIBUTE
 
-def setupSolrConfig(stateDir, port, cores, drilldown=None, admin=None, suggestions=None, config=None):
+def setupSolrConfig(stateDir, port, config):
+    assert all(type(v) == dict for v in config.values()), "Core feature descriptions must be a dictionary (empty for no additional features)."
+
     if not isdir(stateDir):
         makedirs(stateDir)
         copyDir(join(configdir, 'solr-data'), stateDir)
@@ -41,40 +43,23 @@ def setupSolrConfig(stateDir, port, cores, drilldown=None, admin=None, suggestio
     _setupJettyXml(port, stateDir)
     _setupStartConfig(stateDir)
     _setupSolrXml(stateDir)
-    _setupCoreData(stateDir, cores)
-    if drilldown:
-        _setupDrilldown(stateDir, drilldown)
-    if admin:
-        _setupAdmin(stateDir, admin)
-    if suggestions:
-        _setupSuggestions(stateDir, suggestions, config=config)
+    _setupCoreData(stateDir, config.keys())
 
-def _setupDrilldown(stateDir, cores):
-    drilldown_xml = parse(open(join(configdir, 'solrconfig.d', 'drilldown.xml')))
-    for core in cores:
-        solrconfig_file = join(stateDir, 'cores', core, 'conf', 'solrconfig.xml')
-        core_sorlconfig = parse(open(solrconfig_file))
-        core_sorlconfig.getroot().extend(drilldown_xml.xpath('/config/*'))
-        open(solrconfig_file, 'w').write(tostring(core_sorlconfig, pretty_print=True, encoding="UTF-8"))
+    for core, features in config.items():
+        for feature, options in features.items():
+            _setupFeature(name=feature, stateDir=stateDir, core=core, options=options)
 
-def _setupAdmin(stateDir, cores):
-    admin_xml = parse(open(join(configdir, 'solrconfig.d', 'admin.xml')))
-    for core in cores:
-        solrconfig_file = join(stateDir, 'cores', core, 'conf', 'solrconfig.xml')
-        core_sorlconfig = parse(open(solrconfig_file))
-        core_sorlconfig.getroot().extend(admin_xml.xpath('/config/*'))
-        open(solrconfig_file, 'w').write(tostring(core_sorlconfig, pretty_print=True, encoding="UTF-8"))
-
-def _setupSuggestions(stateDir, cores, config):
-    for core in cores:
-        if core not in config['suggestions']:
-            continue
-        suggestions = open(join(configdir, 'solrconfig.d', 'suggestions.xml')).read() % config['suggestions'][core]
-        suggestions_xml = parse(StringIO(suggestions))
-        solrconfig_file = join(stateDir, 'cores', core, 'conf', 'solrconfig.xml')
-        core_sorlconfig = parse(open(solrconfig_file))
-        core_sorlconfig.getroot().extend(suggestions_xml.xpath('/config/*'))
-        open(solrconfig_file, 'w').write(tostring(core_sorlconfig, pretty_print=True, encoding="UTF-8"))
+def _setupFeature(name, stateDir, core, options):
+    if options == False:
+        return
+    feature = open(join(configdir, 'solrconfig.d', '%s.xml' % name)).read()
+    if type(options) is dict:
+        feature = feature % options
+    feature_xml = parse(StringIO(feature))
+    solrconfig_file = join(stateDir, 'cores', core, 'conf', 'solrconfig.xml')
+    core_sorlconfig = parse(open(solrconfig_file))
+    core_sorlconfig.getroot().extend(feature_xml.xpath('/config/*'))
+    open(solrconfig_file, 'w').write(tostring(core_sorlconfig, pretty_print=True, encoding="UTF-8"))
 
 def _setupCoreData(stateDir, cores):
     solr_xml = parse(open(join(stateDir, 'solr.xml')))
