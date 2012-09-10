@@ -15,10 +15,10 @@ version = "3.6.0"
 class SolrRunTest(SeecrTestCase):
 
     def testParseArguments(self):
-        options, arguments = start_solr.parseArguments(['--port=8042', '--stateDir=/tmp', '--core=core1', '--core=core2'])
+        options, arguments = start_solr.parseArguments(['--port=8042', '--stateDir=/tmp', '--config=/tmp/config.json'])
         self.assertEquals(8042, options.port)
         self.assertEquals('/tmp', options.stateDir)
-        self.assertEquals(['core1', 'core2'], options.core)
+        self.assertEquals('/tmp/config.json', options.config)
 
     def testIncompleteArguments(self):
         stdout_mock = StringIO()
