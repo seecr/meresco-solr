@@ -154,6 +154,15 @@ class SolrRunTest(SeecrTestCase):
             self.assertEquals("Core feature descriptions must be a dictionary (empty for no additional features).", str(e))
             self.assertFalse(isdir(solrDataDir))
 
+    def testUnknownFeatureInConfig(self):
+        solrDataDir = join(self.tempdir, 'solr-data')
+        config = {'core1': {'unknown-feature': True}}
+        try:
+            start_solr.setupSolrConfig(stateDir=solrDataDir, port=8042, config=config)
+            self.fail()
+        except ValueError, e:
+            self.assertEquals("Unknown feature 'unknown-feature'", str(e))
+
     def testNotMatchingLuceneMatchVersion(self):
         solrDataDir = join(self.tempdir, 'solr-data')
         start_solr.setupSolrConfig(stateDir=solrDataDir, port=8042, config={'core1': {}})

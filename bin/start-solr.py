@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.6
 from sys import argv, exit
 from os import execvp, system, makedirs, listdir
-from os.path import dirname, abspath, isdir, join
+from os.path import dirname, abspath, isdir, join, isfile
 from optparse import OptionParser, Option
 from lxml.etree import parse, SubElement, tostring
 from StringIO import StringIO
@@ -52,7 +52,11 @@ def setupSolrConfig(stateDir, port, config):
 def _setupFeature(name, stateDir, core, options):
     if options == False:
         return
-    feature = open(join(configdir, 'solrconfig.d', '%s.xml' % name)).read()
+    featureFilename = join(configdir, 'solrconfig.d', '%s.xml' % name)
+    if not isfile(featureFilename):
+        raise ValueError("Unknown feature '%s'" % name)
+
+    feature = open(featureFilename).read()
     if type(options) is dict:
         feature = feature % options
     feature_xml = parse(StringIO(feature))
