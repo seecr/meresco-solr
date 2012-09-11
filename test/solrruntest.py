@@ -84,8 +84,8 @@ class SolrRunTest(SeecrTestCase):
 
         self.assertEquals(set(['core1', 'córë2']), set(listdir(join(solrDataDir, 'cores'))))
         solr_xml = parse(open(join(solrDataDir, 'solr.xml')))
-        self.assertEquals(['core1', 'córë2'], solr_xml.xpath("//core/@name"))
-        self.assertEquals(['cores/core1', 'cores/córë2'], solr_xml.xpath("//core/@instanceDir"))
+        self.assertEquals(set(['core1', u'córë2']), set(solr_xml.xpath("//core/@name")))
+        self.assertEquals(set(['cores/core1', u'cores/córë2']), set(solr_xml.xpath("//core/@instanceDir")))
 
         schema_core1_xml = parse(open(join(solrDataDir, 'cores', 'core1', 'conf', 'schema.xml')))
         self.assertEquals(['meresco-core1'], schema_core1_xml.xpath("/schema/@name"))
@@ -93,9 +93,9 @@ class SolrRunTest(SeecrTestCase):
         schema_core2_xml = parse(open(join(solrDataDir, 'cores', 'córë2', 'conf', 'schema.xml')))
         self.assertEquals(['meresco-córë2'], schema_core2_xml.xpath("/schema/@name"))
 
-    def testSetupSolrConfigWithDrilldown(self):
+    def testSetupSolrConfigWithAutocomplete(self):
         solrDataDir = join(self.tempdir, 'solr-data')
-        config = {'core1': {'drilldown': {}}, 'core2': {}}
+        config = {'core1': {'autocomplete': {}}, 'core2': {}}
         start_solr.setupSolrConfig(stateDir=solrDataDir, port=8042, config=config)
         solrconfig_xml = parse(open(join(solrDataDir, 'cores', 'core1', 'conf', 'solrconfig.xml')))
         self.assertTrue('terms' in solrconfig_xml.xpath("/config/searchComponent/@name"))

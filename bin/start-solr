@@ -77,17 +77,18 @@ def _setupFeature(name, stateDir, core, options):
 
 def _setupCoreData(stateDir, cores):
     solr_xml = parse(open(join(stateDir, 'solr.xml')))
+    coresElement = solr_xml.xpath("/solr/cores")[0]
+    [coresElement.remove(child) for child in coresElement.getchildren()]
     for core in cores:
         coreDir = join(stateDir, 'cores', core)
         if not isdir(coreDir):
             makedirs(coreDir)
-            coresElement = solr_xml.xpath("/solr/cores")[0]
-            SubElement(coresElement, "core", attrib={'name': unicode(core), 'instanceDir': join('cores', unicode(core))})
-            copyDir(join(configdir, 'core-data'), coreDir)
-            schema_xml_path = join(coreDir, 'conf', 'schema.xml')
-            schema_xml = parse(open(schema_xml_path))
-            schema_xml.xpath("/schema")[0].attrib['name'] = unicode("meresco-%s" % core)
-            open(schema_xml_path, 'w').write(tostring(schema_xml, pretty_print=True, encoding="UTF-8"))
+        SubElement(coresElement, "core", attrib={'name': unicode(core), 'instanceDir': join('cores', unicode(core))})
+        copyDir(join(configdir, 'core-data'), coreDir)
+        schema_xml_path = join(coreDir, 'conf', 'schema.xml')
+        schema_xml = parse(open(schema_xml_path))
+        schema_xml.xpath("/schema")[0].attrib['name'] = unicode("meresco-%s" % core)
+        open(schema_xml_path, 'w').write(tostring(schema_xml, pretty_print=True, encoding="UTF-8"))
 
     open(join(stateDir, 'solr.xml'), 'w').write(tostring(solr_xml, pretty_print=True, encoding="UTF-8"))
 
