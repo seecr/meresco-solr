@@ -188,12 +188,12 @@ class SolrRunTest(SeecrTestCase):
         finally:
             start_solr._execvp = _original_execvp
 
-    def xxtestStartSolrReally(self):
+    def testStartSolrReally(self):
         tempdir = "/tmp/testSetupSolrConfig"
         isdir(tempdir) and rmtree(tempdir)
         mkdir(tempdir)
         solrDataDir = join(tempdir, 'solr-data')
-        start_solr.setupSolrConfig(stateDir=solrDataDir, port=8000, cores=["test"])
+        start_solr.setupSolrConfig(stateDir=solrDataDir, port=8000, config={"test": {}})
         start_solr.startSolr(stateDir=solrDataDir, port=8000, javaMX="1024M")
 
 if __name__ == '__main__':
