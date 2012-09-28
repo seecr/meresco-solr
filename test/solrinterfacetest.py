@@ -209,6 +209,20 @@ class SolrInterfaceTest(TestCase):
         self.assertEquals(['1','3','5'], hits)
         self.assertEquals({'aap': (0, 3, ['aapje', 'raap']), 'bo': (8, 10, ['bio', 'bon'])}, suggestions)
 
+    def testFieldnames(self):
+        readData = []
+        def read(path):
+            readData.append(path)
+        self._solrInterface._read = read
+        gen = self._solrInterface.fieldnames()
+        gen.next()
+        try:
+            gen.send(FIELDNAMES_RESPONSE)
+        except StopIteration, e:
+            (response,) = e.args 
+        self.assertEquals(['/solr/admin/luke'], readData)
+        self.assertEquals(['__all__', '__exists__', '__id__', '__timestamp__', 'field0', 'field1', 'untokenized.field0'], response.hits)
+
     def executeQueryResponse(self, query, response, solrInterface=None, **kwargs):
         if solrInterface is None:
             solrInterface = self._solrInterface
@@ -355,3 +369,35 @@ FACET_COUNTS="""
     <lst name="facet_dates"/>
     <lst name="facet_ranges"/>
 </lst>"""
+
+FIELDNAMES_RESPONSE="""
+<response>
+<lst name="responseHeader">
+<int name="status">0</int>
+<int name="QTime">4701</int>
+</lst>
+<lst name="index">
+<int name="numDocs">265054</int>
+<int name="maxDoc">332132</int>
+<int name="numTerms">1972551</int>
+<long name="version">1348587033477</long>
+<int name="segmentCount">11</int>
+<bool name="current">true</bool>
+<bool name="hasDeletions">true</bool>
+<str name="directory">
+org.apache.lucene.store.MMapDirectory:org.apache.lucene.store.MMapDirectory@/data/dev/index-state/14e40aff-9ee8-4b6c-826c-e0fb82232e33-solr/cores/records/data/index lockFactory=org.apache.lucene.store.NativeFSLockFactory@1c851ed
+</str>
+<date name="lastModified">2012-09-26T22:23:31Z</date>
+</lst>
+<lst name="fields">
+<lst name="__all__">...</lst>
+<lst name="__exists__">...</lst>
+<lst name="__id__">...</lst>
+<lst name="__timestamp__">...</lst>
+<lst name="field0">...</lst>
+<lst name="field1">...</lst>
+<lst name="untokenized.field0">...</lst>
+</lst>
+<lst name="info">...</lst>
+</response>
+"""

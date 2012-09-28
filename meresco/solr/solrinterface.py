@@ -108,6 +108,15 @@ class SolrInterface(Observable):
         qtime = int(xml.xpath('/response/lst[@name="responseHeader"]/int[@name="QTime"]/text()')[0])
         response = SolrResponse(total=len(terms), hits=terms, queryTime=qtime)
         raise StopIteration(response)
+    
+    def fieldnames(self):
+        path = self._path('admin/luke')
+        body = yield self._read(path)
+        xml = parse(StringIO(body))
+        fieldnames = xml.xpath('/response/lst[@name="fields"]/lst/@name')
+        qtime = int(xml.xpath('/response/lst[@name="responseHeader"]/int[@name="QTime"]/text()')[0])
+        response = SolrResponse(total=len(fieldnames), hits=fieldnames, queryTime=qtime)
+        raise StopIteration(response)
 
     def _send(self, path, body):
         headers = None
