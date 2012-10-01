@@ -47,7 +47,7 @@ class SolrInterfaceTest(TestCase):
         list(interface.add("recordId", "ignored", "<record><data>recordData</data></record>"))
         self.assertEquals(1, len(sendData))
         self.assertEquals(('/solr/THE_CORE/update?commitWithin=1000', '<add><record><data>recordData</data></record></add>'), sendData[0])
-        total, hits, path = self.executeQuery("meresco.exists:true", start=5, stop=10, sortBy="field", sortDescending=True, response=RESPONSE, solrInterface=interface)
+        total, hits, path = self.executeQuery("meresco.exists:true", start=5, stop=10, sortKeys=[dict(sortBy="field", sortDescending=True)], response=RESPONSE, solrInterface=interface)
         self.assertQuery("/solr/THE_CORE/select?q=meresco.exists%3Atrue&start=5&rows=5&sort=field+desc", path)
 
     def testAdd(self):
@@ -122,7 +122,7 @@ class SolrInterfaceTest(TestCase):
             self.assertEquals('Value commitTimeout should be greater then zero', str(e))
 
     def testExecuteQuery(self):
-        total, hits, path = self.executeQuery("meresco.exists:true", start=0, stop=10, sortBy=None, sortDescending=False, response=RESPONSE) 
+        total, hits, path = self.executeQuery("meresco.exists:true", start=0, stop=10, sortKeys=None, response=RESPONSE) 
         self.assertQuery("/solr/select?q=meresco.exists%3Atrue&start=0&rows=10", path)
         self.assertEquals(3, total)
         self.assertEquals(['1','3','5'], hits)
@@ -142,13 +142,13 @@ class SolrInterfaceTest(TestCase):
         self.assertRaises(ValueError, self.executeQuery, '', response=RESPONSE)
 
     def testExecuteQueryWithStartStopAndSortKeys(self):
-        total, hits, path = self.executeQuery("meresco.exists:true", start=5, stop=10, sortBy="field", sortDescending=True, response=RESPONSE)
-        self.assertQuery("/solr/select?q=meresco.exists%3Atrue&start=5&rows=5&sort=field+desc", path)
+        total, hits, path = self.executeQuery("meresco.exists:true", start=5, stop=10, sortKeys=[dict(sortBy="field", sortDescending=True), dict(sortBy="anotherfield", sortDescending=False)], response=RESPONSE)
+        self.assertQuery("/solr/select?q=meresco.exists%3Atrue&start=5&rows=5&sort=field+desc,anotherfield+asc", path)
         self.assertEquals(3, total)
         self.assertEquals(['1','3','5'], hits)
 
     def testExecuteQuerySortAscending(self):
-        total, hits, path = self.executeQuery("meresco.exists:true", start=0, stop=10, sortBy="field", sortDescending=False, response=RESPONSE)
+        total, hits, path = self.executeQuery("meresco.exists:true", start=0, stop=10, sortKeys=[dict(sortBy="field", sortDescending=False)], response=RESPONSE)
         self.assertQuery("/solr/select?q=meresco.exists%3Atrue&start=0&rows=10&sort=field+asc", path)
         self.assertEquals(3, total)
         self.assertEquals(['1','3','5'], hits)
