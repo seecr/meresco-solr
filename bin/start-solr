@@ -19,7 +19,10 @@ Example config:
 {
     "core1": {},
     "core2": {"feature": {"option": "value"}},
-    "core3": {"booleanFeature": true}
+    "core3": {"booleanFeature": true},
+    "core4": {"schemaExtension": [
+        {"extensionType":"fieldTypeFilter", "fieldTypeName":"text_ws", "filterClass":"solr.ASCIIFoldingFilterFactory"}
+    ]}
 }
 """)
     parser.format_epilog = lambda formatter: parser.epilog
@@ -59,7 +62,24 @@ def setupSolrConfig(stateDir, port, config):
         for feature, options in features.items():
             _setupFeature(name=feature, stateDir=stateDir, core=core, options=options)
 
+def _setupFeatureSchemaExtension(stateDir, core, options):
+    schemaXmlFile = join(stateDir, 'cores', core, 'conf', 'schema.xml')
+    schemaXml = parse(open(schemaXmlFile))
+    for option in options:
+        if option.get('extensionType') == 'fieldTypeFilter':
+            fieldTypeName = option['fieldTypeName']
+            fieldTypes = schemaXml.xpath('/schema/types/fieldType[@name="%s"]' %  fieldTypeName)
+            assert len(fieldTypes) == 1
+            analyzer = fieldTypes[0].xpath('analyzer')[0]
+            SubElement(analyzer, 'filter', attrib={'class': option['filterClass']})
+
+    with open(schemaXmlFile, 'w') as f:
+        f.write(tostring(schemaXml, encoding="UTF-8", pretty_print=True, xml_declaration=True))
+
 def _setupFeature(name, stateDir, core, options):
+    if name == 'schemaExtension':
+        _setupFeatureSchemaExtension(stateDir=stateDir, core=core, options=options)
+        return
     if options == False:
         return
     featureFilename = join(configdir, 'solrconfig.d', '%s.xml' % name)

@@ -15,7 +15,6 @@
  See the License for the specific language governing permissions and
  limitations under the License.
 -->
-
 <schema name="meresco-corename" version="1.5">
   <types>
     <fieldType name="string" class="solr.StrField" sortMissingLast="true" omitNorms="true" indexed="true" stored="false" multiValued="false"/>

@@ -188,7 +188,20 @@ class SolrRunTest(SeecrTestCase):
         finally:
             start_solr._execvp = _original_execvp
 
-    def testStartSolrReally(self):
+    def testSetupSolrCoreWithExtraFilters(self):
+        solrDataDir = join(self.tempdir, 'solr-data')
+        start_solr.setupSolrConfig(stateDir=solrDataDir, port=8042, config={'core1': {'schemaExtension':[
+            { 
+                'extensionType': 'fieldTypeFilter',
+                'fieldTypeName': 'text_ws',
+                'filterClass': 'solr.ASCIIFoldingFilterFactory',
+            }
+        ]}})
+        schemaXml = parse(open(join(solrDataDir, 'cores', 'core1', 'conf', 'schema.xml')))
+        self.assertEquals(['solr.LowerCaseFilterFactory', 'solr.ASCIIFoldingFilterFactory'], schemaXml.xpath('/schema/types/fieldType[@name="text_ws"]/analyzer/filter/@class'))
+        print open(join(solrDataDir, 'cores', 'core1', 'conf', 'schema.xml')).read()
+
+    def xtestStartSolrReally(self):
         tempdir = "/tmp/testSetupSolrConfig"
         isdir(tempdir) and rmtree(tempdir)
         mkdir(tempdir)
