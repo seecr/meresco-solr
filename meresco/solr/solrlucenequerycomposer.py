@@ -31,7 +31,7 @@ prefixRegexp = compile(r'^([\w-]{2,})\*$') # pr*, prefix* ....
 def _formatTerm(index, termString):
     if prefixRegexp.match(termString):
         termString = termString.lower()
-    if ':' in termString or ' ' in termString:
+    if ':' in termString or ' ' in termString or termString in ['AND', 'NOT', 'OR', '-', '+']:
         termString = '"%s"' % termString
     return '%s:%s' % (index, termString)
 

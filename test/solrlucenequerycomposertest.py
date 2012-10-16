@@ -63,6 +63,19 @@ class SolrLuceneQueryComposerTest(SeecrTestCase):
         ast = parseString('dc:title exact term')
         self.assertEquals(r'dc\:title:"term"', printer.compose(ast))
 
+    def testSolrKeywords(self):
+        printer = SolrLuceneQueryComposer(unqualifiedTermFields=[])
+        ast = parseString('field="NOT"')
+        self.assertEquals('field:"NOT"', printer.compose(ast))
+        ast = parseString('field="AND"')
+        self.assertEquals('field:"AND"', printer.compose(ast))
+        ast = parseString('field="OR"')
+        self.assertEquals('field:"OR"', printer.compose(ast))
+        ast = parseString('field=-')
+        self.assertEquals('field:"-"', printer.compose(ast))
+        ast = parseString('field=+')
+        self.assertEquals('field:"+"', printer.compose(ast))
+
     def testPrefixQuery(self):
         printer = SolrLuceneQueryComposer(unqualifiedTermFields=[("__all__", 1.0)])
         ast = parseString('term*')
