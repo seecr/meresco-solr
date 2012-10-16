@@ -1,0 +1,80 @@
+Changeset created on Tue Oct 16 15:05:01 UTC 2012 by Seecr (Seek You Too B.V.)
+
+Description: Escape solr keywords
+
+    Special Solr keywords like 'NOT', 'AND', 'OR', '-' and '+' are quoted if it 
+    matches the exact termString of a query.
+
+Baseline version: 4.1.2
+
+From 7f839b78ac5ac1e27aefdb7723a2113a1e7bd0fc Mon Sep 17 00:00:00 2001
+From: Seecr Development Team <development@seecr.nl>
+Date: Tue, 16 Oct 2012 14:38:04 +0100
+Subject: [PATCH 1/2] TS/TJ: ignore deps.d
+
+---
+ .gitignore |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
+ create mode 100644 .gitignore
+
+diff --git a/.gitignore b/.gitignore
+new file mode 100644
+index 0000000..52c97ca
+--- /dev/null
++++ b/.gitignore
+@@ -0,0 +1 @@
++deps.d
+-- 
+1.7.2.5
+
+
+From ce49bca1dc15b77921f0b2392f2306a06f9a45e2 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Hendrik=20Mor=C3=A9e?= <hendrik@seecr.nl>
+Date: Tue, 16 Oct 2012 16:20:21 +0200
+Subject: [PATCH 2/2] EG/HM: Escape solr keywords in termString
+
+---
+ meresco/solr/solrlucenequerycomposer.py |    2 +-
+ test/solrlucenequerycomposertest.py     |   13 +++++++++++++
+ 2 files changed, 14 insertions(+), 1 deletions(-)
+
+diff --git a/meresco/solr/solrlucenequerycomposer.py b/meresco/solr/solrlucenequerycomposer.py
+index af80663..2aa9560 100644
+--- a/meresco/solr/solrlucenequerycomposer.py
++++ b/meresco/solr/solrlucenequerycomposer.py
+@@ -31,7 +31,7 @@ prefixRegexp = compile(r'^([\w-]{2,})\*$') # pr*, prefix* ....
+ def _formatTerm(index, termString):
+     if prefixRegexp.match(termString):
+         termString = termString.lower()
+-    if ':' in termString or ' ' in termString:
++    if ':' in termString or ' ' in termString or termString in ['AND', 'NOT', 'OR', '-', '+']:
+         termString = '"%s"' % termString
+     return '%s:%s' % (index, termString)
+ 
+diff --git a/test/solrlucenequerycomposertest.py b/test/solrlucenequerycomposertest.py
+index e8c01f9..ebb9c96 100644
+--- a/test/solrlucenequerycomposertest.py
++++ b/test/solrlucenequerycomposertest.py
+@@ -63,6 +63,19 @@ class SolrLuceneQueryComposerTest(SeecrTestCase):
+         ast = parseString('dc:title exact term')
+         self.assertEquals(r'dc\:title:"term"', printer.compose(ast))
+ 
++    def testSolrKeywords(self):
++        printer = SolrLuceneQueryComposer(unqualifiedTermFields=[])
++        ast = parseString('field="NOT"')
++        self.assertEquals('field:"NOT"', printer.compose(ast))
++        ast = parseString('field="AND"')
++        self.assertEquals('field:"AND"', printer.compose(ast))
++        ast = parseString('field="OR"')
++        self.assertEquals('field:"OR"', printer.compose(ast))
++        ast = parseString('field=-')
++        self.assertEquals('field:"-"', printer.compose(ast))
++        ast = parseString('field=+')
++        self.assertEquals('field:"+"', printer.compose(ast))
++
+     def testPrefixQuery(self):
+         printer = SolrLuceneQueryComposer(unqualifiedTermFields=[("__all__", 1.0)])
+         ast = parseString('term*')
+-- 
+1.7.2.5
+
