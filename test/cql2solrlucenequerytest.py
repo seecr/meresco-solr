@@ -57,7 +57,7 @@ class CQL2SolrLuceneQueryTest(TestCase):
         self.assertConversion(['term'], 'term')
         self.assertEquals(1, len(self.observer.calledMethods))
         self.assertEquals("executeQuery", self.observer.calledMethods[0].name)
-        self.assertEquals("field:term", self.observer.calledMethods[0].kwargs['luceneQueryString'])
+        self.assertEquals('field:"term"', self.observer.calledMethods[0].kwargs['luceneQueryString'])
 
     def testIndexRelationTerm(self):
         self.assertConversion(['field = term'], 'field=term')
