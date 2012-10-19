@@ -1,0 +1,52 @@
+Changeset created on Fri Oct 19 14:01:46 UTC 2012 by Seecr (Seek You Too B.V.)
+
+Description: Allow post and prefix search
+
+    Allow both post and prefix search
+
+Baseline version: 4.1.4
+
+From 3da7d8a626ea3297e357f45e8e3c0cb73f772801 Mon Sep 17 00:00:00 2001
+From: Seecr Development Team <development@seecr.nl>
+Date: Fri, 19 Oct 2012 16:00:28 +0200
+Subject: [PATCH] HM/TJ: pre post and infix search.
+
+---
+ meresco/solr/solrlucenequerycomposer.py |    5 +----
+ test/solrlucenequerycomposertest.py     |    2 ++
+ 2 files changed, 3 insertions(+), 4 deletions(-)
+
+diff --git a/meresco/solr/solrlucenequerycomposer.py b/meresco/solr/solrlucenequerycomposer.py
+index 5975e7c..038cbe8 100644
+--- a/meresco/solr/solrlucenequerycomposer.py
++++ b/meresco/solr/solrlucenequerycomposer.py
+@@ -24,12 +24,9 @@
+ ## end license ##
+ 
+ from cqlparser import CqlVisitor, UnsupportedCQL
+-from re import compile
+-
+-prefixRegexp = compile(r'^([\w-]{2,})\*$') # pr*, prefix* ....
+ 
+ def _formatTerm(index, termString):
+-    if prefixRegexp.match(termString):
++    if '*' in termString:
+         termString = termString.lower()
+     else:
+         termString = '"%s"' % termString.replace('\\', r'\\').replace('"', r'\"')
+diff --git a/test/solrlucenequerycomposertest.py b/test/solrlucenequerycomposertest.py
+index b12bbd1..2c62e13 100644
+--- a/test/solrlucenequerycomposertest.py
++++ b/test/solrlucenequerycomposertest.py
+@@ -36,6 +36,8 @@ class SolrLuceneQueryComposerTest(SeecrTestCase):
+         self.assertEquals('__all__:"fiets auto"', self.cql2lucene('"fiets auto"'))
+         self.assertEquals('__all__:fi*', self.cql2lucene('"fi*"'))
+         self.assertEquals('__all__:fi*', self.cql2lucene('fi*'))
++        self.assertEquals('__all__:f*ts', self.cql2lucene('"f*ts"'))
++        self.assertEquals('__all__:*ts', self.cql2lucene('*ts'))
+         self.assertEquals('(__all__:"fiets" AND (__all__:"auto" OR __all__:"boot"))', self.cql2lucene('fiets AND (auto OR boot)'))
+         self.assertEquals('((__all__:"fiets" AND __all__:"auto") OR __all__:"boot")', self.cql2lucene('fiets AND auto OR boot'))
+         self.assertEquals('(__all__:"fiets" AND (__all__:"auto" OR __all__:"boot"))', self.cql2lucene('fiets AND (auto OR boot)'))
+-- 
+1.7.2.5
+
