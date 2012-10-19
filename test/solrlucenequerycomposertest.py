@@ -36,6 +36,8 @@ class SolrLuceneQueryComposerTest(SeecrTestCase):
         self.assertEquals('__all__:"fiets auto"', self.cql2lucene('"fiets auto"'))
         self.assertEquals('__all__:fi*', self.cql2lucene('"fi*"'))
         self.assertEquals('__all__:fi*', self.cql2lucene('fi*'))
+        self.assertEquals('__all__:f*ts', self.cql2lucene('"f*ts"'))
+        self.assertEquals('__all__:*ts', self.cql2lucene('*ts'))
         self.assertEquals('(__all__:"fiets" AND (__all__:"auto" OR __all__:"boot"))', self.cql2lucene('fiets AND (auto OR boot)'))
         self.assertEquals('((__all__:"fiets" AND __all__:"auto") OR __all__:"boot")', self.cql2lucene('fiets AND auto OR boot'))
         self.assertEquals('(__all__:"fiets" AND (__all__:"auto" OR __all__:"boot"))', self.cql2lucene('fiets AND (auto OR boot)'))
