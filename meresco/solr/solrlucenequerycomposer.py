@@ -3,7 +3,7 @@
 # "Meresco Solr" is a set of components and tools
 #  to integrate Solr into "Meresco." 
 # 
-# Copyright (C) 2011 Seecr (Seek You Too B.V.) http://seecr.nl
+# Copyright (C) 2011-2012 Seecr (Seek You Too B.V.) http://seecr.nl
 # 
 # This file is part of "Meresco Solr"
 # 
@@ -31,8 +31,8 @@ prefixRegexp = compile(r'^([\w-]{2,})\*$') # pr*, prefix* ....
 def _formatTerm(index, termString):
     if prefixRegexp.match(termString):
         termString = termString.lower()
-    if ':' in termString or ' ' in termString or termString in ['AND', 'NOT', 'OR', '-', '+']:
-        termString = '"%s"' % termString
+    else:
+        termString = '"%s"' % termString.replace('\\', r'\\').replace('"', r'\"')
     return '%s:%s' % (index, termString)
 
 def _formatBoost(query, boost):

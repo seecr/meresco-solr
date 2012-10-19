@@ -3,7 +3,7 @@
 # "Meresco Solr" is a set of components and tools
 #  to integrate Solr into "Meresco." 
 # 
-# Copyright (C) 2011 Seecr (Seek You Too B.V.) http://seecr.nl
+# Copyright (C) 2011-2012 Seecr (Seek You Too B.V.) http://seecr.nl
 # 
 # This file is part of "Meresco Solr"
 # 
@@ -30,81 +30,64 @@ from meresco.solr.solrlucenequerycomposer import SolrLuceneQueryComposer
 
 class SolrLuceneQueryComposerTest(SeecrTestCase):
     def testOne(self):
-        printer = SolrLuceneQueryComposer(unqualifiedTermFields=[("__all__", 1.0)])
-        ast = parseString("term")
-        self.assertEquals('__all__:term', printer.compose(ast))
-        ast = parseString("fiets AND auto")
-        self.assertEquals('(__all__:fiets AND __all__:auto)', printer.compose(ast))
-        ast = parseString('"fiets auto"')
-        self.assertEquals('__all__:"fiets auto"', printer.compose(ast))
-        ast = parseString('"fi*"')
-        self.assertEquals('__all__:fi*', printer.compose(ast))
-        ast = parseString('fi*')
-        self.assertEquals('__all__:fi*', printer.compose(ast))
-        ast = parseString('fiets AND (auto OR boot)')
-        self.assertEquals('(__all__:fiets AND (__all__:auto OR __all__:boot))', printer.compose(ast))
-        ast = parseString('fiets AND auto OR boot')
-        self.assertEquals('((__all__:fiets AND __all__:auto) OR __all__:boot)', printer.compose(ast))
-        ast = parseString('fiets AND (auto OR boot)')
-        self.assertEquals('(__all__:fiets AND (__all__:auto OR __all__:boot))', printer.compose(ast))
-        ast = parseString('(fiets AND auto) OR (boot AND other)')
-        self.assertEquals('((__all__:fiets AND __all__:auto) OR (__all__:boot AND __all__:other))', printer.compose(ast))
-        ast = parseString('fiets OR auto AND boot')
-        self.assertEquals('(__all__:fiets OR (__all__:auto AND __all__:boot))', printer.compose(ast))
+        self.printer = SolrLuceneQueryComposer(unqualifiedTermFields=[("__all__", 1.0)])
+        self.assertEquals('__all__:"term"', self.cql2lucene("term"))
+        self.assertEquals('(__all__:"fiets" AND __all__:"auto")', self.cql2lucene("fiets AND auto"))
+        self.assertEquals('__all__:"fiets auto"', self.cql2lucene('"fiets auto"'))
+        self.assertEquals('__all__:fi*', self.cql2lucene('"fi*"'))
+        self.assertEquals('__all__:fi*', self.cql2lucene('fi*'))
+        self.assertEquals('(__all__:"fiets" AND (__all__:"auto" OR __all__:"boot"))', self.cql2lucene('fiets AND (auto OR boot)'))
+        self.assertEquals('((__all__:"fiets" AND __all__:"auto") OR __all__:"boot")', self.cql2lucene('fiets AND auto OR boot'))
+        self.assertEquals('(__all__:"fiets" AND (__all__:"auto" OR __all__:"boot"))', self.cql2lucene('fiets AND (auto OR boot)'))
+        self.assertEquals('((__all__:"fiets" AND __all__:"auto") OR (__all__:"boot" AND __all__:"other"))', self.cql2lucene('(fiets AND auto) OR (boot AND other)'))
+        self.assertEquals('(__all__:"fiets" OR (__all__:"auto" AND __all__:"boot"))', self.cql2lucene('fiets OR auto AND boot'))
 
     def testEscaping(self):
-        printer = SolrLuceneQueryComposer(unqualifiedTermFields=[])
-        ast = parseString('field="term:term1"')
-        self.assertEquals('field:"term:term1"', printer.compose(ast))
-        ast = parseString('field exact "term:term1"')
-        self.assertEquals('field:"term:term1"', printer.compose(ast))
-        ast = parseString('field exact term')
-        self.assertEquals('field:"term"', printer.compose(ast))
-        ast = parseString('dc:title exact term')
-        self.assertEquals(r'dc\:title:"term"', printer.compose(ast))
+        self.printer = SolrLuceneQueryComposer(unqualifiedTermFields=[])
+        self.assertEquals('field:"term:term1"', self.cql2lucene('field="term:term1"'))
+        self.assertEquals('field:"term:term1"', self.cql2lucene('field exact "term:term1"'))
+        self.assertEquals('field:"term"', self.cql2lucene('field exact term'))
+        self.assertEquals(r'dc\:title:"term"', self.cql2lucene('dc:title exact term'))
 
     def testSolrKeywords(self):
-        printer = SolrLuceneQueryComposer(unqualifiedTermFields=[])
-        ast = parseString('field="NOT"')
-        self.assertEquals('field:"NOT"', printer.compose(ast))
-        ast = parseString('field="AND"')
-        self.assertEquals('field:"AND"', printer.compose(ast))
-        ast = parseString('field="OR"')
-        self.assertEquals('field:"OR"', printer.compose(ast))
-        ast = parseString('field=-')
-        self.assertEquals('field:"-"', printer.compose(ast))
-        ast = parseString('field=+')
-        self.assertEquals('field:"+"', printer.compose(ast))
+        self.printer = SolrLuceneQueryComposer(unqualifiedTermFields=[])
+        self.assertEquals('field:"NOT"', self.cql2lucene('field="NOT"'))
+        self.assertEquals('field:"AND"', self.cql2lucene('field="AND"'))
+        self.assertEquals('field:"OR"', self.cql2lucene('field="OR"'))
+        # Escaping Special Characters
+        # Lucene supports escaping special characters that are part of the query syntax. The current list special characters are
+        # + - && || ! ( ) { } [ ] ^ " ~ * ? : \
+        # To escape these character use the \ before the character.
+        self.assertEquals('field:"-"', self.cql2lucene('field=-'))
+        self.assertEquals('field:"+"', self.cql2lucene('field=+'))
+        self.assertEquals('field:"!"', self.cql2lucene('field="!"'))
+        self.assertEquals('field:"!"', self.cql2lucene('field=!'))
+        self.assertEquals('field:"&&"', self.cql2lucene('field="&&"'))
+        self.assertEquals(r'field:"\""', self.cql2lucene(r'field="\""'))
+        self.assertEquals(r'field:"fiets!"', self.cql2lucene(r'field="fiets!"'))
+        self.assertEquals(r'field:"fiets!"', self.cql2lucene(r'field=fiets!'))
 
     def testPrefixQuery(self):
-        printer = SolrLuceneQueryComposer(unqualifiedTermFields=[("__all__", 1.0)])
-        ast = parseString('term*')
-        self.assertEquals('__all__:term*', printer.compose(ast))
-        ast = parseString('TERM*')
-        self.assertEquals('__all__:term*', printer.compose(ast))
+        self.printer = SolrLuceneQueryComposer(unqualifiedTermFields=[("__all__", 1.0)])
+        self.assertEquals('__all__:term*', self.cql2lucene('term*'))
+        self.assertEquals('__all__:term*', self.cql2lucene('TERM*'))
 
     def testMultipleUnqualifiedTermFields(self):
-        printer = SolrLuceneQueryComposer(unqualifiedTermFields=[("__all__", 1.0), ("__extra__", 1.0)])
-        ast = parseString("term")
-        self.assertEquals('(__all__:term OR __extra__:term)', printer.compose(ast))
-        ast = parseString("term AND otherterm")
-        self.assertEquals('((__all__:term OR __extra__:term) AND (__all__:otherterm OR __extra__:otherterm))', printer.compose(ast))
+        self.printer = SolrLuceneQueryComposer(unqualifiedTermFields=[("__all__", 1.0), ("__extra__", 1.0)])
+        self.assertEquals('(__all__:"term" OR __extra__:"term")', self.cql2lucene("term"))
+        self.assertEquals('((__all__:"term" OR __extra__:"term") AND (__all__:"otherterm" OR __extra__:"otherterm"))', self.cql2lucene("term AND otherterm"))
 
     def testBoost(self):
-        printer = SolrLuceneQueryComposer(unqualifiedTermFields=[("__all__", 4.0)])
-        ast = parseString("term")
-        self.assertEquals('__all__:term^4.0', printer.compose(ast))
+        self.printer = SolrLuceneQueryComposer(unqualifiedTermFields=[("__all__", 4.0)])
+        self.assertEquals('__all__:"term"^4.0', self.cql2lucene("term"))
 
-        ast = parseString("field=/boost=3.5 term")
-        self.assertEquals('field:term^3.5', printer.compose(ast))
+        self.assertEquals('field:"term"^3.5', self.cql2lucene("field=/boost=3.5 term"))
 
-        printer = SolrLuceneQueryComposer(unqualifiedTermFields=[("__all__", 4.0), ("__extra__", 2.0), ("__uri__", 1.0)])
-        ast = parseString("term")
-        self.assertEquals('(__all__:term^4.0 OR __extra__:term^2.0 OR __uri__:term)', printer.compose(ast))
+        self.printer = SolrLuceneQueryComposer(unqualifiedTermFields=[("__all__", 4.0), ("__extra__", 2.0), ("__uri__", 1.0)])
+        self.assertEquals('(__all__:"term"^4.0 OR __extra__:"term"^2.0 OR __uri__:"term")', self.cql2lucene("term"))
 
-        printer=SolrLuceneQueryComposer(unqualifiedTermFields=[("all", 1)])
-        ast = parseString("field exact/boost=2 term")
-        self.assertEquals('field:"term"^2.0', printer.compose(ast))
+        self.printer = SolrLuceneQueryComposer(unqualifiedTermFields=[("all", 1)])
+        self.assertEquals('field:"term"^2.0', self.cql2lucene("field exact/boost=2 term"))
 
     def testUnsupportedCQL(self):
         printer=SolrLuceneQueryComposer(unqualifiedTermFields=[("all", 1)])
@@ -115,3 +98,5 @@ class SolrLuceneQueryComposerTest(SeecrTestCase):
         except UnsupportedCQL, e:
             self.assertEquals("Only =, == and exact are supported.", str(e))
 
+    def cql2lucene(self, cql):
+        return self.printer.compose(parseString(cql))
