@@ -223,6 +223,12 @@ class SolrInterfaceTest(TestCase):
         self.assertEquals(['/solr/admin/luke'], readData)
         self.assertEquals(['__all__', '__exists__', '__id__', '__timestamp__', 'field0', 'field1', 'untokenized.field0'], response.hits)
 
+    def testPassFilterQuery(self):
+        total, hits, path = self.executeQuery("*", filterQuery="field:value", response=RESPONSE) 
+        self.assertQuery("/solr/select?q=*&fq=field:value&start=0&rows=10", path)
+        total, hits, path = self.executeQuery("*", filterQuery="field:http\://host.nl", response=RESPONSE) 
+        self.assertQuery("/solr/select?q=*&fq=field:http\://host.nl&start=0&rows=10", path)
+
     def executeQueryResponse(self, query, response, solrInterface=None, **kwargs):
         if solrInterface is None:
             solrInterface = self._solrInterface

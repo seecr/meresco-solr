@@ -70,7 +70,7 @@ class SolrInterface(Observable):
         path += "?commitWithin=%d" % self._commitWithin
         yield self._send(path=path, body="<delete><id>%s</id></delete>" % escapeXml(identifier))
 
-    def executeQuery(self, luceneQueryString, start=0, stop=10, sortKeys=None, fieldnamesAndMaximums=None, suggestionsCount=0, suggestionsQuery=None, **kwargs):
+    def executeQuery(self, luceneQueryString, start=0, stop=10, sortKeys=None, fieldnamesAndMaximums=None, suggestionsCount=0, suggestionsQuery=None, filterQuery=None, **kwargs):
         if not luceneQueryString:
             raise ValueError("Empty luceneQueryString not allowed.")
         arguments = dict(
@@ -80,6 +80,9 @@ class SolrInterface(Observable):
             )
         if sortKeys:
             arguments["sort"] = ','.join("%s %s" % (sortKey['sortBy'], 'desc' if sortKey['sortDescending'] else 'asc') for sortKey in sortKeys)
+        if filterQuery:
+            arguments['fq'] = filterQuery
+
         arguments.update(_drilldownArguments(fieldnamesAndMaximums))
         if suggestionsCount > 0 and suggestionsQuery:
             arguments["spellcheck"] = 'true'
