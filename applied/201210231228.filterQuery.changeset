@@ -1,0 +1,62 @@
+Changeset created on Tue Oct 23 12:28:00 UTC 2012 by Seecr (Seek You Too B.V.)
+
+Description: Accept filterQuery for solr
+
+    ExecuteQuery accepts a filterQuery argument which is passed to Solr as the 
+    fq argument.
+
+Baseline version: 4.1.5
+
+From dc6f37411220e85f0a4089b6251ddfad0b3cf3a9 Mon Sep 17 00:00:00 2001
+From: erik <erik@seecr.nl>
+Date: Mon, 22 Oct 2012 11:18:16 +0200
+Subject: [PATCH] EG/HM: Pass filterQuery to Solr fq parameter
+
+---
+ meresco/solr/solrinterface.py |    5 ++++-
+ test/solrinterfacetest.py     |    6 ++++++
+ 2 files changed, 10 insertions(+), 1 deletions(-)
+
+diff --git a/meresco/solr/solrinterface.py b/meresco/solr/solrinterface.py
+index 3703eed..b333f2d 100644
+--- a/meresco/solr/solrinterface.py
++++ b/meresco/solr/solrinterface.py
+@@ -70,7 +70,7 @@ class SolrInterface(Observable):
+         path += "?commitWithin=%d" % self._commitWithin
+         yield self._send(path=path, body="<delete><id>%s</id></delete>" % escapeXml(identifier))
+ 
+-    def executeQuery(self, luceneQueryString, start=0, stop=10, sortKeys=None, fieldnamesAndMaximums=None, suggestionsCount=0, suggestionsQuery=None, **kwargs):
++    def executeQuery(self, luceneQueryString, start=0, stop=10, sortKeys=None, fieldnamesAndMaximums=None, suggestionsCount=0, suggestionsQuery=None, filterQuery=None, **kwargs):
+         if not luceneQueryString:
+             raise ValueError("Empty luceneQueryString not allowed.")
+         arguments = dict(
+@@ -80,6 +80,9 @@ class SolrInterface(Observable):
+             )
+         if sortKeys:
+             arguments["sort"] = ','.join("%s %s" % (sortKey['sortBy'], 'desc' if sortKey['sortDescending'] else 'asc') for sortKey in sortKeys)
++        if filterQuery:
++            arguments['fq'] = filterQuery
++
+         arguments.update(_drilldownArguments(fieldnamesAndMaximums))
+         if suggestionsCount > 0 and suggestionsQuery:
+             arguments["spellcheck"] = 'true'
+diff --git a/test/solrinterfacetest.py b/test/solrinterfacetest.py
+index 8ddde1d..059dcf1 100644
+--- a/test/solrinterfacetest.py
++++ b/test/solrinterfacetest.py
+@@ -223,6 +223,12 @@ class SolrInterfaceTest(TestCase):
+         self.assertEquals(['/solr/admin/luke'], readData)
+         self.assertEquals(['__all__', '__exists__', '__id__', '__timestamp__', 'field0', 'field1', 'untokenized.field0'], response.hits)
+ 
++    def testPassFilterQuery(self):
++        total, hits, path = self.executeQuery("*", filterQuery="field:value", response=RESPONSE) 
++        self.assertQuery("/solr/select?q=*&fq=field:value&start=0&rows=10", path)
++        total, hits, path = self.executeQuery("*", filterQuery="field:http\://host.nl", response=RESPONSE) 
++        self.assertQuery("/solr/select?q=*&fq=field:http\://host.nl&start=0&rows=10", path)
++
+     def executeQueryResponse(self, query, response, solrInterface=None, **kwargs):
+         if solrInterface is None:
+             solrInterface = self._solrInterface
+-- 
+1.7.1
+
