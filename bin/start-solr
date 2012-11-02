@@ -47,7 +47,8 @@ Example config:
     "core3": {"booleanFeature": true},
     "core4": {"schemaExtension": [
         {"extensionType":"fieldTypeFilter", "fieldTypeName":"text_ws", "filterClass":"solr.ASCIIFoldingFilterFactory"}
-    ]}
+    ]},
+    "core5": {"additionalSolrConfig": "full path to additional solrconfig.xml"}
 }
 """)
     parser.format_epilog = lambda formatter: parser.epilog
@@ -65,7 +66,7 @@ def copyDir(src, dst):
     system('cp -r %s/* %s/' % (src, dst))
     system('find %s -name ".svn" | xargs rm -rf' % dst) # DO_NOT_DISTRIBUTE
 
-def setupSolrConfig(stateDir, port, config):
+def setupSolrConfig(stateDir, port, config, additionalSolrConfig=None):
     assert all(type(v) == dict for v in config.values()), "Core feature descriptions must be a dictionary (empty for no additional features)."
 
     if not isdir(stateDir):
@@ -101,9 +102,18 @@ def _setupFeatureSchemaExtension(stateDir, core, options):
     with open(schemaXmlFile, 'w') as f:
         f.write(tostring(schemaXml, encoding="UTF-8", pretty_print=True, xml_declaration=True))
 
+def _setupAdditionalSolrConfig(stateDir, core, filename):
+    solrconfig_file = join(stateDir, 'cores', core, 'conf', 'solrconfig.xml')
+    core_sorlconfig = parse(open(solrconfig_file))
+    core_sorlconfig.getroot().extend(parse(open(filename)).xpath('/config/*'))
+    open(solrconfig_file, 'w').write(tostring(core_sorlconfig, pretty_print=True, encoding="UTF-8"))
+
 def _setupFeature(name, stateDir, core, options):
     if name == 'schemaExtension':
         _setupFeatureSchemaExtension(stateDir=stateDir, core=core, options=options)
+        return
+    if name == 'additionalSolrConfig':
+        _setupAdditionalSolrConfig(stateDir=stateDir, core=core, filename=options)
         return
     if options == False:
         return

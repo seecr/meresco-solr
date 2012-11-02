@@ -30,15 +30,15 @@
     <filterCache class="solr.FastLRUCache"
                  size="512"
                  initialSize="512"
-                 autowarmCount="0"/>
+                 autowarmCount="256"/>
     <queryResultCache class="solr.LRUCache"
                      size="512"
                      initialSize="512"
-                     autowarmCount="0"/>
+                     autowarmCount="256"/>
     <documentCache class="solr.LRUCache"
                    size="512"
                    initialSize="512"
-                   autowarmCount="0"/>
+                   autowarmCount="256"/>
 
     <enableLazyFieldLoading>true</enableLazyFieldLoading>
 

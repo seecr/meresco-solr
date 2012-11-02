@@ -30,7 +30,7 @@ from StringIO import StringIO
 from os import mkdir, listdir, system
 from os.path import join, dirname, abspath, basename, isdir
 from shutil import rmtree
-from lxml.etree import parse
+from lxml.etree import parse, tostring
 import sys
 
 start_solr = __import__('start-solr')
@@ -157,6 +157,14 @@ class SolrRunTest(SeecrTestCase):
         self.assertFalse('suggestions' in solrconfig_xml.xpath("/config/requestHandler[@name='/select']/arr/str/text()"))
         self.assertFalse('suggestions' in solrconfig_xml.xpath("/config/searchComponent/@name"))
 
+    def testSetupSolrConfigWithAdditionalSolrConfig(self):
+        solrDataDir = join(self.tempdir, 'solr-data')
+        open(join(self.tempdir, 'solrconfig.xml'), 'w').write("""<config><extra>option</extra></config>""")
+        start_solr.setupSolrConfig(stateDir=solrDataDir, port=8042, config={'core': {'additionalSolrConfig': join(self.tempdir, 'solrconfig.xml')}})
+        solrconfig_xml = parse(open(join(solrDataDir, 'cores', 'core', 'conf', 'solrconfig.xml')))
+
+        self.assertEquals(['option'], solrconfig_xml.xpath("/config/extra/text()"))
+
     def testSetupWithNoFeatures(self):
         solrDataDir = join(self.tempdir, 'solr-data')
         config = {'core1': {'suggestions': False}, 'core2': {}}
@@ -224,7 +232,6 @@ class SolrRunTest(SeecrTestCase):
         ]}})
         schemaXml = parse(open(join(solrDataDir, 'cores', 'core1', 'conf', 'schema.xml')))
         self.assertEquals(['solr.LowerCaseFilterFactory', 'solr.ASCIIFoldingFilterFactory'], schemaXml.xpath('/schema/types/fieldType[@name="text_ws"]/analyzer/filter/@class'))
-        print open(join(solrDataDir, 'cores', 'core1', 'conf', 'schema.xml')).read()
 
     def xtestStartSolrReally(self):
         tempdir = "/tmp/testSetupSolrConfig"
