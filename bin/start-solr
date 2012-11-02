@@ -103,10 +103,7 @@ def _setupFeatureSchemaExtension(stateDir, core, options):
         f.write(tostring(schemaXml, encoding="UTF-8", pretty_print=True, xml_declaration=True))
 
 def _setupAdditionalSolrConfig(stateDir, core, filename):
-    solrconfig_file = join(stateDir, 'cores', core, 'conf', 'solrconfig.xml')
-    core_sorlconfig = parse(open(solrconfig_file))
-    core_sorlconfig.getroot().extend(parse(open(filename)).xpath('/config/*'))
-    open(solrconfig_file, 'w').write(tostring(core_sorlconfig, pretty_print=True, encoding="UTF-8"))
+    _extendSolrConfig(stateDir=stateDir, core=core, lxmlElementList=parse(open(filename)).xpath('/config/*'))
 
 def _setupFeature(name, stateDir, core, options):
     if name == 'schemaExtension':
@@ -125,10 +122,16 @@ def _setupFeature(name, stateDir, core, options):
     if type(options) is dict:
         feature = feature % options
     feature_xml = parse(StringIO(feature))
+    _extendSolrConfig(stateDir=stateDir, core=core, lxmlElementList=feature_xml.xpath('/config/*'))
+
+def _extendSolrConfig(stateDir, core, lxmlElementList):
+    if not lxmlElementList:
+        raise ValueError("No elements found with which to extend the solrconfig.xml")
     solrconfig_file = join(stateDir, 'cores', core, 'conf', 'solrconfig.xml')
     core_sorlconfig = parse(open(solrconfig_file))
-    core_sorlconfig.getroot().extend(feature_xml.xpath('/config/*'))
+    core_sorlconfig.getroot().extend(lxmlElementList)
     open(solrconfig_file, 'w').write(tostring(core_sorlconfig, pretty_print=True, encoding="UTF-8"))
+
 
 def _setupCoreData(stateDir, cores):
     solr_xml = parse(open(join(stateDir, 'solr.xml')))

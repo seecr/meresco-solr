@@ -165,6 +165,15 @@ class SolrRunTest(SeecrTestCase):
 
         self.assertEquals(['option'], solrconfig_xml.xpath("/config/extra/text()"))
 
+    def testSetupSolrConfigWithAdditionalInvalidSolrConfigShouldRaiseAnError(self):
+        solrDataDir = join(self.tempdir, 'solr-data')
+        open(join(self.tempdir, 'solrconfig.xml'), 'w').write("""<extra>option</extra>""")
+        try:
+            start_solr.setupSolrConfig(stateDir=solrDataDir, port=8042, config={'core': {'additionalSolrConfig': join(self.tempdir, 'solrconfig.xml')}})
+            self.fail()
+        except ValueError, e:
+            self.assertEquals("No elements found with which to extend the solrconfig.xml", str(e))
+
     def testSetupWithNoFeatures(self):
         solrDataDir = join(self.tempdir, 'solr-data')
         config = {'core1': {'suggestions': False}, 'core2': {}}
