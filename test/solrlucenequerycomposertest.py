@@ -73,6 +73,7 @@ class SolrLuceneQueryComposerTest(SeecrTestCase):
         self.printer = SolrLuceneQueryComposer(unqualifiedTermFields=[("__all__", 1.0)])
         self.assertEquals('__all__:term*', self.cql2lucene('term*'))
         self.assertEquals('__all__:term*', self.cql2lucene('TERM*'))
+        self.assertEquals('*:*', self.cql2lucene('*'))
 
     def testMultipleUnqualifiedTermFields(self):
         self.printer = SolrLuceneQueryComposer(unqualifiedTermFields=[("__all__", 1.0), ("__extra__", 1.0)])

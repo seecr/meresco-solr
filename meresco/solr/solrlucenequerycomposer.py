@@ -26,6 +26,9 @@
 from cqlparser import CqlVisitor, UnsupportedCQL
 
 def _formatTerm(index, termString):
+    if termString == '*':
+        return '*:*'
+
     if '*' in termString:
         termString = termString.lower()
     else:
