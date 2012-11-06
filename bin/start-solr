@@ -34,11 +34,12 @@ from StringIO import StringIO
 from subprocess import Popen
 
 mydir = dirname(abspath(__file__))
-configdir = join(dirname(mydir), 'usr-share') # is replaced by makeDeb.sh
+solrUsrShareDir = '/usr/share/solr3.6.0-run'
+solrUsrShareDir = join(dirname(mydir), 'usr-share') # DO_NOT_DISTRIBUTE
 SOLR_VERSION = "3.6.0"
 
 def parseArguments(args):
-    features = [f.rsplit('.', 1)[0] for f in listdir(join(configdir, 'solrconfig.d'))]
+    features = [f.rsplit('.', 1)[0] for f in listdir(join(solrUsrShareDir, 'solrconfig.d'))]
     parser = OptionParser(description="""Available features: %s.""" % ', '.join(features), epilog="""
 Example config: 
 {
@@ -66,119 +67,123 @@ def copyDir(src, dst):
     system('cp -r %s/* %s/' % (src, dst))
     system('find %s -name ".svn" | xargs rm -rf' % dst) # DO_NOT_DISTRIBUTE
 
-def setupSolrConfig(stateDir, port, config, additionalSolrConfig=None):
-    assert all(type(v) == dict for v in config.values()), "Core feature descriptions must be a dictionary (empty for no additional features)."
+class SolrConfig(object):
+    def __init__(self, stateDir, port, configFile):
+        self.config=load(open(configFile))
+        self.stateDir = stateDir
+        self.port = port
+        self.configBasedir = dirname(abspath(configFile))
+        assert all(type(v) == dict for v in self.config.values()), "Core feature descriptions must be a dictionary (empty for no additional features)."
 
-    if not isdir(stateDir):
-        makedirs(stateDir)
-        copyDir(join(configdir, 'solr-data'), stateDir)
-    else:
-        newMatchVersion = parse(open(join(configdir, 'core-data', 'conf', 'solrconfig.xml'))).xpath("//luceneMatchVersion/text()")[0]
-        for coreDir in listdir(join(stateDir, 'cores')):
-            currentMatchVersion = parse(open(join(stateDir, 'cores', coreDir, 'conf', 'solrconfig.xml'))).xpath("//luceneMatchVersion/text()")[0]
-            if currentMatchVersion != newMatchVersion:
-                raise ValueError("LuceneMatchVersion in core '%s' does not match the new configuration. Remove the old index." % coreDir)
+        if not isdir(self.stateDir):
+            makedirs(self.stateDir)
+            copyDir(join(solrUsrShareDir, 'solr-data'), self.stateDir)
+        else:
+            newMatchVersion = parse(open(join(solrUsrShareDir, 'core-data', 'conf', 'solrconfig.xml'))).xpath("//luceneMatchVersion/text()")[0]
+            for coreDir in listdir(join(self.stateDir, 'cores')):
+                currentMatchVersion = parse(open(join(self.stateDir, 'cores', coreDir, 'conf', 'solrconfig.xml'))).xpath("//luceneMatchVersion/text()")[0]
+                if currentMatchVersion != newMatchVersion:
+                    raise ValueError("LuceneMatchVersion in core '%s' does not match the new configuration. Remove the old index." % coreDir)
 
-    _setupJettyXml(port, stateDir)
-    _setupStartConfig(stateDir)
-    _setupSolrXml(stateDir)
-    _setupCoreData(stateDir, config.keys())
+        self._setupJettyXml()
+        self._setupStartConfig()
+        self._setupSolrXml()
+        self._setupCoreData()
 
-    for core, features in config.items():
-        for feature, options in features.items():
-            _setupFeature(name=feature, stateDir=stateDir, core=core, options=options)
+        for core, features in self.config.items():
+            for feature, options in features.items():
+                self._setupFeature(name=feature, core=core, options=options)
 
-def _setupFeatureSchemaExtension(stateDir, core, options):
-    schemaXmlFile = join(stateDir, 'cores', core, 'conf', 'schema.xml')
-    schemaXml = parse(open(schemaXmlFile))
-    for option in options:
-        if option.get('extensionType') == 'fieldTypeFilter':
-            fieldTypeName = option['fieldTypeName']
-            fieldTypes = schemaXml.xpath('/schema/types/fieldType[@name="%s"]' %  fieldTypeName)
-            assert len(fieldTypes) == 1
-            analyzer = fieldTypes[0].xpath('analyzer')[0]
-            SubElement(analyzer, 'filter', attrib={'class': option['filterClass']})
+    def _setupFeatureSchemaExtension(self, core, options):
+        schemaXmlFile = join(self.stateDir, 'cores', core, 'conf', 'schema.xml')
+        schemaXml = parse(open(schemaXmlFile))
+        for option in options:
+            if option.get('extensionType') == 'fieldTypeFilter':
+                fieldTypeName = option['fieldTypeName']
+                fieldTypes = schemaXml.xpath('/schema/types/fieldType[@name="%s"]' %  fieldTypeName)
+                assert len(fieldTypes) == 1
+                analyzer = fieldTypes[0].xpath('analyzer')[0]
+                SubElement(analyzer, 'filter', attrib={'class': option['filterClass']})
 
-    with open(schemaXmlFile, 'w') as f:
-        f.write(tostring(schemaXml, encoding="UTF-8", pretty_print=True, xml_declaration=True))
+        with open(schemaXmlFile, 'w') as f:
+            f.write(tostring(schemaXml, encoding="UTF-8", pretty_print=True, xml_declaration=True))
 
-def _setupAdditionalSolrConfig(stateDir, core, filename):
-    _extendSolrConfig(stateDir=stateDir, core=core, lxmlElementList=parse(open(filename)).xpath('/config/*'))
+    def _setupFeature(self, name, core, options):
+        if name == 'schemaExtension':
+            self._setupFeatureSchemaExtension(core=core, options=options)
+            return
+        if name == 'additionalSolrConfig':
+            filepath = options if options.startswith('/') else join(self.configBasedir, options)
+            self._extendSolrConfig(core=core, lxmlElementList=parse(open(filepath)).xpath('/config/*'))
+            return
+        if options == False:
+            return
+        featureFilename = join(solrUsrShareDir, 'solrconfig.d', '%s.xml' % name)
+        if not isfile(featureFilename):
+            raise ValueError("Unknown feature '%s'" % name)
 
-def _setupFeature(name, stateDir, core, options):
-    if name == 'schemaExtension':
-        _setupFeatureSchemaExtension(stateDir=stateDir, core=core, options=options)
-        return
-    if name == 'additionalSolrConfig':
-        _setupAdditionalSolrConfig(stateDir=stateDir, core=core, filename=options)
-        return
-    if options == False:
-        return
-    featureFilename = join(configdir, 'solrconfig.d', '%s.xml' % name)
-    if not isfile(featureFilename):
-        raise ValueError("Unknown feature '%s'" % name)
+        feature = open(featureFilename).read()
+        if type(options) is dict:
+            feature = feature % options
+        feature_xml = parse(StringIO(feature))
+        self._extendSolrConfig(core=core, lxmlElementList=feature_xml.xpath('/config/*'))
 
-    feature = open(featureFilename).read()
-    if type(options) is dict:
-        feature = feature % options
-    feature_xml = parse(StringIO(feature))
-    _extendSolrConfig(stateDir=stateDir, core=core, lxmlElementList=feature_xml.xpath('/config/*'))
-
-def _extendSolrConfig(stateDir, core, lxmlElementList):
-    if not lxmlElementList:
-        raise ValueError("No elements found with which to extend the solrconfig.xml")
-    solrconfig_file = join(stateDir, 'cores', core, 'conf', 'solrconfig.xml')
-    core_sorlconfig = parse(open(solrconfig_file))
-    core_sorlconfig.getroot().extend(lxmlElementList)
-    open(solrconfig_file, 'w').write(tostring(core_sorlconfig, pretty_print=True, encoding="UTF-8"))
+    def _extendSolrConfig(self, core, lxmlElementList):
+        if not lxmlElementList:
+            raise ValueError("No elements found with which to extend the solrconfig.xml")
+        solrconfig_file = join(self.stateDir, 'cores', core, 'conf', 'solrconfig.xml')
+        core_sorlconfig = parse(open(solrconfig_file))
+        core_sorlconfig.getroot().extend(lxmlElementList)
+        open(solrconfig_file, 'w').write(tostring(core_sorlconfig, pretty_print=True, encoding="UTF-8"))
 
 
-def _setupCoreData(stateDir, cores):
-    solr_xml = parse(open(join(stateDir, 'solr.xml')))
-    coresElement = solr_xml.xpath("/solr/cores")[0]
-    [coresElement.remove(child) for child in coresElement.getchildren()]
-    for core in cores:
-        coreDir = join(stateDir, 'cores', core)
-        if not isdir(coreDir):
-            makedirs(coreDir)
-        SubElement(coresElement, "core", attrib={'name': unicode(core), 'instanceDir': join('cores', unicode(core))})
-        copyDir(join(configdir, 'core-data'), coreDir)
-        schema_xml_path = join(coreDir, 'conf', 'schema.xml')
-        schema_xml = parse(open(schema_xml_path))
-        schema_xml.xpath("/schema")[0].attrib['name'] = unicode("meresco-%s" % core)
-        open(schema_xml_path, 'w').write(tostring(schema_xml, pretty_print=True, encoding="UTF-8"))
+    def _setupCoreData(self):
+        cores = self.config.keys()
+        solr_xml = parse(open(join(self.stateDir, 'solr.xml')))
+        coresElement = solr_xml.xpath("/solr/cores")[0]
+        [coresElement.remove(child) for child in coresElement.getchildren()]
+        for core in cores:
+            coreDir = join(self.stateDir, 'cores', core)
+            if not isdir(coreDir):
+                makedirs(coreDir)
+            SubElement(coresElement, "core", attrib={'name': unicode(core), 'instanceDir': join('cores', unicode(core))})
+            copyDir(join(solrUsrShareDir, 'core-data'), coreDir)
+            schema_xml_path = join(coreDir, 'conf', 'schema.xml')
+            schema_xml = parse(open(schema_xml_path))
+            schema_xml.xpath("/schema")[0].attrib['name'] = unicode("meresco-%s" % core)
+            open(schema_xml_path, 'w').write(tostring(schema_xml, pretty_print=True, encoding="UTF-8"))
 
-    open(join(stateDir, 'solr.xml'), 'w').write(tostring(solr_xml, pretty_print=True, encoding="UTF-8"))
+        open(join(self.stateDir, 'solr.xml'), 'w').write(tostring(solr_xml, pretty_print=True, encoding="UTF-8"))
 
-def _setupJettyXml(port, stateDir):
-    system(r"""sed 's,<SystemProperty name="jetty.port"[^/]*/>,<SystemProperty name="jetty.port" default="%s"/>,' -i %s""" % (
-            port,
-            join(stateDir, 'etc', 'jetty.xml')
-        ))
+    def _setupJettyXml(self):
+        system(r"""sed 's,<SystemProperty name="jetty.port"[^/]*/>,<SystemProperty name="jetty.port" default="%s"/>,' -i %s""" % (
+                self.port,
+                join(self.stateDir, 'etc', 'jetty.xml')
+            ))
 
-def _setupStartConfig(stateDir):
-    system(r"""sed 's,^jetty\.home=.*$,jetty.home=%s,' -i %s""" % (
-            stateDir,
-            join(stateDir, 'start.config')
-        ))
+    def _setupStartConfig(self):
+        system(r"""sed 's,^jetty\.home=.*$,jetty.home=%s,' -i %s""" % (
+                self.stateDir,
+                join(self.stateDir, 'start.config')
+            ))
 
-    system(r"""sed 's,^/.*$,/usr/share/java/solr%s/*,' -i %s""" % (
-            SOLR_VERSION,
-            join(stateDir, 'start.config')
-        ))
+        system(r"""sed 's,^/.*$,/usr/share/java/solr%s/*,' -i %s""" % (
+                SOLR_VERSION,
+                join(self.stateDir, 'start.config')
+            ))
 
-def _setupSolrXml(stateDir):
-    system(r"""sed -e "s,<Set name=\"war\">.*</Set>,<Set name=\"war\">/usr/share/java/webapps/apache-solr-%s.war</Set>," -i %s/contexts/solr.xml""" % (SOLR_VERSION, stateDir))
+    def _setupSolrXml(self):
+        system(r"""sed -e "s,<Set name=\"war\">.*</Set>,<Set name=\"war\">/usr/share/java/webapps/apache-solr-%s.war</Set>," -i %s/contexts/solr.xml""" % (SOLR_VERSION, self.stateDir))
 
-def startSolr(stateDir, port, javaMX):
-    _execvp('java', [
-        'java',
-        '-Xmx%s' % javaMX, 
-        '-Djetty.port=%s' % port,
-        '-DSTART=%s/start.config' % stateDir,
-        '-Dsolr.solr.home=%s' % stateDir, 
-        '-jar', '/usr/share/java/solr%s/start.jar' % SOLR_VERSION,
-        ])
+    def start(self, javaMX):
+        _execvp('java', [
+                'java',
+                '-Xmx%s' % javaMX, 
+                '-Djetty.port=%s' % self.port,
+                '-DSTART=%s/start.config' % self.stateDir,
+                '-Dsolr.solr.home=%s' % self.stateDir, 
+                '-jar', '/usr/share/java/solr%s/start.jar' % SOLR_VERSION,
+            ])
 
 def _execvp(*args, **kwargs):
     execvp(*args, **kwargs)
@@ -192,6 +197,7 @@ if __name__ == '__main__':
         print "Don't use GCJ as the default java JRE."
         exit(1)
 
-    setupSolrConfig(stateDir=options.stateDir, port=options.port, config=load(open(options.config)))
-    startSolr(stateDir=options.stateDir, port=options.port, javaMX=options.javaMX)
+    solr = SolrConfig(stateDir=options.stateDir, port=options.port, configFile=options.config)
+    solr.start(javaMX=options.javaMX)
+
 
