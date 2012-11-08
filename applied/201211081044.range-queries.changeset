@@ -1,0 +1,127 @@
+Changeset created on Thu Nov 08 10:44:12 UTC 2012 by Seecr (Seek You Too B.V.)
+
+Description: Support for open-ended range queries
+
+    The CQL operators >, <, >=, <= are translated in open-ended range queries 
+    for Solr.
+
+Baseline version: 4.1.7
+
+From cce034990da7ded7d50ee3e4f6a358a32ebd8986 Mon Sep 17 00:00:00 2001
+From: Seecr Development Team <development@seecr.nl>
+Date: Thu, 8 Nov 2012 10:42:17 +0000
+Subject: [PATCH] JPM/HM: Rewrite cql range query to lucene range queries
+
+---
+ meresco/solr/solrlucenequerycomposer.py |   48 +++++++++++++++++++-----------
+ test/solrlucenequerycomposertest.py     |   12 ++++++-
+ 2 files changed, 40 insertions(+), 20 deletions(-)
+
+diff --git a/meresco/solr/solrlucenequerycomposer.py b/meresco/solr/solrlucenequerycomposer.py
+index 84b1b97..92e6892 100644
+--- a/meresco/solr/solrlucenequerycomposer.py
++++ b/meresco/solr/solrlucenequerycomposer.py
+@@ -25,21 +25,17 @@
+ 
+ from cqlparser import CqlVisitor, UnsupportedCQL
+ 
+-def _formatTerm(index, termString):
+-    if termString == '*':
+-        return '*:*'
+ 
+-    if '*' in termString:
+-        termString = termString.lower()
+-    else:
+-        termString = '"%s"' % termString.replace('\\', r'\\').replace('"', r'\"')
+-    return '%s:%s' % (index, termString)
++class SolrLuceneQueryComposer(object):
++    def __init__(self, unqualifiedTermFields):
++        self._unqualifiedTermFields = unqualifiedTermFields
+ 
+-def _formatBoost(query, boost):
+-    return '%s^%.1f' % (query, boost) if boost != 1 else query
++    def compose(self, ast):
++        (result, ) = _Cql2LuceneQueryVisitor(ast, self._unqualifiedTermFields).visit()
++        return result
+ 
+-class Cql2LuceneQueryVisitor(CqlVisitor):
+ 
++class _Cql2LuceneQueryVisitor(CqlVisitor):
+     def __init__(self, ast, unqualifiedTermFields):
+         CqlVisitor.__init__(self, ast)
+         self._unqualifiedTermFields = unqualifiedTermFields
+@@ -76,8 +72,10 @@ class Cql2LuceneQueryVisitor(CqlVisitor):
+                 query = '%s:"%s"' % (index, term)
+             elif relation == '=':
+                 query = _formatTerm(index, term)
++            elif relation in ['>', '<', '>=', '<=']:
++                query = _formatRangeTerm(index, relation, term)
+             else:
+-                raise UnsupportedCQL("Only =, == and exact are supported.")
++                raise UnsupportedCQL("Only =, ==, exact, <, <=, > and >= are supported.")
+             return _formatBoost(query, boost)
+         else:
+             ((query,),) = results
+@@ -93,10 +91,24 @@ class Cql2LuceneQueryVisitor(CqlVisitor):
+             boost = float(value)
+         return relation, boost
+  
+-class SolrLuceneQueryComposer(object):
+-    def __init__(self, unqualifiedTermFields):
+-        self._unqualifiedTermFields = unqualifiedTermFields
+ 
+-    def compose(self, ast):
+-        (result, ) = Cql2LuceneQueryVisitor(ast, self._unqualifiedTermFields).visit()
+-        return result
++def _formatTerm(index, termString):
++    if termString == '*':
++        return '*:*'
++    if '*' in termString:
++        termString = termString.lower()
++    else:
++        termString = '"%s"' % termString.replace('\\', r'\\').replace('"', r'\"')
++    return '%s:%s' % (index, termString)
++
++def _formatBoost(query, boost):
++    return '%s^%.1f' % (query, boost) if boost != 1 else query
++
++def _formatRangeTerm(index, relation, term):
++    rangeString = {
++        '<': "{* TO %s}",
++        '>': "{%s TO *}",
++        '<=': "[* TO %s]",
++        '>=': "[%s TO *]"}[relation]
++    return '%s:%s' % (index, rangeString % term)
++
+diff --git a/test/solrlucenequerycomposertest.py b/test/solrlucenequerycomposertest.py
+index 6d347cc..442100f 100644
+--- a/test/solrlucenequerycomposertest.py
++++ b/test/solrlucenequerycomposertest.py
+@@ -92,14 +92,22 @@ class SolrLuceneQueryComposerTest(SeecrTestCase):
+         self.printer = SolrLuceneQueryComposer(unqualifiedTermFields=[("all", 1)])
+         self.assertEquals('field:"term"^2.0', self.cql2lucene("field exact/boost=2 term"))
+ 
++    def testRangeQuery(self):
++        self.printer = SolrLuceneQueryComposer(unqualifiedTermFields=[])
++        self.assertEquals('field:{* TO 5}', self.cql2lucene("field<5"))
++        self.assertEquals('field:[* TO 5]', self.cql2lucene("field<=5"))
++        self.assertEquals('field:[5 TO *]', self.cql2lucene("field>=5"))
++        self.assertEquals('field:{5 TO *}', self.cql2lucene("field>5"))
++        self.assertEquals('(field:{5 TO *} AND field:[* TO 10])', self.cql2lucene("field>5 AND field<=10"))
++
+     def testUnsupportedCQL(self):
+         printer=SolrLuceneQueryComposer(unqualifiedTermFields=[("all", 1)])
+-        ast = parseString("field > term")
++        ast = parseString("field any term")
+         try:
+             printer.compose(ast)
+             self.fail("must raise UnsupportedCQL")
+         except UnsupportedCQL, e:
+-            self.assertEquals("Only =, == and exact are supported.", str(e))
++            self.assertEquals("Only =, ==, exact, <, <=, > and >= are supported.", str(e))
+ 
+     def cql2lucene(self, cql):
+         return self.printer.compose(parseString(cql))
+-- 
+1.7.1
+
