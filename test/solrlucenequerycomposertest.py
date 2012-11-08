@@ -92,14 +92,22 @@ class SolrLuceneQueryComposerTest(SeecrTestCase):
         self.printer = SolrLuceneQueryComposer(unqualifiedTermFields=[("all", 1)])
         self.assertEquals('field:"term"^2.0', self.cql2lucene("field exact/boost=2 term"))
 
+    def testRangeQuery(self):
+        self.printer = SolrLuceneQueryComposer(unqualifiedTermFields=[])
+        self.assertEquals('field:{* TO 5}', self.cql2lucene("field<5"))
+        self.assertEquals('field:[* TO 5]', self.cql2lucene("field<=5"))
+        self.assertEquals('field:[5 TO *]', self.cql2lucene("field>=5"))
+        self.assertEquals('field:{5 TO *}', self.cql2lucene("field>5"))
+        self.assertEquals('(field:{5 TO *} AND field:[* TO 10])', self.cql2lucene("field>5 AND field<=10"))
+
     def testUnsupportedCQL(self):
         printer=SolrLuceneQueryComposer(unqualifiedTermFields=[("all", 1)])
-        ast = parseString("field > term")
+        ast = parseString("field any term")
         try:
             printer.compose(ast)
             self.fail("must raise UnsupportedCQL")
         except UnsupportedCQL, e:
-            self.assertEquals("Only =, == and exact are supported.", str(e))
+            self.assertEquals("Only =, ==, exact, <, <=, > and >= are supported.", str(e))
 
     def cql2lucene(self, cql):
         return self.printer.compose(parseString(cql))

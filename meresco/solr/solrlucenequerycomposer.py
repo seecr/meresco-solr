@@ -25,21 +25,17 @@
 
 from cqlparser import CqlVisitor, UnsupportedCQL
 
-def _formatTerm(index, termString):
-    if termString == '*':
-        return '*:*'
 
-    if '*' in termString:
-        termString = termString.lower()
-    else:
-        termString = '"%s"' % termString.replace('\\', r'\\').replace('"', r'\"')
-    return '%s:%s' % (index, termString)
+class SolrLuceneQueryComposer(object):
+    def __init__(self, unqualifiedTermFields):
+        self._unqualifiedTermFields = unqualifiedTermFields
 
-def _formatBoost(query, boost):
-    return '%s^%.1f' % (query, boost) if boost != 1 else query
+    def compose(self, ast):
+        (result, ) = _Cql2LuceneQueryVisitor(ast, self._unqualifiedTermFields).visit()
+        return result
 
-class Cql2LuceneQueryVisitor(CqlVisitor):
 
+class _Cql2LuceneQueryVisitor(CqlVisitor):
     def __init__(self, ast, unqualifiedTermFields):
         CqlVisitor.__init__(self, ast)
         self._unqualifiedTermFields = unqualifiedTermFields
@@ -76,8 +72,10 @@ class Cql2LuceneQueryVisitor(CqlVisitor):
                 query = '%s:"%s"' % (index, term)
             elif relation == '=':
                 query = _formatTerm(index, term)
+            elif relation in ['>', '<', '>=', '<=']:
+                query = _formatRangeTerm(index, relation, term)
             else:
-                raise UnsupportedCQL("Only =, == and exact are supported.")
+                raise UnsupportedCQL("Only =, ==, exact, <, <=, > and >= are supported.")
             return _formatBoost(query, boost)
         else:
             ((query,),) = results
@@ -93,10 +91,24 @@ class Cql2LuceneQueryVisitor(CqlVisitor):
             boost = float(value)
         return relation, boost
  
-class SolrLuceneQueryComposer(object):
-    def __init__(self, unqualifiedTermFields):
-        self._unqualifiedTermFields = unqualifiedTermFields
 
-    def compose(self, ast):
-        (result, ) = Cql2LuceneQueryVisitor(ast, self._unqualifiedTermFields).visit()
-        return result
+def _formatTerm(index, termString):
+    if termString == '*':
+        return '*:*'
+    if '*' in termString:
+        termString = termString.lower()
+    else:
+        termString = '"%s"' % termString.replace('\\', r'\\').replace('"', r'\"')
+    return '%s:%s' % (index, termString)
+
+def _formatBoost(query, boost):
+    return '%s^%.1f' % (query, boost) if boost != 1 else query
+
+def _formatRangeTerm(index, relation, term):
+    rangeString = {
+        '<': "{* TO %s}",
+        '>': "{%s TO *}",
+        '<=': "[* TO %s]",
+        '>=': "[%s TO *]"}[relation]
+    return '%s:%s' % (index, rangeString % term)
+
