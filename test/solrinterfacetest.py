@@ -154,11 +154,22 @@ class SolrInterfaceTest(TestCase):
         self.assertEquals(['1','3','5'], hits)
 
     def testDrilldown(self):
-        total, hits, drilldownData, path = self.executeQuery("meresco.exists:true", fieldnamesAndMaximums=[('__all__', 5, False)], response=RESPONSE % FACET_COUNTS)
+        total, hits, drilldownData, path = self.executeQuery("meresco.exists:true", fieldnamesAndMaximums=[('__all__', 5, False), ('__other__', 5, False)], response=RESPONSE % FACET_COUNTS)
         result = dict(drilldownData)
-        self.assertQuery("/solr/select?facet.mincount=1&q=meresco.exists%3Atrue&start=0&rows=10&facet=on&facet.field=__all__&f.__all__.facet.sort=index&f.__all__.facet.limit=5", path)
+        self.assertQuery("/solr/select?facet.mincount=1&q=meresco.exists%3Atrue&start=0&rows=10&facet=on&facet.field=__all__&f.__all__.facet.sort=index&f.__all__.facet.limit=5&facet.field=__other__&f.__other__.facet.limit=5&f.__other__.facet.sort=index", path)
         self.assertEquals(3, total)
         self.assertEquals(['1', '3', '5'], hits)
+        self.assertEquals(['__all__', '__other__'], result.keys())
+        self.assertEquals([("term_0", 1), ("term_1", 2)], list(result['__all__']))
+        self.assertEquals([("term_2", 3), ("term_3", 4)], list(result['__other__']))
+
+    def testDrilldownOnSameFieldTwice(self):
+        total, hits, drilldownData, path = self.executeQuery("meresco.exists:true", fieldnamesAndMaximums=[('__all__', 5, False), ('__all__', 5, False)], response=RESPONSE % FACET_COUNTS_SAME_FIELD_TWICE)
+        self.assertQuery("/solr/select?facet.mincount=1&q=meresco.exists%3Atrue&start=0&rows=10&facet=on&facet.field=__all__&f.__all__.facet.sort=index&f.__all__.facet.limit=5&facet.field=__all__&f.__all__.facet.limit=5&f.__all__.facet.sort=index", path)
+        self.assertEquals(3, total)
+        self.assertEquals(['1', '3', '5'], hits)
+        self.assertEquals(2, len(drilldownData))
+        result = dict(drilldownData)
         self.assertEquals(['__all__'], result.keys())
         self.assertEquals([("term_0", 1), ("term_1", 2)], list(result['__all__']))
 
@@ -367,6 +378,27 @@ FACET_COUNTS="""
 <lst name="facet_counts">
     <lst name="facet_queries"/>
     <lst name="facet_fields">
+        <lst name="__all__">
+            <int name="term_0">1</int>
+            <int name="term_1">2</int>
+        </lst>
+        <lst name="__other__">
+            <int name="term_2">3</int>
+            <int name="term_3">4</int>
+        </lst>
+    </lst>
+    <lst name="facet_dates"/>
+    <lst name="facet_ranges"/>
+</lst>"""
+
+FACET_COUNTS_SAME_FIELD_TWICE="""
+<lst name="facet_counts">
+    <lst name="facet_queries"/>
+    <lst name="facet_fields">
+        <lst name="__all__">
+            <int name="term_0">1</int>
+            <int name="term_1">2</int>
+        </lst>
         <lst name="__all__">
             <int name="term_0">1</int>
             <int name="term_1">2</int>

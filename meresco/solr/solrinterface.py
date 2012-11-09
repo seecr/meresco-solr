@@ -159,15 +159,15 @@ def _drilldownArguments(fieldnamesAndMaximums):
         arguments['facet.field'] = []
         for fieldname, maximumResults, howToSort in fieldnamesAndMaximums:
             arguments['facet.field'].append(fieldname)
-            arguments['f.%s.facet.limit' % fieldname] = -1 if maximumResults == 0 else maximumResults
-            arguments['f.%s.facet.sort' % fieldname] = 'count' if howToSort else 'index'
+            arguments.setdefault('f.%s.facet.limit' % fieldname, []).append(-1 if maximumResults == 0 else maximumResults)
+            arguments.setdefault('f.%s.facet.sort' % fieldname, []).append('count' if howToSort else 'index')
     return arguments
 
 def _updateResponseWithDrilldownData(arguments, xml, response):
     drilldownData = []
-    for fieldname in arguments['facet.field']:
-        drilldownResult = xml.xpath('/response/lst[@name="facet_counts"]/lst[@name="facet_fields"]/lst[@name="%s"]/int' % fieldname)
-        drilldownData.append((fieldname, ((termCount.attrib['name'], int(termCount.text)) for termCount in drilldownResult)))
+    for facet_fields in xml.xpath('/response/lst[@name="facet_counts"]/lst[@name="facet_fields"]/lst'):
+        drilldownResult = facet_fields.xpath('int')
+        drilldownData.append((facet_fields.attrib["name"], ((termCount.attrib['name'], int(termCount.text)) for termCount in drilldownResult)))
     response.drilldownData = drilldownData
 
 def _updateResponseWithSuggestionData(arguments, xml, response):
