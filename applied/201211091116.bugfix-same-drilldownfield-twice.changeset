@@ -1,0 +1,107 @@
+Changeset created on Fri Nov 09 11:16:03 UTC 2012 by Seecr (Seek You Too B.V.)
+
+Description: Fixed drilldown result for same field more than once
+
+    When a drilldown for the same field was asked more then once,
+    all terms for that field get listed for every drilldown on that
+    field.
+
+Baseline version: 4.1.8
+
+From 8b7ddc29d51273cf8653d4503b11735b58215cc8 Mon Sep 17 00:00:00 2001
+From: Seecr Development Team <development@seecr.nl>
+Date: Fri, 9 Nov 2012 11:08:19 +0000
+Subject: [PATCH] TS/HM: Drilldown result based on solr answer;
+
+This fixes a bug when requesting drilldown on the same field more than
+once
+---
+ meresco/solr/solrinterface.py |   10 +++++-----
+ test/solrinterfacetest.py     |   36 ++++++++++++++++++++++++++++++++++--
+ 2 files changed, 39 insertions(+), 7 deletions(-)
+
+diff --git a/meresco/solr/solrinterface.py b/meresco/solr/solrinterface.py
+index b333f2d..7685f29 100644
+--- a/meresco/solr/solrinterface.py
++++ b/meresco/solr/solrinterface.py
+@@ -159,15 +159,15 @@ def _drilldownArguments(fieldnamesAndMaximums):
+         arguments['facet.field'] = []
+         for fieldname, maximumResults, howToSort in fieldnamesAndMaximums:
+             arguments['facet.field'].append(fieldname)
+-            arguments['f.%s.facet.limit' % fieldname] = -1 if maximumResults == 0 else maximumResults
+-            arguments['f.%s.facet.sort' % fieldname] = 'count' if howToSort else 'index'
++            arguments.setdefault('f.%s.facet.limit' % fieldname, []).append(-1 if maximumResults == 0 else maximumResults)
++            arguments.setdefault('f.%s.facet.sort' % fieldname, []).append('count' if howToSort else 'index')
+     return arguments
+ 
+ def _updateResponseWithDrilldownData(arguments, xml, response):
+     drilldownData = []
+-    for fieldname in arguments['facet.field']:
+-        drilldownResult = xml.xpath('/response/lst[@name="facet_counts"]/lst[@name="facet_fields"]/lst[@name="%s"]/int' % fieldname)
+-        drilldownData.append((fieldname, ((termCount.attrib['name'], int(termCount.text)) for termCount in drilldownResult)))
++    for facet_fields in xml.xpath('/response/lst[@name="facet_counts"]/lst[@name="facet_fields"]/lst'):
++        drilldownResult = facet_fields.xpath('int')
++        drilldownData.append((facet_fields.attrib["name"], ((termCount.attrib['name'], int(termCount.text)) for termCount in drilldownResult)))
+     response.drilldownData = drilldownData
+ 
+ def _updateResponseWithSuggestionData(arguments, xml, response):
+diff --git a/test/solrinterfacetest.py b/test/solrinterfacetest.py
+index 059dcf1..fdc7709 100644
+--- a/test/solrinterfacetest.py
++++ b/test/solrinterfacetest.py
+@@ -154,11 +154,22 @@ class SolrInterfaceTest(TestCase):
+         self.assertEquals(['1','3','5'], hits)
+ 
+     def testDrilldown(self):
+-        total, hits, drilldownData, path = self.executeQuery("meresco.exists:true", fieldnamesAndMaximums=[('__all__', 5, False)], response=RESPONSE % FACET_COUNTS)
++        total, hits, drilldownData, path = self.executeQuery("meresco.exists:true", fieldnamesAndMaximums=[('__all__', 5, False), ('__other__', 5, False)], response=RESPONSE % FACET_COUNTS)
+         result = dict(drilldownData)
+-        self.assertQuery("/solr/select?facet.mincount=1&q=meresco.exists%3Atrue&start=0&rows=10&facet=on&facet.field=__all__&f.__all__.facet.sort=index&f.__all__.facet.limit=5", path)
++        self.assertQuery("/solr/select?facet.mincount=1&q=meresco.exists%3Atrue&start=0&rows=10&facet=on&facet.field=__all__&f.__all__.facet.sort=index&f.__all__.facet.limit=5&facet.field=__other__&f.__other__.facet.limit=5&f.__other__.facet.sort=index", path)
+         self.assertEquals(3, total)
+         self.assertEquals(['1', '3', '5'], hits)
++        self.assertEquals(['__all__', '__other__'], result.keys())
++        self.assertEquals([("term_0", 1), ("term_1", 2)], list(result['__all__']))
++        self.assertEquals([("term_2", 3), ("term_3", 4)], list(result['__other__']))
++
++    def testDrilldownOnSameFieldTwice(self):
++        total, hits, drilldownData, path = self.executeQuery("meresco.exists:true", fieldnamesAndMaximums=[('__all__', 5, False), ('__all__', 5, False)], response=RESPONSE % FACET_COUNTS_SAME_FIELD_TWICE)
++        self.assertQuery("/solr/select?facet.mincount=1&q=meresco.exists%3Atrue&start=0&rows=10&facet=on&facet.field=__all__&f.__all__.facet.sort=index&f.__all__.facet.limit=5&facet.field=__all__&f.__all__.facet.limit=5&f.__all__.facet.sort=index", path)
++        self.assertEquals(3, total)
++        self.assertEquals(['1', '3', '5'], hits)
++        self.assertEquals(2, len(drilldownData))
++        result = dict(drilldownData)
+         self.assertEquals(['__all__'], result.keys())
+         self.assertEquals([("term_0", 1), ("term_1", 2)], list(result['__all__']))
+ 
+@@ -371,6 +382,27 @@ FACET_COUNTS="""
+             <int name="term_0">1</int>
+             <int name="term_1">2</int>
+         </lst>
++        <lst name="__other__">
++            <int name="term_2">3</int>
++            <int name="term_3">4</int>
++        </lst>
++    </lst>
++    <lst name="facet_dates"/>
++    <lst name="facet_ranges"/>
++</lst>"""
++
++FACET_COUNTS_SAME_FIELD_TWICE="""
++<lst name="facet_counts">
++    <lst name="facet_queries"/>
++    <lst name="facet_fields">
++        <lst name="__all__">
++            <int name="term_0">1</int>
++            <int name="term_1">2</int>
++        </lst>
++        <lst name="__all__">
++            <int name="term_0">1</int>
++            <int name="term_1">2</int>
++        </lst>
+     </lst>
+     <lst name="facet_dates"/>
+     <lst name="facet_ranges"/>
+-- 
+1.7.2.5
+
