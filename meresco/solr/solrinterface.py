@@ -90,7 +90,7 @@ class SolrInterface(Observable):
             arguments["spellcheck.q"] = suggestionsQuery
 
         path = self._path('select')
-        body = yield self._read('%s?%s' % (path, urlencode(arguments, doseq=True)))
+        body = yield self._send(path, urlencode(arguments, doseq=True), contentType='application/x-www-form-urlencoded')
         xml = parse(StringIO(body))
         recordCount = int(xml.xpath('/response/result/@numFound')[0])
         identifiers = xml.xpath('/response/result/doc/str[@name="__id__"]/text()')
@@ -121,14 +121,15 @@ class SolrInterface(Observable):
         response = SolrResponse(total=len(fieldnames), hits=fieldnames, queryTime=qtime)
         raise StopIteration(response)
 
-    def _send(self, path, body):
+    def _send(self, path, body, contentType="text/xml"):
         headers = None
         if body:
-            headers={'Content-Type': 'text/xml', 'Content-Length': len(body)}
+            headers={'Content-Type': contentType, 'Content-Length': len(body)}
         host, port = self._solrServer() # WARNING: can return a different server each time.
         response = yield self._httppost(host=host, port=port, request=path, body=body, headers=headers)
         header, body = response.split("\r\n\r\n", 1)
         self._verify200(header, response)
+        raise StopIteration(body)
 
     def _read(self, path):
         host, port = self._solrServer()
