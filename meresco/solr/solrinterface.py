@@ -105,7 +105,7 @@ class SolrInterface(Observable):
     def prefixSearch(self, field, prefix, limit=10):
         arguments = {'terms.fl': field, 'terms.prefix': prefix, 'terms.limit': limit}
         path = self._path('terms')
-        body = yield self._read('%s?%s' % (path, urlencode(arguments, doseq=True)))
+        body = yield self._send(path, urlencode(arguments, doseq=True), contentType='application/x-www-form-urlencoded')
         xml = parse(StringIO(body))
         terms = xml.xpath('/response/lst[@name="terms"]/lst[@name="%s"]/int/@name' % field)
         qtime = int(xml.xpath('/response/lst[@name="responseHeader"]/int[@name="QTime"]/text()')[0])

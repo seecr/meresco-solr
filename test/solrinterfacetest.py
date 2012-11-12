@@ -130,15 +130,17 @@ class SolrInterfaceTest(TestCase):
         self.assertEquals(['1','3','5'], hits)
 
     def testPrefixSearch(self):
-        response, path = self.executePrefixSearch(prefix="ho", field="afield", response=TERMS_PREFIX_RESPONSE) 
+        response, (path, body) = self.executePrefixSearch(prefix="ho", field="afield", response=TERMS_PREFIX_RESPONSE) 
         self.assertEquals(['hoogte', 'holland', 'hoe', 'horticulture', 'houden', 'housing', 'houdt', 'hoge', 'hoofd', 'houten'], response.hits)
         self.assertEquals(10, response.total)
         self.assertEquals(76, response.queryTime)
-        self.assertEquals('/solr/terms?terms.limit=10&terms.prefix=ho&terms.fl=afield', path)
+        self.assertEquals('/solr/terms', path)
+        self.assertQueryArguments('terms.limit=10&terms.prefix=ho&terms.fl=afield', body)
 
     def testPrefixSearchWithLimit(self):
-        response, path = self.executePrefixSearch(prefix="ho", field="afield", limit=5, response=TERMS_PREFIX_RESPONSE) 
-        self.assertEquals('/solr/terms?terms.limit=5&terms.prefix=ho&terms.fl=afield', path)
+        response, (path, body) = self.executePrefixSearch(prefix="ho", field="afield", limit=5, response=TERMS_PREFIX_RESPONSE) 
+        self.assertEquals('/solr/terms', path)
+        self.assertQueryArguments('terms.limit=5&terms.prefix=ho&terms.fl=afield', body)
 
     def testExecuteEmptyQuery(self):
         self.assertRaises(ValueError, self.executeQuery, '', response=RESPONSE)
@@ -268,17 +270,17 @@ class SolrInterfaceTest(TestCase):
     def executePrefixSearch(self, response, solrInterface=None, **kwargs):
         if solrInterface is None:
             solrInterface = self._solrInterface
-        readData = []
-        def read(path):
-            readData.append(path)
-        solrInterface._read = read
+        sendData = []
+        def send(path, body, contentType="default"):
+            sendData.append((path, body))
+        solrInterface._send = send
         gen = solrInterface.prefixSearch(**kwargs)
         gen.next()
         try:
             gen.send(response)
         except StopIteration, e:
             (response,) = e.args 
-            return response, readData[0]
+            return response, sendData[0]
     
     def executeQuery(self, query, response, solrInterface=None, **kwargs):
         response, sendData = self.executeQueryResponse(query, response, solrInterface=solrInterface, **kwargs)
