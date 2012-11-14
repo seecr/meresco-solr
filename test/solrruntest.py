@@ -215,23 +215,16 @@ class SolrRunTest(SeecrTestCase):
         self.assertRaises(ValueError, lambda: self._createSolrConfig(stateDir=solrDataDir, port=8042, config={'core1': {}}))
 
     def testStartSolr(self):
+        solrConfig = self._createSolrConfig(stateDir=join(self.tempdir, 'the/state/dir'), port=1423, config={})
         execCalled = []
-        def execvpMock(*args, **kwargs):
-            execCalled.append((args, kwargs))
-
-        try:
-            _original_execvp = start_solr._execvp
-            start_solr._execvp = execvpMock
-            solrConfig = self._createSolrConfig(stateDir=join(self.tempdir, 'the/state/dir'), port=1423, config={})
-            solrConfig.start(javaMX="1234M")
-            self.assertEquals(1, len(execCalled))
-            self.assertEquals((
-                'java', 
-                ['java', '-Xmx1234M', '-Djetty.port=1423', '-DSTART=%s/the/state/dir/start.config' % self.tempdir, '-Dsolr.solr.home=%s/the/state/dir' % self.tempdir, '-jar', '/usr/share/java/solr3.6.0/start.jar'],
-            ), execCalled[0][0])
-            self.assertEquals({}, execCalled[0][1])
-        finally:
-            start_solr._execvp = _original_execvp
+        solrConfig._execvp = lambda *args, **kwargs: execCalled.append((args, kwargs))
+        solrConfig.start(javaMX="1234M")
+        self.assertEquals(1, len(execCalled))
+        self.assertEquals((
+            'java', 
+            ['java', '-Xmx1234M', '-Djetty.port=1423', '-DSTART=%s/the/state/dir/start.config' % self.tempdir, '-Dsolr.solr.home=%s/the/state/dir' % self.tempdir, '-jar', '/usr/share/java/solr3.6.0/start.jar'],
+        ), execCalled[0][0])
+        self.assertEquals({}, execCalled[0][1])
 
     def testSetupSolrCoreWithExtraFilters(self):
         solrDataDir = join(self.tempdir, 'solr-data')
