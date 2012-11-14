@@ -24,21 +24,23 @@
 # 
 ## end license ##
 
+import sys
 from unittest import main
-from seecr.test import SeecrTestCase
 from StringIO import StringIO
 from os import mkdir, listdir, system
 from os.path import join, dirname, abspath, basename, isdir
 from shutil import rmtree
+from simplejson import dump as jsonDump
 from lxml.etree import parse, tostring
-import sys
 
+from seecr.test import SeecrTestCase
 start_solr = __import__('start-solr')
+
+
 mydir = dirname(abspath(__file__))
 version = "3.6.0"
 
 class SolrRunTest(SeecrTestCase):
-
     def testParseArguments(self):
         options, arguments = start_solr.parseArguments(['--port=8042', '--stateDir=/tmp', '--config=/tmp/config.json'])
         self.assertEquals(8042, options.port)
@@ -55,7 +57,7 @@ class SolrRunTest(SeecrTestCase):
 
     def testSetupSolrConfig(self):
         solrDataDir = join(self.tempdir, 'solr-data')
-        start_solr.setupSolrConfig(stateDir=solrDataDir, port=8042, config={'core1': {}, 'córë2': {}})
+        self._createSolrConfig(stateDir=solrDataDir, port=8042, config={'core1': {}, 'córë2': {}})
         self.assertEquals(set(['contexts', 'cores', 'start.config', 'solr.xml', 'etc']), set(listdir(solrDataDir)))
         self.assertEquals(set(['webdefault.xml', 'jetty.xml']), set(listdir(join(solrDataDir, 'etc'))))
         jetty_xml = parse(open(join(solrDataDir, 'etc', 'jetty.xml')))
@@ -87,8 +89,8 @@ class SolrRunTest(SeecrTestCase):
 
     def testSetupSolrTwiceConfig(self):
         solrDataDir = join(self.tempdir, 'solr-data')
-        start_solr.setupSolrConfig(stateDir=solrDataDir, port=8042, config={'core1': {}})
-        start_solr.setupSolrConfig(stateDir=solrDataDir, port=8042, config={'core1': {}, 'córë2': {}})
+        self._createSolrConfig(stateDir=solrDataDir, port=8042, config={'core1': {}})
+        self._createSolrConfig(stateDir=solrDataDir, port=8042, config={'core1': {}, 'córë2': {}})
         self.assertEquals(set(['contexts', 'cores', 'start.config', 'solr.xml', 'etc']), set(listdir(solrDataDir)))
         self.assertEquals(set(['webdefault.xml', 'jetty.xml']), set(listdir(join(solrDataDir, 'etc'))))
         jetty_xml = parse(open(join(solrDataDir, 'etc', 'jetty.xml')))
@@ -121,7 +123,7 @@ class SolrRunTest(SeecrTestCase):
     def testSetupSolrConfigWithAutocomplete(self):
         solrDataDir = join(self.tempdir, 'solr-data')
         config = {'core1': {'autocomplete': {}}, 'core2': {}}
-        start_solr.setupSolrConfig(stateDir=solrDataDir, port=8042, config=config)
+        self._createSolrConfig(stateDir=solrDataDir, port=8042, config=config)
         solrconfig_xml = parse(open(join(solrDataDir, 'cores', 'core1', 'conf', 'solrconfig.xml')))
         self.assertTrue('terms' in solrconfig_xml.xpath("/config/searchComponent/@name"))
         self.assertTrue('/terms' in solrconfig_xml.xpath("/config/requestHandler/@name"))
@@ -133,7 +135,7 @@ class SolrRunTest(SeecrTestCase):
     def testSetupSolrConfigWithAdmin(self):
         solrDataDir = join(self.tempdir, 'solr-data')
         config = {'core1': {'admin': {}}, 'core2': {}}
-        start_solr.setupSolrConfig(stateDir=solrDataDir, port=8042, config=config)
+        self._createSolrConfig(stateDir=solrDataDir, port=8042, config=config)
         solrconfig_xml = parse(open(join(solrDataDir, 'cores', 'core1', 'conf', 'solrconfig.xml')))
         self.assertTrue('/admin' in solrconfig_xml.xpath("/config/requestHandler/@name"))
         self.assertTrue('/admin/ping' in solrconfig_xml.xpath("/config/requestHandler/@name"))
@@ -147,7 +149,7 @@ class SolrRunTest(SeecrTestCase):
     def testSetupSolrConfigWithSuggestions(self):
         solrDataDir = join(self.tempdir, 'solr-data')
         config = {'core2': {'suggestions': {'field': 'afieldname'}}, 'core1': {}}
-        start_solr.setupSolrConfig(stateDir=solrDataDir, port=8042, config=config)
+        self._createSolrConfig(stateDir=solrDataDir, port=8042, config=config)
         solrconfig_xml = parse(open(join(solrDataDir, 'cores', 'core2', 'conf', 'solrconfig.xml')))
         self.assertTrue('suggestions' in solrconfig_xml.xpath("/config/requestHandler[@name='/select']/arr/str/text()"))
         self.assertTrue('suggestions' in solrconfig_xml.xpath("/config/searchComponent/@name"))
@@ -160,7 +162,7 @@ class SolrRunTest(SeecrTestCase):
     def testSetupSolrConfigWithAdditionalSolrConfig(self):
         solrDataDir = join(self.tempdir, 'solr-data')
         open(join(self.tempdir, 'solrconfig.xml'), 'w').write("""<config><extra>option</extra></config>""")
-        start_solr.setupSolrConfig(stateDir=solrDataDir, port=8042, config={'core': {'additionalSolrConfig': join(self.tempdir, 'solrconfig.xml')}})
+        self._createSolrConfig(stateDir=solrDataDir, port=8042, config={'core': {'additionalSolrConfig': join(self.tempdir, 'solrconfig.xml')}})
         solrconfig_xml = parse(open(join(solrDataDir, 'cores', 'core', 'conf', 'solrconfig.xml')))
 
         self.assertEquals(['option'], solrconfig_xml.xpath("/config/extra/text()"))
@@ -169,7 +171,7 @@ class SolrRunTest(SeecrTestCase):
         solrDataDir = join(self.tempdir, 'solr-data')
         open(join(self.tempdir, 'solrconfig.xml'), 'w').write("""<extra>option</extra>""")
         try:
-            start_solr.setupSolrConfig(stateDir=solrDataDir, port=8042, config={'core': {'additionalSolrConfig': join(self.tempdir, 'solrconfig.xml')}})
+            self._createSolrConfig(stateDir=solrDataDir, port=8042, config={'core': {'additionalSolrConfig': join(self.tempdir, 'solrconfig.xml')}})
             self.fail()
         except ValueError, e:
             self.assertEquals("No elements found with which to extend the solrconfig.xml", str(e))
@@ -177,7 +179,7 @@ class SolrRunTest(SeecrTestCase):
     def testSetupWithNoFeatures(self):
         solrDataDir = join(self.tempdir, 'solr-data')
         config = {'core1': {'suggestions': False}, 'core2': {}}
-        start_solr.setupSolrConfig(stateDir=solrDataDir, port=8042, config=config)
+        self._createSolrConfig(stateDir=solrDataDir, port=8042, config=config)
         solrconfig_xml = parse(open(join(solrDataDir, 'cores', 'core1', 'conf', 'solrconfig.xml')))
         self.assertFalse('suggestions' in solrconfig_xml.xpath("/config/requestHandler[@name='/select']/arr/str/text()"))
         self.assertFalse('suggestions' in solrconfig_xml.xpath("/config/searchComponent/@name"))
@@ -190,7 +192,7 @@ class SolrRunTest(SeecrTestCase):
         solrDataDir = join(self.tempdir, 'solr-data')
         config = {'core1': {'suggestions': False}, 'core2': False}
         try:
-            start_solr.setupSolrConfig(stateDir=solrDataDir, port=8042, config=config)
+            self._createSolrConfig(stateDir=solrDataDir, port=8042, config=config)
             self.fail()
         except AssertionError, e:
             self.assertEquals("Core feature descriptions must be a dictionary (empty for no additional features).", str(e))
@@ -200,17 +202,17 @@ class SolrRunTest(SeecrTestCase):
         solrDataDir = join(self.tempdir, 'solr-data')
         config = {'core1': {'unknown-feature': True}}
         try:
-            start_solr.setupSolrConfig(stateDir=solrDataDir, port=8042, config=config)
+            self._createSolrConfig(stateDir=solrDataDir, port=8042, config=config)
             self.fail()
         except ValueError, e:
             self.assertEquals("Unknown feature 'unknown-feature'", str(e))
 
     def testNotMatchingLuceneMatchVersion(self):
         solrDataDir = join(self.tempdir, 'solr-data')
-        start_solr.setupSolrConfig(stateDir=solrDataDir, port=8042, config={'core1': {}})
+        self._createSolrConfig(stateDir=solrDataDir, port=8042, config={'core1': {}})
         system('sed "s,<luceneMatchVersion>.*</luceneMatchVersion>,<luceneMatchVersion>LUCENE_32</luceneMatchVersion>," -i %s' % join(solrDataDir, 'cores', 'core1', 'conf', 'solrconfig.xml'))
 
-        self.assertRaises(ValueError, lambda: start_solr.setupSolrConfig(stateDir=solrDataDir, port=8042, config={'core1': {}}))
+        self.assertRaises(ValueError, lambda: self._createSolrConfig(stateDir=solrDataDir, port=8042, config={'core1': {}}))
 
     def testStartSolr(self):
         execCalled = []
@@ -220,11 +222,12 @@ class SolrRunTest(SeecrTestCase):
         try:
             _original_execvp = start_solr._execvp
             start_solr._execvp = execvpMock
-            start_solr.startSolr(stateDir='/the/state/dir', port=1423, javaMX="1234M")
+            solrConfig = self._createSolrConfig(stateDir=join(self.tempdir, 'the/state/dir'), port=1423, config={})
+            solrConfig.start(javaMX="1234M")
             self.assertEquals(1, len(execCalled))
             self.assertEquals((
                 'java', 
-                ['java', '-Xmx1234M', '-Djetty.port=1423', '-DSTART=/the/state/dir/start.config', '-Dsolr.solr.home=/the/state/dir', '-jar', '/usr/share/java/solr3.6.0/start.jar'],
+                ['java', '-Xmx1234M', '-Djetty.port=1423', '-DSTART=%s/the/state/dir/start.config' % self.tempdir, '-Dsolr.solr.home=%s/the/state/dir' % self.tempdir, '-jar', '/usr/share/java/solr3.6.0/start.jar'],
             ), execCalled[0][0])
             self.assertEquals({}, execCalled[0][1])
         finally:
@@ -232,7 +235,7 @@ class SolrRunTest(SeecrTestCase):
 
     def testSetupSolrCoreWithExtraFilters(self):
         solrDataDir = join(self.tempdir, 'solr-data')
-        start_solr.setupSolrConfig(stateDir=solrDataDir, port=8042, config={'core1': {'schemaExtension':[
+        self._createSolrConfig(stateDir=solrDataDir, port=8042, config={'core1': {'schemaExtension':[
             { 
                 'extensionType': 'fieldTypeFilter',
                 'fieldTypeName': 'text_ws',
@@ -247,8 +250,14 @@ class SolrRunTest(SeecrTestCase):
         isdir(tempdir) and rmtree(tempdir)
         mkdir(tempdir)
         solrDataDir = join(tempdir, 'solr-data')
-        start_solr.setupSolrConfig(stateDir=solrDataDir, port=8000, config={"test": {}})
-        start_solr.startSolr(stateDir=solrDataDir, port=8000, javaMX="1024M")
+        solrConfig = self._createSolrConfig(stateDir=solrDataDir, port=8000, config={"test": {}})
+        solrConfig.start(javaMX="1024M")
+
+    def _createSolrConfig(self, stateDir, port, config):
+        solrConfFile = join(self.tempdir, 'solr.conf')
+        jsonDump(config, open(solrConfFile, 'w'))
+        return start_solr.SolrConfig(stateDir, port, solrConfFile)
+        
 
 if __name__ == '__main__':
     main()
