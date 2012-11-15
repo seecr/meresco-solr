@@ -26,6 +26,7 @@
 from os import makedirs, listdir, system, execvp
 from os.path import dirname, abspath, isdir, isfile, join
 from shutil import copytree, rmtree
+from re import compile, MULTILINE
 from StringIO import StringIO
 from lxml.etree import parse, SubElement, tostring
 from simplejson import load as jsonLoad
@@ -129,15 +130,11 @@ class SolrConfig(object):
             ))
 
     def _setupStartConfig(self):
-        system(r"""sed 's,^jetty\.home=.*$,jetty.home=%s,' -i %s""" % (
-                self.stateDir,
-                join(self.stateDir, 'start.config')
-            ))
-
-        system(r"""sed 's,^/.*$,/usr/share/java/solr%s/*,' -i %s""" % (
-                SOLR_VERSION,
-                join(self.stateDir, 'start.config')
-            ))
+        startConfigPath = join(self.stateDir, 'start.config')
+        startConfig = oldStartConfig = open(startConfigPath).read()
+        startConfig = compile('^jetty\.home=.*$', flags=MULTILINE).sub('jetty.home=' + self.stateDir, startConfig)
+        startConfig = compile('^/.*$', flags=MULTILINE).sub('/usr/share/java/solr%s/*' % SOLR_VERSION, startConfig)
+        open(startConfigPath, 'w').write(startConfig)
 
     def _setupSolrXml(self):
         system(r"""sed -e "s,<Set name=\"war\">.*</Set>,<Set name=\"war\">/usr/share/java/webapps/apache-solr-%s.war</Set>," -i %s/contexts/solr.xml""" % (SOLR_VERSION, self.stateDir))
