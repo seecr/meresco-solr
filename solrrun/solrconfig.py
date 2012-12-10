@@ -33,9 +33,9 @@ from simplejson import load as jsonLoad
 
 
 mydir = dirname(abspath(__file__))
-solrUsrShareDir = '/usr/share/solr3.6.0-run'
+solrUsrShareDir = '/usr/share/solr4.0.0-run'
 solrUsrShareDir = join(dirname(mydir), 'usr-share') # DO_NOT_DISTRIBUTE
-SOLR_VERSION = "3.6.0"
+SOLR_VERSION = "4.0.0"
 
 
 class SolrConfig(object):
@@ -133,7 +133,7 @@ class SolrConfig(object):
         startConfigPath = join(self.stateDir, 'start.config')
         startConfig = oldStartConfig = open(startConfigPath).read()
         startConfig = compile('^jetty\.home=.*$', flags=MULTILINE).sub('jetty.home=' + self.stateDir, startConfig)
-        startConfig = compile('^/.*$', flags=MULTILINE).sub('/usr/share/java/solr%s/*' % SOLR_VERSION, startConfig)
+        startConfig = compile('^jetty\.lib=.*$', flags=MULTILINE).sub('jetty.lib=/usr/share/java/solr%s' % SOLR_VERSION, startConfig)
         open(startConfigPath, 'w').write(startConfig)
 
     def _setupSolrXml(self):
@@ -150,6 +150,6 @@ class SolrConfig(object):
                 '-jar', '/usr/share/java/solr%s/start.jar' % SOLR_VERSION,
             ])
 
-    def _execvp(self, args, **kwargs):
+    def _execvp(self, *args, **kwargs):
         execvp(*args, **kwargs)
 

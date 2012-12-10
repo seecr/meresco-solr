@@ -38,7 +38,7 @@ start_solr = __import__('start-solr')
 
 
 mydir = dirname(abspath(__file__))
-version = "3.6.0"
+version = "4.0.0"
 
 class SolrRunTest(SeecrTestCase):
     def testParseArguments(self):
@@ -71,7 +71,7 @@ class SolrRunTest(SeecrTestCase):
             self.fail("No jetty.home line found")
         f.close()
         self.assertEquals('jetty.home=%s\n' % solrDataDir, line)
-        self.assertTrue('/usr/share/java/solr3.6.0/*' in open(join(solrDataDir, 'start.config')).read())
+        self.assertTrue('/usr/share/java/solr4.0.0/*' in open(join(solrDataDir, 'start.config')).read())
 
         context_solr_xml = parse(open(join(solrDataDir, 'contexts', 'solr.xml')))
         self.assertEquals(['/usr/share/java/webapps/apache-solr-%s.war' % version], context_solr_xml.xpath('//Set[@name="war"]/text()'))
@@ -104,7 +104,7 @@ class SolrRunTest(SeecrTestCase):
             self.fail("No jetty.home line found")
         f.close()
         self.assertEquals('jetty.home=%s\n' % solrDataDir, line)
-        self.assertTrue('/usr/share/java/solr3.6.0/*' in open(join(solrDataDir, 'start.config')).read())
+        self.assertTrue('/usr/share/java/solr4.0.0/*' in open(join(solrDataDir, 'start.config')).read())
 
         context_solr_xml = parse(open(join(solrDataDir, 'contexts', 'solr.xml')))
         self.assertEquals(['/usr/share/java/webapps/apache-solr-%s.war' % version], context_solr_xml.xpath('//Set[@name="war"]/text()'))
@@ -222,7 +222,7 @@ class SolrRunTest(SeecrTestCase):
         self.assertEquals(1, len(execCalled))
         self.assertEquals((
             'java', 
-            ['java', '-Xmx1234M', '-Djetty.port=1423', '-DSTART=%s/the/state/dir/start.config' % self.tempdir, '-Dsolr.solr.home=%s/the/state/dir' % self.tempdir, '-jar', '/usr/share/java/solr3.6.0/start.jar'],
+            ['java', '-Xmx1234M', '-Djetty.port=1423', '-DSTART=%s/the/state/dir/start.config' % self.tempdir, '-Dsolr.solr.home=%s/the/state/dir' % self.tempdir, '-jar', '/usr/share/java/solr4.0.0/start.jar'],
         ), execCalled[0][0])
         self.assertEquals({}, execCalled[0][1])
 
@@ -243,7 +243,7 @@ class SolrRunTest(SeecrTestCase):
         isdir(tempdir) and rmtree(tempdir)
         mkdir(tempdir)
         solrDataDir = join(tempdir, 'solr-data')
-        solrConfig = self._createSolrConfig(stateDir=solrDataDir, port=8000, config={"test": {}})
+        solrConfig = self._createSolrConfig(stateDir=solrDataDir, port=8000, config={"test": {'admin': True}})
         solrConfig.start(javaMX="1024M")
 
     def _createSolrConfig(self, stateDir, port, config):
