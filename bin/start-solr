@@ -1,0 +1,76 @@
+#!/usr/bin/env python2.6
+## begin license ##
+# 
+# "Solr Run" starts Solr with correct parameters etc. 
+# 
+# Copyright (C) 2012 Seecr (Seek You Too B.V.) http://seecr.nl
+# Copyright (C) 2012 Stichting Bibliotheek.nl (BNL) http://www.bibliotheek.nl
+# 
+# This file is part of "Solr Run"
+# 
+# "Solr Run" is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# "Solr Run" is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with "Solr Run"; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+# 
+## end license ##
+
+import sys                # DO_NOT_DISTRIBUTE
+sys.path.insert(0, '..')  # DO_NOT_DISTRIBUTE
+
+from sys import argv, exit
+from os import listdir
+from os.path import join
+from optparse import OptionParser, Option
+from subprocess import Popen
+
+from solrrun.solrconfig import SolrConfig, solrUsrShareDir
+
+
+def parseArguments(args):
+    features = [f.rsplit('.', 1)[0] for f in listdir(join(solrUsrShareDir, 'solrconfig.d'))]
+    parser = OptionParser(description="""Available features: %s.""" % ', '.join(features), epilog="""
+Example config: 
+{
+    "core1": {},
+    "core2": {"feature": {"option": "value"}},
+    "core3": {"booleanFeature": true},
+    "core4": {"schemaExtension": [
+        {"extensionType":"fieldTypeFilter", "fieldTypeName":"text_ws", "filterClass":"solr.ASCIIFoldingFilterFactory"}
+    ]},
+    "core5": {"additionalSolrConfig": "full path to additional solrconfig.xml"}
+}
+""")
+    parser.format_epilog = lambda formatter: parser.epilog
+    parser.add_option(Option('', '--port', type='int', help='Solr port number', dest='port'))
+    parser.add_option(Option('', '--stateDir', type='string', help='Solr state directory', dest='stateDir'))
+    parser.add_option(Option('', '--config', type='string', help="Filename with json configuration file for solr", dest="config"))
+    parser.add_option(Option('', '--javaMX', type='string', help="Value for -Xmx setting for java", dest="javaMX", default="1024M"))
+    options, arguments = parser.parse_args(args)
+    if not all([options.port, options.stateDir, options.config]):
+        parser.print_help()
+        raise ValueError("Missing required option (all except javaMX are required)")
+    return options, arguments
+
+
+if __name__ == '__main__':
+    args = argv[1:]
+    options, arguments = parseArguments(args)
+
+    if Popen(["java -version 2>&1 | grep 'libgcj' > /dev/null 2>&1"], shell=True).wait() == 0:
+        print "Don't use GCJ as the default java JRE."
+        exit(1)
+
+    solrConfig = SolrConfig(stateDir=options.stateDir, port=options.port, configFile=options.config)
+    solrConfig.start(javaMX=options.javaMX)
+
+

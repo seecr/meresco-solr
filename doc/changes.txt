@@ -1,0 +1,15 @@
+example/etc/jetty.xml -> solr-data/etc/jetty.xml
+ - Replace: <Set name="webAppDir"><SystemProperty name="jetty.webapps" default="."/></Set>
+
+example/etc/webdefault.xml -> solr-data/etc/webdefault.xml
+
+example-DIH/solr/solr.xml -> solr-data/solr.xml
+ - Remove core elements
+
+example/start.jar:org/mortbay/start/start.config -> solr-data/start.config
+ - Handmatige diff; Keep explaining comments; Add jetty.webapps; Add dummy jetty.home; Fix jetty classpath
+
+zelf verzonnen iets -> solr-data/contexts/solr.xml 
+zelf verzonnen iets (kijk uit voor version) -> core-data/conf/schema.xml
+
+example/solr/conf/solrconfig.xml -> core-data/conf/solrconfig.xml (Copy changes using meld!!! (Too many changes))
