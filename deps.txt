@@ -1,2 +1,2 @@
-solr3.6.0
+solr4.0
 python-lxml
