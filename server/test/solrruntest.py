@@ -71,7 +71,7 @@ class SolrRunTest(SeecrTestCase):
             self.fail("No jetty.home line found")
         f.close()
         self.assertEquals('jetty.home=%s\n' % solrDataDir, line)
-        self.assertTrue('/usr/share/java/solr4.0.0/*' in open(join(solrDataDir, 'start.config')).read())
+        self.assertTrue('jetty.lib=/usr/share/java/solr4.0.0' in open(join(solrDataDir, 'start.config')).read())
 
         context_solr_xml = parse(open(join(solrDataDir, 'contexts', 'solr.xml')))
         self.assertEquals(['/usr/share/java/webapps/apache-solr-%s.war' % version], context_solr_xml.xpath('//Set[@name="war"]/text()'))
@@ -104,7 +104,7 @@ class SolrRunTest(SeecrTestCase):
             self.fail("No jetty.home line found")
         f.close()
         self.assertEquals('jetty.home=%s\n' % solrDataDir, line)
-        self.assertTrue('/usr/share/java/solr4.0.0/*' in open(join(solrDataDir, 'start.config')).read())
+        self.assertTrue('jetty.lib=/usr/share/java/solr4.0.0' in open(join(solrDataDir, 'start.config')).read())
 
         context_solr_xml = parse(open(join(solrDataDir, 'contexts', 'solr.xml')))
         self.assertEquals(['/usr/share/java/webapps/apache-solr-%s.war' % version], context_solr_xml.xpath('//Set[@name="war"]/text()'))
@@ -252,5 +252,3 @@ class SolrRunTest(SeecrTestCase):
         return start_solr.SolrConfig(stateDir, port, solrConfFile)
         
 
-if __name__ == '__main__':
-    main()
