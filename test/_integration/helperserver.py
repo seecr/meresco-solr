@@ -33,13 +33,14 @@ from meresco.core import Observable
 from weightless.core import be, compose
 from weightless.io import Reactor
 from sys import argv
-from simplejson import loads
+from simplejson import loads, dumps
 
 from meresco.components.http.utils import okPlainText
 from meresco.components.http import ObservableHttpServer
 from meresco.components import ParseArguments
 
 from meresco.solr import SolrInterface
+from traceback import format_exc
 
 class HelperHandler(Observable):
     def handleRequest(self, path, Body, **kwargs):
@@ -49,8 +50,15 @@ class HelperHandler(Observable):
             return
         methodKwargs = loads(Body)
         message = [p for p in path.split('/') if p][0]
-        yield self.all.unknown(message, **methodKwargs)
         yield okPlainText
+        try:
+            if message in ['add', 'delete']:
+                yield self.all.unknown(message, **methodKwargs)
+            else:
+                response = yield self.any.unknown(message, **methodKwargs)
+                yield "%s: %s" % (type(response).__name__, dumps(vars(response)))
+        except:
+            yield format_exc()
 
 
 def createServer(reactor, port, solrPort):

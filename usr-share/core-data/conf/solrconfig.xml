@@ -66,7 +66,7 @@
     <httpCaching never304="true" />
   </requestDispatcher>
 
-  <requestHandler name="/search" class="org.apache.solr.handler.component.SearchHandler">
+  <requestHandler name="/select" class="org.apache.solr.handler.component.SearchHandler">
   </requestHandler>
 
 
@@ -90,7 +90,7 @@
   <!-- ping/healthcheck -->
   <requestHandler name="/admin/ping" class="solr.PingRequestHandler">
     <lst name="invariants">
-      <str name="qt">/search</str>
+      <str name="qt">/select</str>
       <str name="q">solrpingquery</str>
     </lst>
     <lst name="defaults">

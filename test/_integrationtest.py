@@ -52,6 +52,7 @@ if __name__ == '__main__':
         "default", 
         tests=[
             '_integration.solrservertest.SolrServerTest',
+            '_integration.solrinterfacetest.SolrInterfaceTest',
         ],
         fastMode=fastMode).addToTestRunner(runner)
 

@@ -61,7 +61,7 @@ class SolrInterface(Observable):
     def _path(self, action):
         return '/solr/%s' % action if self._core is None else '/solr/%s/%s' % (self._core, action)
 
-    def add(self, identifier, partname, data):
+    def add(self, identifier, data, **kwargs):
         path = self._path('update')
         path += "?commitWithin=%d" % self._commitWithin
         yield self._send(path=path, body="<add>%s</add>" % data)
