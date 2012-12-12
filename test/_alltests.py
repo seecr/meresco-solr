@@ -3,7 +3,8 @@
 # "Meresco Solr" is a set of components and tools
 #  to integrate Solr into "Meresco." 
 # 
-# Copyright (C) 2011 Seecr (Seek You Too B.V.) http://seecr.nl
+# Copyright (C) 2011-2012 Seecr (Seek You Too B.V.) http://seecr.nl
+# Copyright (C) 2012 SURF http://www.surf.nl
 # 
 # This file is part of "Meresco Solr"
 # 
