@@ -4,7 +4,7 @@
 # "Meresco Solr" is a set of components and tools
 #  to integrate Solr into "Meresco." 
 # 
-# Copyright (C) 2012 Seecr (Seek You Too B.V.) http://seecr.nl
+# Copyright (C) 2011 Seecr (Seek You Too B.V.) http://seecr.nl
 # 
 # This file is part of "Meresco Solr"
 # 
@@ -25,21 +25,7 @@
 ## end license ##
 
 export LANG=en_US.UTF-8
-export PYTHONPATH=.:$PYTHONPATH
-tests="client server"
-option=$1
-if [ "$option" == "--client" ]; then 
-    tests="client"
-    shift
-elif [ "$option" == "--server" ]; then 
-    tests="server"
-    shift
-fi
+export PYTHONPATH=.:"$PYTHONPATH"
 
-for type in $tests; do
-    echo "Meresco Solr $(echo $type | sed -e "s,\(.\)\(.*\),\U\1\L\2,") tests."
-    (
-        cd ../$type/test
-        ./alltests.sh "$@"
-    )
-done
+python2.6 _alltests.py "$@"
+
