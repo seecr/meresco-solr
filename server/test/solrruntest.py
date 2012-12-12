@@ -132,20 +132,6 @@ class SolrRunTest(SeecrTestCase):
         self.assertFalse('terms' in solrconfig_xml.xpath("/config/searchComponent/@name"))
         self.assertFalse('/terms' in solrconfig_xml.xpath("/config/requestHandler/@name"))
 
-    def testSetupSolrConfigWithAdmin(self):
-        solrDataDir = join(self.tempdir, 'solr-data')
-        config = {'core1': {'admin': {}}, 'core2': {}}
-        self._createSolrConfig(stateDir=solrDataDir, port=8042, config=config)
-        solrconfig_xml = parse(open(join(solrDataDir, 'cores', 'core1', 'conf', 'solrconfig.xml')))
-        self.assertTrue('/admin' in solrconfig_xml.xpath("/config/requestHandler/@name"))
-        self.assertTrue('/admin/ping' in solrconfig_xml.xpath("/config/requestHandler/@name"))
-        self.assertTrue('*:*' in solrconfig_xml.xpath("/config/admin/defaultQuery/text()"))
-
-        solrconfig_xml = parse(open(join(solrDataDir, 'cores', 'core2', 'conf', 'solrconfig.xml')))
-        self.assertFalse('/admin' in solrconfig_xml.xpath("/config/requestHandler/@name"))
-        self.assertFalse('/admin/ping' in solrconfig_xml.xpath("/config/requestHandler/@name"))
-        self.assertFalse('*:*' in solrconfig_xml.xpath("/config/admin/defaultQuery/text()"))
-
     def testSetupSolrConfigWithSuggestions(self):
         solrDataDir = join(self.tempdir, 'solr-data')
         config = {'core2': {'suggestions': {'field': 'afieldname'}}, 'core1': {}}

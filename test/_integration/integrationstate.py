@@ -40,6 +40,7 @@ from lxml.etree import parse
 from meresco.components import lxmltostring
 from urllib import urlopen
 from shutil import copyfile
+from simplejson import dumps
 
 from seecr.test.integrationtestcase import IntegrationState as _IntegrationState
 from seecr.test.portnumbergenerator import PortNumberGenerator
@@ -58,6 +59,12 @@ class IntegrationState(_IntegrationState):
         self.solrPort = PortNumberGenerator.next()
 
         self.solrCore = "records"
+        self.config = {
+                self.solrCore: {}
+            }
+        self.configPath = join(self.integrationTempdir, 'solr.config')
+        with open(self.configPath, 'w') as f:
+            f.write(dumps(self.config))
 
     def binDir(self):
         return join(projectDir, 'server', 'bin')
@@ -70,8 +77,7 @@ class IntegrationState(_IntegrationState):
         _IntegrationState.tearDown(self)
 
     def _startSolrServer(self):
-        self._startServer('solr', self.binPath('start-solr'), 'http://localhost:%s/solr/%s/admin/ping' % (self.solrPort, self.solrCore), port=self.solrPort, stateDir=self.solrStatePath)
-
+        self._startServer('solr', self.binPath('start-solr'), 'http://localhost:%s/solr/%s/admin/ping' % (self.solrPort, self.solrCore), port=self.solrPort, stateDir=self.solrStatePath, config=self.configPath)
 
     def _createDatabase(self):
         if self.fastMode:
