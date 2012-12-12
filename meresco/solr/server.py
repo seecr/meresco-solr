@@ -35,8 +35,8 @@ from simplejson import load as jsonLoad
 
 
 mydir = dirname(abspath(__file__))
-solrUsrShareDir = '/usr/share/solr4.0.0-run'
-solrUsrShareDir = join(dirname(dirname(mydir)), 'usr-share') # DO_NOT_DISTRIBUTE
+usrShareDir = '/usr/share/solr4.0.0-run'
+usrShareDir = join(dirname(dirname(mydir)), 'usr-share') # DO_NOT_DISTRIBUTE
 SOLR_VERSION = "4.0.0"
 
 
@@ -49,9 +49,9 @@ class Server(object):
         assert all(type(v) == dict for v in self.config.values()), "Core feature descriptions must be a dictionary (empty for no additional features)."
 
         if not isdir(self.stateDir):
-            copytree(join(solrUsrShareDir, 'solr-data'), self.stateDir)
+            copytree(join(usrShareDir, 'solr-data'), self.stateDir)
         else:
-            newMatchVersion = parse(open(join(solrUsrShareDir, 'core-data', 'conf', 'solrconfig.xml'))).xpath("//luceneMatchVersion/text()")[0]
+            newMatchVersion = parse(open(join(usrShareDir, 'core-data', 'conf', 'solrconfig.xml'))).xpath("//luceneMatchVersion/text()")[0]
             for coreDir in listdir(join(self.stateDir, 'cores')):
                 currentMatchVersion = parse(open(join(self.stateDir, 'cores', coreDir, 'conf', 'solrconfig.xml'))).xpath("//luceneMatchVersion/text()")[0]
                 if currentMatchVersion != newMatchVersion:
@@ -90,7 +90,7 @@ class Server(object):
             return
         if options == False:
             return
-        featureFilename = join(solrUsrShareDir, 'solrconfig.d', '%s.xml' % name)
+        featureFilename = join(usrShareDir, 'solrconfig.d', '%s.xml' % name)
         if not isfile(featureFilename):
             raise ValueError("Unknown feature '%s'" % name)
 
@@ -117,7 +117,7 @@ class Server(object):
             SubElement(coresElement, "core", attrib={'name': unicode(core), 'instanceDir': join('cores', unicode(core))})
             coreDir = join(self.stateDir, 'cores', core)
             isdir(coreDir) and rmtree(coreDir)
-            copytree(join(solrUsrShareDir, 'core-data'), coreDir)
+            copytree(join(usrShareDir, 'core-data'), coreDir)
             schema_xml_path = join(coreDir, 'conf', 'schema.xml')
             schema_xml = parse(open(schema_xml_path))
             schema_xml.xpath("/schema")[0].attrib['name'] = unicode("meresco-%s" % core)

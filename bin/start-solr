@@ -33,11 +33,11 @@ from os.path import join
 from optparse import OptionParser, Option
 from subprocess import Popen
 
-from meresco.solr.server import Server, solrUsrShareDir
+from meresco.solr.server import Server, usrShareDir
 
 
 def parseArguments(args):
-    features = [f.rsplit('.', 1)[0] for f in listdir(join(solrUsrShareDir, 'solrconfig.d'))]
+    features = [f.rsplit('.', 1)[0] for f in listdir(join(usrShareDir, 'solrconfig.d'))]
     parser = OptionParser(description="""Available features: %s.""" % ', '.join(features), epilog="""
 Example config: 
 {

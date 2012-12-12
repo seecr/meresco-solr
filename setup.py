@@ -26,12 +26,23 @@
 
 from distutils.core import setup
 
+version = '$Version: master$'[9:-1].strip()
+from os import walk, listdir
+from os.path import join
+data_files = []
+for path, dirs, files in walk('usr-share'):
+    if not files:
+        continue
+    data_files.append((path.replace('usr-share', '/usr/share/meresco-solr'), [join(path, f) for f in files]))
+
 setup(
     name='meresco-solr',
     packages=[
         'meresco.solr',
     ],
-    version='%VERSION%',
+    data_files=data_files,
+    scripts=[join('bin', f) for f in listdir('bin')],
+    version=version,
     url='http://www.meresco.org',
     author='Seecr (Seek You Too B.V.)',
     author_email='info@seecr.nl',

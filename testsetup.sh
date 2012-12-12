@@ -26,35 +26,23 @@
 ## end license ##
 
 set -o errexit
+mydir=$(cd $(dirname $0);pwd)
+
+source /usr/share/seecr-test/functions
 
 rm -rf tmp build
 
-fullPythonVersion=python2.6
-${fullPythonVersion} setup.py install --root tmp
+definePythonVars
 
-
-VERSION="x.y.z"
-
-find tmp -name '*.py' -exec sed -r -e \
-    "/DO_NOT_DISTRIBUTE/ d;
-    s/\\\$Version:[^\\\$]*\\\$/\\\$Version: ${VERSION}\\\$/" -i '{}' \;
-
-if [ -f /etc/debian_version ]; then
-    SITE_PACKAGE_DIR=`pwd`/tmp/usr/local/lib/${fullPythonVersion}/dist-packages
-else
-    SITE_PACKAGE_DIR=`pwd`/tmp/usr/lib/${fullPythonVersion}/site-packages
-fi
-
-cp meresco/__init__.py ${SITE_PACKAGE_DIR}/meresco
-export PYTHONPATH=${SITE_PACKAGE_DIR}:${PYTHONPATH}
+${PYTHON} setup.py install --root tmp
+cp meresco/__init__.py ${SITEPACKAGES}/meresco/
 cp -r test tmp/test
+find tmp -type f -exec sed -e \
+    "s,^usrShareDir.*$,usrShareDir = '$mydir/tmp/usr/share/meresco-solr'," -i {} \;
 
-set +o errexit
-(
-cd tmp/test
-./alltests.sh
-)
-set -o errexit
+removeDoNotDistribute tmp
+
+runtests "$@"
 
 rm -rf tmp build
 
