@@ -57,6 +57,7 @@ class IntegrationState(_IntegrationState):
         self.solrStatePath = join(self.integrationTempdir, 'solr')
 
         self.solrPort = PortNumberGenerator.next()
+        self.solrClientPort = PortNumberGenerator.next()
 
         self.solrCore = "records"
         self.config = {
@@ -70,6 +71,7 @@ class IntegrationState(_IntegrationState):
         return join(projectDir, 'bin')
 
     def setUp(self):
+        self._startMerescoSolrInterfaceServer()
         self._startSolrServer()
         self._createDatabase()
    
@@ -78,6 +80,9 @@ class IntegrationState(_IntegrationState):
 
     def _startSolrServer(self):
         self._startServer('solr', self.binPath('start-solr'), 'http://localhost:%s/solr/%s/admin/ping' % (self.solrPort, self.solrCore), port=self.solrPort, stateDir=self.solrStatePath, config=self.configPath)
+
+    def _startMerescoSolrInterfaceServer(self):
+        self._startServer('solr-client', self.binPath('helperserver.py', binDirs=[mydir]), 'http://localhost:%s/ping' % self.solrClientPort, cwd=mydir, port=self.solrClientPort, solrPort=self.solrPort)
 
     def _createDatabase(self):
         if self.fastMode:
