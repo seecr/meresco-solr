@@ -38,7 +38,7 @@ solrUsrShareDir = join(dirname(dirname(mydir)), 'usr-share') # DO_NOT_DISTRIBUTE
 SOLR_VERSION = "4.0.0"
 
 
-class SolrConfig(object):
+class Server(object):
     def __init__(self, stateDir, port, configFile):
         self.config=jsonLoad(open(configFile))
         self.stateDir = stateDir

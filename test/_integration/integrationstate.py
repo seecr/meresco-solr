@@ -67,7 +67,7 @@ class IntegrationState(_IntegrationState):
             f.write(dumps(self.config))
 
     def binDir(self):
-        return join(projectDir, 'server', 'bin')
+        return join(projectDir, 'bin')
 
     def setUp(self):
         self._startSolrServer()

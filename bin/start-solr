@@ -33,7 +33,7 @@ from os.path import join
 from optparse import OptionParser, Option
 from subprocess import Popen
 
-from meresco.solr.solrconfig import SolrConfig, solrUsrShareDir
+from meresco.solr.server import Server, solrUsrShareDir
 
 
 def parseArguments(args):
@@ -70,7 +70,7 @@ if __name__ == '__main__':
         print "Don't use GCJ as the default java JRE."
         exit(1)
 
-    solrConfig = SolrConfig(stateDir=options.stateDir, port=options.port, configFile=options.config)
-    solrConfig.start(javaMX=options.javaMX)
+    solrServer = Server(stateDir=options.stateDir, port=options.port, configFile=options.config)
+    solrServer.start(javaMX=options.javaMX)
 
 
