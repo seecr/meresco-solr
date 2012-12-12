@@ -1,2 +1,0 @@
-solr4.0.0
-python-lxml

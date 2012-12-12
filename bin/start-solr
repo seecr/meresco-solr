@@ -33,7 +33,7 @@ from os.path import join
 from optparse import OptionParser, Option
 from subprocess import Popen
 
-from solrrun.solrconfig import SolrConfig, solrUsrShareDir
+from meresco.solr.solrconfig import SolrConfig, solrUsrShareDir
 
 
 def parseArguments(args):

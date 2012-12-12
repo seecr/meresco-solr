@@ -36,6 +36,7 @@ path.insert(0, "..")
 from fields2solrdoctest import Fields2SolrDocTest
 from solrinterfacetest import SolrInterfaceTest
 from solrlucenequerycomposertest import SolrLuceneQueryComposerTest
+from solrconfigtest import SolrConfigTest
 from cql2solrlucenequerytest import CQL2SolrLuceneQueryTest
 
 if __name__ == '__main__':

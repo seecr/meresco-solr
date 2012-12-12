@@ -34,13 +34,14 @@ from simplejson import dump as jsonDump
 from lxml.etree import parse, tostring
 
 from seecr.test import SeecrTestCase
+sys.path.insert(0, '../bin')
 start_solr = __import__('start-solr')
 
 
 mydir = dirname(abspath(__file__))
 version = "4.0.0"
 
-class SolrRunTest(SeecrTestCase):
+class SolrConfigTest(SeecrTestCase):
     def testParseArguments(self):
         options, arguments = start_solr.parseArguments(['--port=8042', '--stateDir=/tmp', '--config=/tmp/config.json'])
         self.assertEquals(8042, options.port)

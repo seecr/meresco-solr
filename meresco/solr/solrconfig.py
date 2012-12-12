@@ -34,7 +34,7 @@ from simplejson import load as jsonLoad
 
 mydir = dirname(abspath(__file__))
 solrUsrShareDir = '/usr/share/solr4.0.0-run'
-solrUsrShareDir = join(dirname(mydir), 'usr-share') # DO_NOT_DISTRIBUTE
+solrUsrShareDir = join(dirname(dirname(mydir)), 'usr-share') # DO_NOT_DISTRIBUTE
 SOLR_VERSION = "4.0.0"
 
 

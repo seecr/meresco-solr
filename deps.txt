@@ -6,3 +6,5 @@ python-cqlparser (>= 1.7)
 python-cqlparser (< 1.8)
 python-weightless-core (>= 0.7)
 python-weightless-core (<< 0.8)
+solr4.0.0
+python-lxml
