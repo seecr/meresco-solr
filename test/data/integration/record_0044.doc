@@ -1,0 +1,24 @@
+<doc xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <field name="__id__">record:0044</field>
+  <field name="prov.source">http://webggc.oclc.nl</field>
+  <field name="untokenized.dc:language">urn:iso:std:iso:639:-2:dut</field>
+  <field name="sorted.dc:title">d'un mo</field>
+  <field name="untokenized.dc:date">1985</field>
+  <field name="__all__">TEXT</field>
+  <field name="__all__">D'un monde à l'autre</field>
+  <field name="__all__">1985</field>
+  <field name="__all__">Claude Foucart</field>
+  <field name="__all__">la correspondance André Gide-Harry Kessler (1903-1933)</field>
+  <field name="__all__">http://webggc.oclc.nl</field>
+  <field name="__all__">86577210x</field>
+  <field name="dc:creator">Claude Foucart</field>
+  <field name="untokenized.prov.source">http://webggc.oclc.nl</field>
+  <field name="dc:title">D'un monde à l'autre</field>
+  <field name="ppn">86577210x</field>
+  <field name="untokenized.dc:creator">Claude Foucart</field>
+  <field name="untokenized.rdf:type">http://dbpedia.org/ontology/Book</field>
+  <field name="dc:date">1985</field>
+  <field name="untokenized.lh:holder">urn:iln:2</field>
+  <field name="sorted.dc:creator">claude foucart</field>
+  <field name="sorted.dc:date">1985</field>
+</doc>

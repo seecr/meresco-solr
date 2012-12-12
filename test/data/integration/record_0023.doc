@@ -1,0 +1,29 @@
+<doc xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <field name="__id__">record:0023</field>
+  <field name="prov.source">http://localhost:43343/oai</field>
+  <field name="untokenized.dc:language">urn:iso:std:iso:639:-2:ita</field>
+  <field name="sorted.dc:title">serie d</field>
+  <field name="untokenized.dc:date">1970</field>
+  <field name="__all__">TEXT</field>
+  <field name="__all__">Serie di opere ebraiche impresse dai celebri tipografi Soncini ed altre in greco, latino ed italiano</field>
+  <field name="__all__">1970</field>
+  <field name="__all__">Zaccaria Antonucci, Gaetano</field>
+  <field name="__all__">vi, 122, 71 p</field>
+  <field name="__all__">in-8</field>
+  <field name="__all__">1e uitg.: 1868</field>
+  <field name="__all__">Fotomech. herdr. van de 3e dr.: Fermo, 1870</field>
+  <field name="__all__">http://localhost:43343/oai</field>
+  <field name="__all__">81000853x</field>
+  <field name="dc:creator">Zaccaria Antonucci, Gaetano</field>
+  <field name="untokenized.prov.source">http://localhost:43343/oai</field>
+  <field name="dc:title">Serie di opere ebraiche impresse dai celebri tipografi Soncini ed altre in greco, latino ed italiano</field>
+  <field name="ppn">81000853x</field>
+  <field name="untokenized.dc:creator">Zaccaria Antonucci, Gaetano</field>
+  <field name="untokenized.rdf:type">http://dbpedia.org/ontology/Book</field>
+  <field name="dc:date">1970</field>
+  <field name="untokenized.lh:holder">urn:iln:2</field>
+  <field name="dc:format">in-8</field>
+  <field name="dc:format">vi, 122, 71 p</field>
+  <field name="sorted.dc:creator">zaccaria antonucci</field>
+  <field name="sorted.dc:date">1970</field>
+</doc>

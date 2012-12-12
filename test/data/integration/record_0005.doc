@@ -1,0 +1,31 @@
+<doc xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <field name="__id__">record:0005</field>
+  <field name="prov.source">http://localhost:43343/oai</field>
+  <field name="untokenized.dc:language">urn:iso:std:iso:639:-2:eng</field>
+  <field name="untokenized.dc:language">urn:iso:std:iso:639:-2:fre</field>
+  <field name="sorted.dc:title">illustr</field>
+  <field name="untokenized.dc:date">1971</field>
+  <field name="__all__">TEXT</field>
+  <field name="__all__">Illustrated notebooks, 1917-1955</field>
+  <field name="__all__">1971</field>
+  <field name="__all__">Braque, Georges</field>
+  <field name="__all__">117 p</field>
+  <field name="__all__">29 cm</field>
+  <field name="__all__">http://localhost:43343/oai</field>
+  <field name="__all__">781120845</field>
+  <field name="__all__">0486202321</field>
+  <field name="dc:creator">Braque, Georges</field>
+  <field name="untokenized.prov.source">http://localhost:43343/oai</field>
+  <field name="dc:title">Illustrated notebooks, 1917-1955</field>
+  <field name="ppn">781120845</field>
+  <field name="untokenized.dc:creator">Braque, Georges</field>
+  <field name="untokenized.rdf:type">http://dbpedia.org/ontology/Book</field>
+  <field name="dc:date">1971</field>
+  <field name="untokenized.lh:holder">urn:iln:10</field>
+  <field name="untokenized.lh:holder">urn:iln:27</field>
+  <field name="isbn">0486202321</field>
+  <field name="dc:format">29 cm</field>
+  <field name="dc:format">117 p</field>
+  <field name="sorted.dc:creator">braque</field>
+  <field name="sorted.dc:date">1971</field>
+</doc>

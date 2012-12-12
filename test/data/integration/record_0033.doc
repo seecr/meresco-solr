@@ -1,0 +1,26 @@
+<doc xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <field name="__id__">record:0033</field>
+  <field name="prov.source">http://localhost:43343/oai</field>
+  <field name="untokenized.dc:language">urn:iso:std:iso:639:-2:ger</field>
+  <field name="sorted.dc:title">verzeic</field>
+  <field name="untokenized.dc:date">1790</field>
+  <field name="__all__">TEXT</field>
+  <field name="__all__">Verzeichnisz alter Druckdenkmale der Bibliothek des uralten Benediktinerstifts zum H. Mang in Füeszen</field>
+  <field name="__all__">1790</field>
+  <field name="__all__">Helmschrott, Joseph Maria</field>
+  <field name="__all__">in-4</field>
+  <field name="__all__">2 st. in 1 dl</field>
+  <field name="__all__">http://localhost:43343/oai</field>
+  <field name="__all__">803431384</field>
+  <field name="dc:creator">Helmschrott, Joseph Maria</field>
+  <field name="untokenized.prov.source">http://localhost:43343/oai</field>
+  <field name="dc:title">Verzeichnisz alter Druckdenkmale der Bibliothek des uralten Benediktinerstifts zum H. Mang in Füeszen</field>
+  <field name="ppn">803431384</field>
+  <field name="untokenized.dc:creator">Helmschrott, Joseph Maria</field>
+  <field name="untokenized.rdf:type">http://dbpedia.org/ontology/Book</field>
+  <field name="dc:date">1790</field>
+  <field name="untokenized.lh:holder">urn:iln:2</field>
+  <field name="dc:format">in-4</field>
+  <field name="sorted.dc:creator">helmschrott</field>
+  <field name="sorted.dc:date">1790</field>
+</doc>

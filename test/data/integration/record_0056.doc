@@ -1,0 +1,6 @@
+<doc xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <field name="__id__">record:0056</field>
+  <field name="untokenized.rdf:type">http://www.w3.org/2004/02/skos/core#Concept</field>
+  <field name="untokenized.dc:language">urn:iso:std:iso:639:-2:dut</field>
+  <field name="__all__">Azië en Australië</field>
+</doc>

@@ -1,0 +1,26 @@
+<doc xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <field name="__id__">record:0043</field>
+  <field name="prov.source">http://webggc.oclc.nl</field>
+  <field name="untokenized.dc:language">urn:iso:std:iso:639:-2:dut</field>
+  <field name="sorted.dc:title">das tag</field>
+  <field name="untokenized.dc:date">2004</field>
+  <field name="__all__">TEXT</field>
+  <field name="__all__">Das Tagebuch 1880-1937</field>
+  <field name="__all__">2004</field>
+  <field name="__all__">Harry Graf Kessler</field>
+  <field name="__all__">http://webggc.oclc.nl</field>
+  <field name="__all__">265768918</field>
+  <field name="__all__">0123456789</field>
+  <field name="dc:creator">Harry Graf Kessler</field>
+  <field name="untokenized.prov.source">http://webggc.oclc.nl</field>
+  <field name="dc:title">Das Tagebuch 1880-1937</field>
+  <field name="ppn">265768918</field>
+  <field name="untokenized.dc:creator">Harry Graf Kessler</field>
+  <field name="untokenized.rdf:type">http://dbpedia.org/ontology/Book</field>
+  <field name="dc:date">2004</field>
+  <field name="untokenized.lh:holder">urn:iln:2</field>
+  <field name="untokenized.lh:holder">urn:iln:12</field>
+  <field name="isbn">0123456789</field>
+  <field name="sorted.dc:creator">harry graf kessler</field>
+  <field name="sorted.dc:date">2004</field>
+</doc>

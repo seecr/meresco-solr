@@ -1,0 +1,24 @@
+<doc xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <field name="__id__">record:0067</field>
+  <field name="dc:source">seecr</field>
+  <field name="untokenized.dc:language">urn:iso:std:iso:639:-2:dut</field>
+  <field name="sorted.dc:title">1588 -</field>
+  <field name="__all__">CD</field>
+  <field name="__all__">Kastnr. 8729. - Bevar werken van : Th. Deloney ; M. praetorius ; P. Attaignant...[et al.]</field>
+  <field name="__all__">1588 - Music from the time of the spanish Armada / The York Waits</field>
+  <field name="__all__">York Waits, The</field>
+  <field name="__all__">Saydisc CD SOL 373</field>
+  <field name="__all__">seecr</field>
+  <field name="__all__">seecr</field>
+  <field name="dc:creator">York Waits, The</field>
+  <field name="dc:type">http://purl.org/dc/dcmitype/Sound</field>
+  <field name="untokenized.prov.source">seecr</field>
+  <field name="dc:title">1588 - Music from the time of the spanish Armada / The York Waits</field>
+  <field name="untokenized.dc:creator">York Waits, The</field>
+  <field name="untokenized.rdf:type">http://dbpedia.org/ontology/Album</field>
+  <field name="dc:publisher">Saydisc CD SOL 373</field>
+  <field name="dc:format">CD</field>
+  <field name="sorted.dc:creator">york waits</field>
+  <field name="prov.source">seecr</field>
+  <field name="dc:description">Kastnr. 8729. - Bevar werken van : Th. Deloney ; M. praetorius ; P. Attaignant...[et al.]</field>
+</doc>

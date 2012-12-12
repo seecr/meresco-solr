@@ -1,0 +1,27 @@
+<doc xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <field name="__id__">record:0029</field>
+  <field name="prov.source">http://localhost:43343/oai</field>
+  <field name="untokenized.dc:language">urn:iso:std:iso:639:-2:lat</field>
+  <field name="sorted.dc:title">annaliu</field>
+  <field name="untokenized.dc:date">1789</field>
+  <field name="__all__">TEXT</field>
+  <field name="__all__">Annalium typographicorum M. Maittaire supplementum</field>
+  <field name="__all__">1789</field>
+  <field name="__all__">Denis, Michael</field>
+  <field name="__all__">2 dl</field>
+  <field name="__all__">in-4</field>
+  <field name="__all__">http://localhost:43343/oai</field>
+  <field name="__all__">803432682</field>
+  <field name="dc:creator">Denis, Michael</field>
+  <field name="untokenized.prov.source">http://localhost:43343/oai</field>
+  <field name="dc:title">Annalium typographicorum M. Maittaire supplementum</field>
+  <field name="ppn">803432682</field>
+  <field name="untokenized.dc:creator">Denis, Michael</field>
+  <field name="untokenized.rdf:type">http://dbpedia.org/ontology/Book</field>
+  <field name="dc:date">1789</field>
+  <field name="untokenized.lh:holder">urn:iln:2</field>
+  <field name="dc:format">in-4</field>
+  <field name="dc:format">2 dl</field>
+  <field name="sorted.dc:creator">denis</field>
+  <field name="sorted.dc:date">1789</field>
+</doc>

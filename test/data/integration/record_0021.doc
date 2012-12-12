@@ -1,0 +1,30 @@
+<doc xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <field name="__id__">record:0021</field>
+  <field name="prov.source">http://localhost:43343/oai</field>
+  <field name="untokenized.dc:language">urn:iso:std:iso:639:-2:fre</field>
+  <field name="sorted.dc:title">les imp</field>
+  <field name="untokenized.dc:date">1971</field>
+  <field name="__all__">TEXT</field>
+  <field name="__all__">Les imprimeurs et les libraires dans la Côte-d'Or</field>
+  <field name="__all__">1971</field>
+  <field name="__all__">Clément-Janin, Michel Hilaire</field>
+  <field name="__all__">viii, 238 p</field>
+  <field name="__all__">in-8</field>
+  <field name="__all__">1e uitg.: 1873</field>
+  <field name="__all__">Fotomech. herdr. van de 2e uitg.: Dijon, 1883</field>
+  <field name="__all__">http://localhost:43343/oai</field>
+  <field name="__all__">803160496</field>
+  <field name="dc:creator">Clément-Janin, Michel Hilaire</field>
+  <field name="untokenized.prov.source">http://localhost:43343/oai</field>
+  <field name="dc:title">Les imprimeurs et les libraires dans la Côte-d'Or</field>
+  <field name="ppn">803160496</field>
+  <field name="untokenized.dc:creator">Clément-Janin, Michel Hilaire</field>
+  <field name="untokenized.rdf:type">http://dbpedia.org/ontology/Book</field>
+  <field name="dc:date">1971</field>
+  <field name="untokenized.lh:holder">urn:iln:2</field>
+  <field name="untokenized.lh:holder">urn:iln:10</field>
+  <field name="dc:format">in-8</field>
+  <field name="dc:format">viii, 238 p</field>
+  <field name="sorted.dc:creator">clément-janin</field>
+  <field name="sorted.dc:date">1971</field>
+</doc>

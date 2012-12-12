@@ -42,13 +42,7 @@ class SolrInterfaceTest(IntegrationTestCase):
         self.assertEquals('', body)
         sleep(0.1)
 
-        queryKwargs=dict(
-                luceneQueryString='__id__:record\:testAddQueryDelete',
-            )
-        header, body = postRequest(port=self.solrClientPort, path='/executeQuery', data=dumps(queryKwargs), parse=False)
-        responseType, responseDict = body.split(': ', 1)
-        self.assertEquals('SolrResponse', responseType)
-        response = loads(responseDict)
+        response = self.executeQuery(luceneQueryString='__id__:record\:testAddQueryDelete')
         self.assertEquals(1, response['total'])
         self.assertEquals(['record:testAddQueryDelete'], response['hits'])
 
@@ -56,7 +50,15 @@ class SolrInterfaceTest(IntegrationTestCase):
         self.assertEquals('', body)
         sleep(0.1)
 
+        response = self.executeQuery(luceneQueryString='__id__:record\:testAddQueryDelete')
+        self.assertEquals(0, response['total'])
+
+    def testDatabase(self):
+        response = self.executeQuery(luceneQueryString='*:*')
+        self.assertEquals(69, response['total'])
+
+    def executeQuery(self, **queryKwargs):
         header, body = postRequest(port=self.solrClientPort, path='/executeQuery', data=dumps(queryKwargs), parse=False)
         responseType, responseDict = body.split(': ', 1)
-        response = loads(responseDict)
-        self.assertEquals(0, response['total'])
+        self.assertEquals('SolrResponse', responseType)
+        return loads(responseDict)

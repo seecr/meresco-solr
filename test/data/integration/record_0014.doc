@@ -1,0 +1,23 @@
+<doc xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <field name="__id__">record:0014</field>
+  <field name="prov.source">http://localhost:43343/oai</field>
+  <field name="untokenized.dc:language">urn:iso:std:iso:639:-2:eng</field>
+  <field name="sorted.dc:title">collect</field>
+  <field name="untokenized.dc:date">1975</field>
+  <field name="__all__">TEXT</field>
+  <field name="__all__">Collections of the royal castle of Wawel</field>
+  <field name="__all__">1975</field>
+  <field name="__all__">434 p</field>
+  <field name="__all__">31 cm</field>
+  <field name="__all__">http://localhost:43343/oai</field>
+  <field name="__all__">782745520</field>
+  <field name="untokenized.prov.source">http://localhost:43343/oai</field>
+  <field name="dc:title">Collections of the royal castle of Wawel</field>
+  <field name="ppn">782745520</field>
+  <field name="dc:format">31 cm</field>
+  <field name="dc:format">434 p</field>
+  <field name="untokenized.rdf:type">http://dbpedia.org/ontology/Book</field>
+  <field name="dc:date">1975</field>
+  <field name="untokenized.lh:holder">urn:iln:2</field>
+  <field name="sorted.dc:date">1975</field>
+</doc>

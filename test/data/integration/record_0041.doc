@@ -1,0 +1,19 @@
+<doc xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <field name="__id__">record:0041</field>
+  <field name="prov.source">http://webggc.oclc.nl</field>
+  <field name="untokenized.dc:language">urn:iso:std:iso:639:-2:dut</field>
+  <field name="sorted.dc:title">harry s</field>
+  <field name="untokenized.dc:date">19XX</field>
+  <field name="__all__">Harry Sacksioni</field>
+  <field name="__all__">19XX</field>
+  <field name="__all__">gitaar</field>
+  <field name="__all__">http://webggc.oclc.nl</field>
+  <field name="__all__">322337593</field>
+  <field name="untokenized.prov.source">http://webggc.oclc.nl</field>
+  <field name="dc:title">Harry Sacksioni</field>
+  <field name="untokenized.rdf:type">http://dbpedia.org/resource/Sheet_music</field>
+  <field name="ppn">322337593</field>
+  <field name="untokenized.unparsable.dc:date">19XX</field>
+  <field name="dc:date">19XX</field>
+  <field name="untokenized.lh:holder">urn:iln:283</field>
+</doc>

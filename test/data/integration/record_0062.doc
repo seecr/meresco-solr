@@ -1,0 +1,13 @@
+<doc xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <field name="__id__">record:0062</field>
+  <field name="dc:source">seecr</field>
+  <field name="untokenized.dc:language">urn:iso:std:iso:639:-2:dut</field>
+  <field name="sorted.dc:title">waar is</field>
+  <field name="__all__">Waar is Morée vandaag?</field>
+  <field name="__all__">seecr</field>
+  <field name="__all__">seecr</field>
+  <field name="prov.source">seecr</field>
+  <field name="untokenized.prov.source">seecr</field>
+  <field name="dc:title">Waar is Morée vandaag?</field>
+  <field name="untokenized.rdf:type">http://dbpedia.org/resource/Manuscript</field>
+</doc>

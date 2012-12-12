@@ -1,0 +1,30 @@
+<doc xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <field name="__id__">record:0018</field>
+  <field name="prov.source">http://localhost:43343/oai</field>
+  <field name="untokenized.dc:language">urn:iso:std:iso:639:-2:fre</field>
+  <field name="dc:title">Les très riches heures du Bourbonnais</field>
+  <field name="untokenized.dc:date">1975</field>
+  <field name="__all__">TEXT</field>
+  <field name="__all__">Les très riches heures du Bourbonnais</field>
+  <field name="__all__">1975</field>
+  <field name="__all__">Varennes, Jean Charles</field>
+  <field name="__all__">355 p., [8] leaves of plates</field>
+  <field name="__all__">Bourbonnais (France)</field>
+  <field name="__all__">21 cm</field>
+  <field name="__all__">http://localhost:43343/oai</field>
+  <field name="__all__">783064071</field>
+  <field name="dc:creator">Varennes, Jean Charles</field>
+  <field name="untokenized.prov.source">http://localhost:43343/oai</field>
+  <field name="untokenized.dc:subject">Bourbonnais (France)</field>
+  <field name="ppn">783064071</field>
+  <field name="untokenized.dc:creator">Varennes, Jean Charles</field>
+  <field name="untokenized.rdf:type">http://dbpedia.org/ontology/Book</field>
+  <field name="sorted.dc:title">les trè</field>
+  <field name="dc:date">1975</field>
+  <field name="untokenized.lh:holder">urn:iln:2</field>
+  <field name="dc:format">21 cm</field>
+  <field name="dc:format">355 p., [8] leaves of plates</field>
+  <field name="sorted.dc:creator">varennes</field>
+  <field name="sorted.dc:date">1975</field>
+  <field name="dc:subject">Bourbonnais (France)</field>
+</doc>

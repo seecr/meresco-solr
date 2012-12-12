@@ -1,0 +1,26 @@
+<doc xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <field name="__id__">record:0016</field>
+  <field name="prov.source">http://localhost:43343/oai</field>
+  <field name="untokenized.dc:language">urn:iso:std:iso:639:-2:fre</field>
+  <field name="sorted.dc:title">watteau</field>
+  <field name="untokenized.dc:date">1975</field>
+  <field name="__all__">TEXT</field>
+  <field name="__all__">De Watteau à David</field>
+  <field name="__all__">1975</field>
+  <field name="__all__">209 p</field>
+  <field name="__all__">22 cm</field>
+  <field name="__all__">peintures et dessins des musées de province français</field>
+  <field name="__all__">Catalog of exposition held Sept. 27-Nov. 30, 1975</field>
+  <field name="__all__">At head of title: Europalia 75 France</field>
+  <field name="__all__">http://localhost:43343/oai</field>
+  <field name="__all__">782843964</field>
+  <field name="untokenized.prov.source">http://localhost:43343/oai</field>
+  <field name="dc:title">De Watteau à David</field>
+  <field name="ppn">782843964</field>
+  <field name="dc:format">22 cm</field>
+  <field name="dc:format">209 p</field>
+  <field name="untokenized.rdf:type">http://dbpedia.org/ontology/Book</field>
+  <field name="dc:date">1975</field>
+  <field name="untokenized.lh:holder">urn:iln:2</field>
+  <field name="sorted.dc:date">1975</field>
+</doc>

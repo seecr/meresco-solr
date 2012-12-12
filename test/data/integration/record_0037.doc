@@ -1,0 +1,28 @@
+<doc xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <field name="__id__">record:0037</field>
+  <field name="prov.source">http://localhost:43343/oai</field>
+  <field name="untokenized.dc:language">urn:iso:std:iso:639:-2:eng</field>
+  <field name="sorted.dc:title">the cyc</field>
+  <field name="untokenized.dc:date">1894</field>
+  <field name="__all__">TEXT</field>
+  <field name="__all__">The Cyclopaedia of names</field>
+  <field name="__all__">1894</field>
+  <field name="__all__">Smith, Benjamin E.</field>
+  <field name="__all__">vii, 1085 p</field>
+  <field name="__all__">33 cm</field>
+  <field name="__all__">a pronouncing and etymological dictionary of names in geography, biography, mythology, history, ethnology, art, archaeology, fiction, etc., etc., etc.</field>
+  <field name="__all__">http://localhost:43343/oai</field>
+  <field name="__all__">810262517</field>
+  <field name="dc:creator">Smith, Benjamin E.</field>
+  <field name="untokenized.prov.source">http://localhost:43343/oai</field>
+  <field name="dc:title">The Cyclopaedia of names</field>
+  <field name="ppn">810262517</field>
+  <field name="untokenized.dc:creator">Smith, Benjamin E.</field>
+  <field name="untokenized.rdf:type">http://dbpedia.org/ontology/Book</field>
+  <field name="dc:date">1894</field>
+  <field name="untokenized.lh:holder">urn:iln:2</field>
+  <field name="dc:format">33 cm</field>
+  <field name="dc:format">vii, 1085 p</field>
+  <field name="sorted.dc:creator">smith</field>
+  <field name="sorted.dc:date">1894</field>
+</doc>

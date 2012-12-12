@@ -1,0 +1,26 @@
+<doc xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <field name="__id__">record:0039</field>
+  <field name="prov.source">http://localhost:43343/oai</field>
+  <field name="untokenized.dc:language">urn:iso:std:iso:639:-2:eng</field>
+  <field name="sorted.dc:title">catalog</field>
+  <field name="untokenized.dc:date">1961</field>
+  <field name="__all__">TEXT</field>
+  <field name="__all__">Catalogue presenting our holdings in the sixteenth imprints with the principal rare acquisitions in 1961</field>
+  <field name="__all__">1961</field>
+  <field name="__all__">35 p</field>
+  <field name="__all__">in-8</field>
+  <field name="__all__">exhibited in commemoration of the 31th anniversary of Tenri Central Library from Oct. 18, 1961 to Oct. 31, 1961</field>
+  <field name="__all__">Tentoonstellingscatalogus</field>
+  <field name="__all__">http://localhost:43343/oai</field>
+  <field name="__all__">81003283x</field>
+  <field name="untokenized.prov.source">http://localhost:43343/oai</field>
+  <field name="dc:title">Catalogue presenting our holdings in the sixteenth imprints with the principal rare acquisitions in 1961</field>
+  <field name="ppn">81003283x</field>
+  <field name="dc:format">in-8</field>
+  <field name="dc:format">35 p</field>
+  <field name="untokenized.rdf:type">http://dbpedia.org/ontology/Book</field>
+  <field name="dc:date">1961</field>
+  <field name="untokenized.lh:holder">urn:iln:2</field>
+  <field name="untokenized.lh:holder">urn:iln:11</field>
+  <field name="sorted.dc:date">1961</field>
+</doc>

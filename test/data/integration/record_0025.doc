@@ -1,0 +1,28 @@
+<doc xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <field name="__id__">record:0025</field>
+  <field name="prov.source">http://localhost:43343/oai</field>
+  <field name="untokenized.dc:language">urn:iso:std:iso:639:-2:eng</field>
+  <field name="sorted.dc:title">catalog</field>
+  <field name="untokenized.dc:date">1919</field>
+  <field name="__all__">TEXT</field>
+  <field name="__all__">Catalogue of the incunabula in the library of the College of physicians of Philadelphia</field>
+  <field name="__all__">1919</field>
+  <field name="__all__">Fisher, Charles Perry</field>
+  <field name="__all__">ii, 108 p</field>
+  <field name="__all__">24 cm</field>
+  <field name="__all__">Overdruk uit : Annals of medical history, vol. 2, 1 (p. 44-78) en vol. 2, 2 (p. 191-193)</field>
+  <field name="__all__">http://localhost:43343/oai</field>
+  <field name="__all__">803156901</field>
+  <field name="dc:creator">Fisher, Charles Perry</field>
+  <field name="untokenized.prov.source">http://localhost:43343/oai</field>
+  <field name="dc:title">Catalogue of the incunabula in the library of the College of physicians of Philadelphia</field>
+  <field name="ppn">803156901</field>
+  <field name="untokenized.dc:creator">Fisher, Charles Perry</field>
+  <field name="untokenized.rdf:type">http://dbpedia.org/ontology/Book</field>
+  <field name="dc:date">1919</field>
+  <field name="untokenized.lh:holder">urn:iln:2</field>
+  <field name="dc:format">24 cm</field>
+  <field name="dc:format">ii, 108 p</field>
+  <field name="sorted.dc:creator">fisher</field>
+  <field name="sorted.dc:date">1919</field>
+</doc>

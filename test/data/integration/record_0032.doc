@@ -1,0 +1,28 @@
+<doc xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <field name="__id__">record:0032</field>
+  <field name="prov.source">http://localhost:43343/oai</field>
+  <field name="untokenized.dc:language">urn:iso:std:iso:639:-2:ger</field>
+  <field name="sorted.dc:title">rede üb</field>
+  <field name="untokenized.dc:date">1869</field>
+  <field name="__all__">TEXT</field>
+  <field name="__all__">Rede über die Gewissensfreiheit</field>
+  <field name="__all__">1869</field>
+  <field name="__all__">Castelar, Emilio</field>
+  <field name="__all__">28 p</field>
+  <field name="__all__">19 cm</field>
+  <field name="__all__">Gehalten am 5. Mai 1869 in der Sitzung der syanischen Cortes</field>
+  <field name="__all__">http://localhost:43343/oai</field>
+  <field name="__all__">810090449</field>
+  <field name="dc:creator">Castelar, Emilio</field>
+  <field name="untokenized.prov.source">http://localhost:43343/oai</field>
+  <field name="dc:title">Rede über die Gewissensfreiheit</field>
+  <field name="ppn">810090449</field>
+  <field name="untokenized.dc:creator">Castelar, Emilio</field>
+  <field name="untokenized.rdf:type">http://dbpedia.org/ontology/Book</field>
+  <field name="dc:date">1869</field>
+  <field name="untokenized.lh:holder">urn:iln:8</field>
+  <field name="dc:format">19 cm</field>
+  <field name="dc:format">28 p</field>
+  <field name="sorted.dc:creator">castelar</field>
+  <field name="sorted.dc:date">1869</field>
+</doc>

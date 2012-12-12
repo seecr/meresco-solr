@@ -1,0 +1,18 @@
+<doc xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <field name="__id__">record:0051</field>
+  <field name="prov.source">http://data.bibliotheek.nl/gutenberg</field>
+  <field name="untokenized.dc:language">urn:iso:std:iso:639:-2:eng</field>
+  <field name="sorted.dc:title">united</field>
+  <field name="__all__">etext1</field>
+  <field name="__all__">United States Declaration of Independence</field>
+  <field name="__all__">This is the original PG edition.
+See also our revised edition: #16780</field>
+  <field name="__all__">http://data.bibliotheek.nl/gutenberg</field>
+  <field name="dc:identifier">etext1</field>
+  <field name="untokenized.prov.source">http://data.bibliotheek.nl/gutenberg</field>
+  <field name="dc:title">United States Declaration of Independence</field>
+  <field name="untokenized.rdf:type">http://dbpedia.org/ontology/Book</field>
+  <field name="untokenized.rdf:type">http://dbpedia.org/resource/E-book</field>
+  <field name="dc:description">This is the original PG edition.
+See also our revised edition: #16780</field>
+</doc>

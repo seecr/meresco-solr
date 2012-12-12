@@ -1,0 +1,25 @@
+<doc xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <field name="__id__">record:0027</field>
+  <field name="prov.source">http://localhost:43343/oai</field>
+  <field name="untokenized.dc:language">urn:iso:std:iso:639:-2:lat</field>
+  <field name="sorted.dc:title">specime</field>
+  <field name="untokenized.dc:date">1794</field>
+  <field name="__all__">TEXT</field>
+  <field name="__all__">Specimen historico-criticum editionum Italicarum saeculi XV</field>
+  <field name="__all__">1794</field>
+  <field name="__all__">Audiffredi, Giovanni Battista</field>
+  <field name="__all__">in-4</field>
+  <field name="__all__">http://localhost:43343/oai</field>
+  <field name="__all__">803431112</field>
+  <field name="dc:creator">Audiffredi, Giovanni Battista</field>
+  <field name="untokenized.prov.source">http://localhost:43343/oai</field>
+  <field name="dc:title">Specimen historico-criticum editionum Italicarum saeculi XV</field>
+  <field name="ppn">803431112</field>
+  <field name="untokenized.dc:creator">Audiffredi, Giovanni Battista</field>
+  <field name="untokenized.rdf:type">http://dbpedia.org/ontology/Book</field>
+  <field name="dc:date">1794</field>
+  <field name="untokenized.lh:holder">urn:iln:2</field>
+  <field name="dc:format">in-4</field>
+  <field name="sorted.dc:creator">audiffredi</field>
+  <field name="sorted.dc:date">1794</field>
+</doc>

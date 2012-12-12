@@ -99,14 +99,13 @@ class IntegrationState(_IntegrationState):
             exit(1)
 
     def _uploadSolrData(self, dataDir):
-        for f in sorted(glob(join(dataDir, 'solr*.records'))):
-            print 'HIER VERDER'
-            break
-            oaibatchLxml = parse(open(f))
-            for record in xpath(oaibatchLxml, '//oai:record'):
-                print 'Uploading %s' % xpath(record, 'oai:header/oai:identifier/text()')[0]
-                data = lxmltostring(xpath(record, 'oai:metadata/doc')[0])
-                postRequest(port=self.solrPort, path='/solr/%s/update' % self.solrCore, data='<add>%s</add>' % data, contentType='text/xml')
-                postRequest(port=self.solrPort, path='/solr/%s/update' % self.solrCore, data='<commit/>', contentType='text/xml')
-        
+        for docFile in sorted(glob(join(dataDir, '*.doc'))):
+            identifier = basename(docFile).rsplit('.',1)[0]
+            addKwargs=dict(
+                identifier=identifier,
+                data=open(docFile).read(),
+            )
+            header, body = postRequest(port=self.solrClientPort, path='/add', data=dumps(addKwargs), parse=False)
+            assert '' == body, 'Something bad happened:\n' + body
+               
 

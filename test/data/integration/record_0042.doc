@@ -1,0 +1,24 @@
+<doc xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <field name="__id__">record:0042</field>
+  <field name="prov.source">http://webggc.oclc.nl</field>
+  <field name="untokenized.dc:language">urn:iso:std:iso:639:-2:dut</field>
+  <field name="sorted.dc:title">harry p</field>
+  <field name="untokenized.dc:date">2004</field>
+  <field name="__all__">VIDEO</field>
+  <field name="__all__">Harry Potter jaar 1-4</field>
+  <field name="__all__">2004</field>
+  <field name="__all__">[starring] Daniel Radcliffe ... [et al.]</field>
+  <field name="__all__">4-disc dvd box</field>
+  <field name="__all__">http://webggc.oclc.nl</field>
+  <field name="__all__">323615066</field>
+  <field name="dc:creator">[starring] Daniel Radcliffe ... [et al.]</field>
+  <field name="untokenized.prov.source">http://webggc.oclc.nl</field>
+  <field name="dc:title">Harry Potter jaar 1-4</field>
+  <field name="ppn">323615066</field>
+  <field name="untokenized.dc:creator">[starring] Daniel Radcliffe ... [et al.]</field>
+  <field name="untokenized.rdf:type">http://dbpedia.org/ontology/Film</field>
+  <field name="dc:date">2004</field>
+  <field name="untokenized.lh:holder">urn:iln:27</field>
+  <field name="sorted.dc:creator">[starring] daniel radcliffe ... [et al.]</field>
+  <field name="sorted.dc:date">2004</field>
+</doc>

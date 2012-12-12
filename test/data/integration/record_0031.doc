@@ -1,0 +1,29 @@
+<doc xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <field name="__id__">record:0031</field>
+  <field name="prov.source">http://localhost:43343/oai</field>
+  <field name="untokenized.dc:language">urn:iso:std:iso:639:-2:fre</field>
+  <field name="sorted.dc:title">l'impri</field>
+  <field name="untokenized.dc:date">1868</field>
+  <field name="__all__">TEXT</field>
+  <field name="__all__">L'imprimerie à Toulouse au XVe, XVIe et XVIIe siècles</field>
+  <field name="__all__">1868</field>
+  <field name="__all__">Desbarreaux-Bernard, Tibulle</field>
+  <field name="__all__">148, 17 p</field>
+  <field name="__all__">in-8</field>
+  <field name="__all__">Alleen aanwezig dl. 1: Catalogue raisonné des livres imprimés au XVe siècle</field>
+  <field name="__all__">1e uitg.: 1865</field>
+  <field name="__all__">http://localhost:43343/oai</field>
+  <field name="__all__">810017768</field>
+  <field name="dc:creator">Desbarreaux-Bernard, Tibulle</field>
+  <field name="untokenized.prov.source">http://localhost:43343/oai</field>
+  <field name="dc:title">L'imprimerie à Toulouse au XVe, XVIe et XVIIe siècles</field>
+  <field name="ppn">810017768</field>
+  <field name="untokenized.dc:creator">Desbarreaux-Bernard, Tibulle</field>
+  <field name="untokenized.rdf:type">http://dbpedia.org/ontology/Book</field>
+  <field name="dc:date">1868</field>
+  <field name="untokenized.lh:holder">urn:iln:2</field>
+  <field name="dc:format">in-8</field>
+  <field name="dc:format">148, 17 p</field>
+  <field name="sorted.dc:creator">desbarreaux-bernard</field>
+  <field name="sorted.dc:date">1868</field>
+</doc>

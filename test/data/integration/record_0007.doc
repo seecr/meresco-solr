@@ -1,0 +1,36 @@
+<doc xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <field name="__id__">record:0007</field>
+  <field name="prov.source">http://localhost:43343/oai</field>
+  <field name="untokenized.dc:language">urn:iso:std:iso:639:-2:eng</field>
+  <field name="dc:title">Letters and other writings of a Natal Sheriff, Thomas Phipson 1815-76</field>
+  <field name="untokenized.dc:date">1968</field>
+  <field name="__all__">TEXT</field>
+  <field name="__all__">Letters and other writings of a Natal Sheriff, Thomas Phipson 1815-76</field>
+  <field name="__all__">1968</field>
+  <field name="__all__">Phipson, Thomas</field>
+  <field name="__all__">Currey, Ralph Nixon</field>
+  <field name="__all__">xxvii, 248 p</field>
+  <field name="__all__">Natal (South Africa)</field>
+  <field name="__all__">Natal</field>
+  <field name="__all__">22 cm</field>
+  <field name="__all__">http://localhost:43343/oai</field>
+  <field name="__all__">781565766</field>
+  <field name="dc:creator">Phipson, Thomas</field>
+  <field name="dc:creator">Currey, Ralph Nixon</field>
+  <field name="untokenized.prov.source">http://localhost:43343/oai</field>
+  <field name="untokenized.dc:subject">Natal (South Africa)</field>
+  <field name="untokenized.dc:subject">Natal</field>
+  <field name="ppn">781565766</field>
+  <field name="untokenized.dc:creator">Phipson, Thomas</field>
+  <field name="untokenized.dc:creator">Currey, Ralph Nixon</field>
+  <field name="untokenized.rdf:type">http://dbpedia.org/ontology/Book</field>
+  <field name="sorted.dc:title">letters</field>
+  <field name="dc:date">1968</field>
+  <field name="untokenized.lh:holder">urn:iln:2</field>
+  <field name="dc:format">22 cm</field>
+  <field name="dc:format">xxvii, 248 p</field>
+  <field name="sorted.dc:creator">phipson</field>
+  <field name="sorted.dc:date">1968</field>
+  <field name="dc:subject">Natal (South Africa)</field>
+  <field name="dc:subject">Natal</field>
+</doc>

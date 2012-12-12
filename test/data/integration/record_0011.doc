@@ -1,0 +1,31 @@
+<doc xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <field name="__id__">record:0011</field>
+  <field name="prov.source">http://localhost:43343/oai</field>
+  <field name="untokenized.dc:language">urn:iso:std:iso:639:-2:dut</field>
+  <field name="dc:title">De Baerkenhuizen, Anno 1349</field>
+  <field name="untokenized.dc:date">1966</field>
+  <field name="__all__">TEXT</field>
+  <field name="__all__">De Baerkenhuizen, Anno 1349</field>
+  <field name="__all__">1966</field>
+  <field name="__all__">Nieuwkerk Kramer, H G</field>
+  <field name="__all__">15 p</field>
+  <field name="__all__">Doesburg (Netherlands)</field>
+  <field name="__all__">20 cm</field>
+  <field name="__all__">http://localhost:43343/oai</field>
+  <field name="__all__">78240829x</field>
+  <field name="dc:creator">Nieuwkerk Kramer, H G</field>
+  <field name="untokenized.prov.source">http://localhost:43343/oai</field>
+  <field name="untokenized.dc:subject">Doesburg (Netherlands)</field>
+  <field name="ppn">78240829x</field>
+  <field name="untokenized.dc:creator">Nieuwkerk Kramer, H G</field>
+  <field name="untokenized.rdf:type">http://dbpedia.org/ontology/Book</field>
+  <field name="sorted.dc:title">baerken</field>
+  <field name="dc:date">1966</field>
+  <field name="untokenized.lh:holder">urn:iln:12</field>
+  <field name="untokenized.lh:holder">urn:iln:192</field>
+  <field name="dc:format">20 cm</field>
+  <field name="dc:format">15 p</field>
+  <field name="sorted.dc:creator">nieuwkerk kramer</field>
+  <field name="sorted.dc:date">1966</field>
+  <field name="dc:subject">Doesburg (Netherlands)</field>
+</doc>

@@ -1,0 +1,12 @@
+<doc xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <field name="__id__">record:0064</field>
+  <field name="dc:source">seecr</field>
+  <field name="untokenized.dc:language">urn:iso:std:iso:639:-2:dut</field>
+  <field name="isbn">9870136042594</field>
+  <field name="__all__">seecr</field>
+  <field name="__all__">seecr</field>
+  <field name="__all__">9870136042594</field>
+  <field name="prov.source">seecr</field>
+  <field name="untokenized.prov.source">seecr</field>
+  <field name="untokenized.rdf:type">http://dbpedia.org/ontology/Book</field>
+</doc>

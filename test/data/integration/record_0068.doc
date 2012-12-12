@@ -1,0 +1,18 @@
+<doc xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <field name="__id__">record:0068</field>
+  <field name="dc:source">seecr</field>
+  <field name="untokenized.dc:language">urn:iso:std:iso:639:-2:dut</field>
+  <field name="__all__">EAX0118</field>
+  <field name="__all__">40 YORK</field>
+  <field name="__all__">7024</field>
+  <field name="__all__">Boeken</field>
+  <field name="__all__">seecr</field>
+  <field name="__all__">seecr</field>
+  <field name="prov.source">seecr</field>
+  <field name="untokenized.prov.source">seecr</field>
+  <field name="dc:identifier">EAX0118</field>
+  <field name="dc:identifier">40 YORK</field>
+  <field name="dc:identifier">7024</field>
+  <field name="dc:format">Boeken</field>
+  <field name="untokenized.rdf:type">http://dbpedia.org/ontology/Book</field>
+</doc>

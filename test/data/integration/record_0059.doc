@@ -1,0 +1,6 @@
+<doc xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <field name="__id__">record:0059</field>
+  <field name="untokenized.rdf:type">http://purl.org/dc/terms/RightsStatement</field>
+  <field name="untokenized.rdf:type">http://purl.org/dc/terms/RightsStatement</field>
+  <field name="untokenized.dc:language">urn:iso:std:iso:639:-2:dut</field>
+</doc>
