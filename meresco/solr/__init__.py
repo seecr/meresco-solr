@@ -24,3 +24,7 @@
 # 
 ## end license ##
 from solrinterface import SolrInterface
+from fields2solrdoc import Fields2SolrDoc
+
+UNTOKENIZED_PREFIX = 'untokenized.'
+SORTED_PREFIX = 'sorted.'

@@ -30,7 +30,7 @@ from xml.sax.saxutils import escape as escapeXml
 from itertools import chain
 
 class Fields2SolrDoc(Observable):
-    def __init__(self, transactionName, partname, singularValueFields=None):
+    def __init__(self, transactionName, partname="solr", singularValueFields=None):
         Observable.__init__(self)
         self._transactionName = transactionName
         self._partname = partname
