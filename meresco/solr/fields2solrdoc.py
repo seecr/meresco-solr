@@ -30,11 +30,16 @@ from xml.sax.saxutils import escape as escapeXml
 from itertools import chain
 
 class Fields2SolrDoc(Observable):
-    def __init__(self, transactionName, partname="solr", singularValueFields=None):
+    def __init__(self, transactionName, partname="solr", singularValueFields=None, isSingularValueField=None):
         Observable.__init__(self)
         self._transactionName = transactionName
         self._partname = partname
-        self._singularValueFields = set(singularValueFields) if singularValueFields else set()
+        if singularValueFields and isSingularValueField:
+            raise ValueError("Use either 'singularValueFields' or 'isSingularValueField'")
+        self._isSingularValueField = isSingularValueField
+        if singularValueFields:
+            singularValueFields = set(singularValueFields)
+            self._isSingularValueField = lambda name: name in singularValueFields
         self.txs = {}
 
     def begin(self, name):
@@ -47,8 +52,9 @@ class Fields2SolrDoc(Observable):
     def addField(self, name, value):
         tx = self.ctx.tx
         valueList = self.txs[tx.getId()].setdefault(name, [])
-        if len(valueList) == 1 and name in self._singularValueFields:
-            return
+        if not self._isSingularValueField is None:
+            if len(valueList) == 1 and self._isSingularValueField(name):
+                return
         valueList.append(value)
 
     def commit(self, id):

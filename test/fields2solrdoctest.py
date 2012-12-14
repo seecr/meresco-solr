@@ -118,3 +118,22 @@ class Fields2SolrDocTest(SeecrTestCase):
         list(compose(fxf.commit(__callstack_var_tx__.getId())))
         method = observer.calledMethods[0]
         self.assertEquals({'__id__': ['identifier'], 'once':['one'], 'twice': ['one', 'two']}, todict(method.kwargs['data']))
+
+    def testIsSingularValueField(self):
+        __callstack_var_tx__ = Transaction('name') 
+        __callstack_var_tx__.locals['id'] = 'identifier'
+        observer = CallTrace('observer', emptyGeneratorMethods=['add'])
+        fxf = Fields2SolrDoc('name', 'partname', isSingularValueField=lambda name: name == 'once')
+        fxf.addObserver(observer)
+        fxf.begin(name='name')
+        fxf.addField('once', 'one')
+        fxf.addField('once', 'two')
+        fxf.addField('twice', 'one')
+        fxf.addField('twice', 'two')
+        list(compose(fxf.commit(__callstack_var_tx__.getId())))
+        method = observer.calledMethods[0]
+        self.assertEquals({'__id__': ['identifier'], 'once':['one'], 'twice': ['one', 'two']}, todict(method.kwargs['data']))
+
+    def testChooseSingularValueFieldsOrIsSingularValueField(self):
+        self.assertRaises(ValueError, lambda: Fields2SolrDoc('name', singularValueFields=['fields'], isSingularValueField=lambda name: False))
+
