@@ -30,7 +30,7 @@ from meresco.components.statistics import Logger
 from meresco.components.clausecollector import ClauseCollector
 from meresco.solr.solrlucenequerycomposer import SolrLuceneQueryComposer
 
-class CQL2SolrLuceneQuery(Observable, Logger):
+class Cql2SolrLuceneQuery(Observable, Logger):
 
     def __init__(self, unqualifiedFields, name=None):
         Observable.__init__(self, name=name)
@@ -44,3 +44,4 @@ class CQL2SolrLuceneQuery(Observable, Logger):
         ClauseCollector(ast, self.log).visit()
         return self._cqlComposer.compose(ast)
 
+CQL2SolrLuceneQuery = Cql2SolrLuceneQuery

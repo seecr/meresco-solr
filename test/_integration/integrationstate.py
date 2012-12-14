@@ -75,9 +75,6 @@ class IntegrationState(_IntegrationState):
         self._startSolrServer()
         self._createDatabase()
    
-    def tearDown(self):
-        _IntegrationState.tearDown(self)
-
     def _startSolrServer(self):
         self._startServer('solr', self.binPath('start-solr'), 'http://localhost:%s/solr/%s/admin/ping' % (self.solrPort, self.solrCore), port=self.solrPort, stateDir=self.solrStatePath, config=self.configPath)
 

@@ -31,8 +31,6 @@ from os import walk, listdir
 from os.path import join
 data_files = []
 for path, dirs, files in walk('usr-share'):
-    if not files:
-        continue
     data_files.append((path.replace('usr-share', '/usr/share/meresco-solr'), [join(path, f) for f in files]))
 
 setup(

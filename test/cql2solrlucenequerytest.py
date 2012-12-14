@@ -27,7 +27,7 @@
 from unittest import TestCase
 from seecr.test import CallTrace
 from cqlparser import parseString
-from meresco.solr.cql2solrlucenequery import CQL2SolrLuceneQuery
+from meresco.solr.cql2solrlucenequery import Cql2SolrLuceneQuery
 from meresco.core import Observable
 from weightless.core import be, compose
 
@@ -35,9 +35,9 @@ def executeQueryMock(luceneQueryString, *args, **kwargs):
     return
     yield
 
-class CQL2SolrLuceneQueryTest(TestCase):
+class Cql2SolrLuceneQueryTest(TestCase):
     def setUp(self):
-        self.convertor = CQL2SolrLuceneQuery([('field', 1.0)])
+        self.convertor = Cql2SolrLuceneQuery([('field', 1.0)])
         self.observer = CallTrace('Query responder', methods={'executeQuery': executeQueryMock})
         self.dna = be((Observable(),
             (self.convertor, 

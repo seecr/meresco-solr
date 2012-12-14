@@ -38,7 +38,7 @@ from fields2solrdoctest import Fields2SolrDocTest
 from solrinterfacetest import SolrInterfaceTest
 from solrlucenequerycomposertest import SolrLuceneQueryComposerTest
 from servertest import ServerTest
-from cql2solrlucenequerytest import CQL2SolrLuceneQueryTest
+from cql2solrlucenequerytest import Cql2SolrLuceneQueryTest
 
 if __name__ == '__main__':
     main()
