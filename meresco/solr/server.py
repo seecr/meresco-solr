@@ -88,6 +88,10 @@ class Server(object):
             filepath = options if options.startswith('/') else join(self.configBasedir, options)
             self._extendSolrConfig(core=core, lxmlElementList=parse(open(filepath)).xpath('/config/*'))
             return
+        if name == 'additionalSchemaXml':
+            filepath = options if options.startswith('/') else join(self.configBasedir, options)
+            self._extendSchemaXml(core=core, lxmlElementList=parse(open(filepath)).xpath('/schema/*'))
+            return
         if options == False:
             return
         featureFilename = join(usrShareDir, 'solrconfig.d', '%s.xml' % name)
@@ -107,6 +111,14 @@ class Server(object):
         core_sorlconfig = parse(open(solrconfig_file))
         core_sorlconfig.getroot().extend(lxmlElementList)
         open(solrconfig_file, 'w').write(tostring(core_sorlconfig, pretty_print=True, encoding="UTF-8"))
+
+    def _extendSchemaXml(self, core, lxmlElementList):
+        if not lxmlElementList:
+            raise ValueError("No elements found with which to extend the schema.xml")
+        schemaxml_file = join(self.stateDir, 'cores', core, 'conf', 'schema.xml')
+        core_sorlconfig = parse(open(schemaxml_file))
+        core_sorlconfig.getroot().extend(lxmlElementList)
+        open(schemaxml_file, 'w').write(tostring(core_sorlconfig, pretty_print=True, encoding="UTF-8"))
 
     def _setupCoreData(self):
         cores = self.config.keys()

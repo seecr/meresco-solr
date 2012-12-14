@@ -139,6 +139,14 @@ class ServerTest(SeecrTestCase):
 
         self.assertEquals(['option'], solrconfig_xml.xpath("/config/extra/text()"))
 
+    def testSetupSolrConfigWithAdditionalSchemaXml(self):
+        solrDataDir = join(self.tempdir, 'solr-data')
+        open(join(self.tempdir, 'schema.xml'), 'w').write("""<schema><fields><field name="extra"/></fields></schema>""")
+        self._createServer(stateDir=solrDataDir, port=8042, config={'core': {'additionalSchemaXml': join(self.tempdir, 'schema.xml')}})
+        solrconfig_xml = parse(open(join(solrDataDir, 'cores', 'core', 'conf', 'schema.xml')))
+
+        self.assertEquals(1, len(solrconfig_xml.xpath("/schema/fields/field[@name='extra']")))
+
     def testSetupSolrConfigWithAdditionalInvalidSolrConfigShouldRaiseAnError(self):
         solrDataDir = join(self.tempdir, 'solr-data')
         open(join(self.tempdir, 'solrconfig.xml'), 'w').write("""<extra>option</extra>""")
