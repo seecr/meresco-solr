@@ -34,36 +34,31 @@ class Fields2SolrDoc(Observable):
         self._transactionName = transactionName
         self._partname = partname
         self._singularValueFields = set(singularValueFields) if singularValueFields else set()
-        self.txs = {}
 
     def begin(self, name):
         if name != self._transactionName:
             return
         tx = self.ctx.tx
         tx.join(self)
-        self.txs[tx.getId()] = {}
 
     def addField(self, name, value):
         tx = self.ctx.tx
-        valueList = self.txs[tx.getId()].setdefault(name, [])
+        valueList = tx.objectScope(self).setdefault(name, [])
         if len(valueList) == 1 and name in self._singularValueFields:
             return
         valueList.append(value)
 
     def commit(self, id):
-        fields = self.txs.pop(id)
+        tx = self.ctx.tx
+        fields = tx.objectScope(self)
         if not fields:
             return
-
-        tx = self.ctx.tx
         recordIdentifier = tx.locals["id"]
         specialFields = [
             ('__id__', recordIdentifier), 
         ] 
         def fieldStatement(key, value):
             return '<field name="%s">%s</field>' % (escapeXml(key), escapeXml(value))
-        allFields = ((k,v) for k,vs in fields.items() for v in vs)
-
+        allFields = ((k, v) for k, vs in fields.items() for v in vs)
         xml = "<doc xmlns=''>%s</doc>" % ''.join(fieldStatement(*args) for args in chain(iter(specialFields), allFields))
         yield self.all.add(identifier=recordIdentifier, partname=self._partname, data=xml)
-
