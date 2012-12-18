@@ -48,7 +48,7 @@ class SolrInterfaceTest(TestCase):
         list(interface.add(identifier="recordId", partname="ignored", data="<record><data>recordData</data></record>"))
         self.assertEquals(1, len(sendData))
         self.assertEquals(('/solr/THE_CORE/update?commitWithin=1000', '<add><record><data>recordData</data></record></add>'), sendData[0])
-        total, hits, (path, body) = self.executeQuery("meresco.exists:true", start=5, stop=10, sortKeys=[dict(sortBy="field", sortDescending=True)], response=RESPONSE, solrInterface=interface)
+        response, (path, body) = self.executeQueryResponse("meresco.exists:true", start=5, stop=10, sortKeys=[dict(sortBy="field", sortDescending=True)], response=RESPONSE, solrInterface=interface)
         self.assertEquals(path, "/solr/THE_CORE/select")
         self.assertQueryArguments("q=meresco.exists%3Atrue&start=5&rows=5&sort=field+desc", body)
 
@@ -124,11 +124,11 @@ class SolrInterfaceTest(TestCase):
             self.assertEquals('Value commitTimeout should be greater then zero', str(e))
 
     def testExecuteQuery(self):
-        total, hits, (path, body) = self.executeQuery("meresco.exists:true", start=0, stop=10, sortKeys=None, response=RESPONSE) 
+        response, (path, body) = self.executeQueryResponse("meresco.exists:true", start=0, stop=10, sortKeys=None, response=RESPONSE) 
         self.assertEquals("/solr/select", path)
         self.assertQueryArguments("q=meresco.exists%3Atrue&start=0&rows=10", body)
-        self.assertEquals(3, total)
-        self.assertEquals(['1','3','5'], hits)
+        self.assertEquals(3, response.total)
+        self.assertEquals(['1','3','5'], response.hits)
 
     def testPrefixSearch(self):
         response, (path, body) = self.executePrefixSearch(prefix="ho", field="afield", response=TERMS_PREFIX_RESPONSE) 
@@ -144,42 +144,44 @@ class SolrInterfaceTest(TestCase):
         self.assertQueryArguments('terms.limit=5&terms.prefix=ho&terms.fl=afield', body)
 
     def testExecuteEmptyQuery(self):
-        self.assertRaises(ValueError, self.executeQuery, '', response=RESPONSE)
+        self.assertRaises(ValueError, self.executeQueryResponse, '', response=RESPONSE)
 
     def testExecuteQueryWithStartStopAndSortKeys(self):
-        total, hits, (path, body) = self.executeQuery("meresco.exists:true", start=5, stop=10, sortKeys=[dict(sortBy="field", sortDescending=True), dict(sortBy="anotherfield", sortDescending=False)], response=RESPONSE)
+        response, (path, body) = self.executeQueryResponse("meresco.exists:true", start=5, stop=10, sortKeys=[dict(sortBy="field", sortDescending=True), dict(sortBy="anotherfield", sortDescending=False)], response=RESPONSE)
         self.assertEquals("/solr/select", path)
         self.assertQueryArguments("q=meresco.exists%3Atrue&start=5&rows=5&sort=field+desc,anotherfield+asc", body)
-        self.assertEquals(3, total)
-        self.assertEquals(['1','3','5'], hits)
+        self.assertEquals(3, response.total)
+        self.assertEquals(['1','3','5'], response.hits)
 
     def testExecuteQuerySortAscending(self):
-        total, hits, (path, body) = self.executeQuery("meresco.exists:true", start=0, stop=10, sortKeys=[dict(sortBy="field", sortDescending=False)], response=RESPONSE)
+        response, (path, body) = self.executeQueryResponse("meresco.exists:true", start=0, stop=10, sortKeys=[dict(sortBy="field", sortDescending=False)], response=RESPONSE)
         self.assertEquals("/solr/select", path)
         self.assertQueryArguments("q=meresco.exists%3Atrue&start=0&rows=10&sort=field+asc", body)
-        self.assertEquals(3, total)
-        self.assertEquals(['1','3','5'], hits)
+        self.assertEquals(3, response.total)
+        self.assertEquals(['1','3','5'], response.hits)
 
     def testDrilldown(self):
-        total, hits, drilldownData, (path, body) = self.executeQuery("meresco.exists:true", fieldnamesAndMaximums=[('__all__', 5, False), ('__other__', 5, False)], response=RESPONSE % FACET_COUNTS)
-        result = dict(drilldownData)
+        response, (path, body) = self.executeQueryResponse("meresco.exists:true", fieldnamesAndMaximums=[('__all__', 5, False), ('__other__', 5, False)], response=RESPONSE % FACET_COUNTS)
         self.assertEquals("/solr/select", path)
         self.assertQueryArguments("facet.mincount=1&q=meresco.exists%3Atrue&start=0&rows=10&facet=on&facet.field=__all__&f.__all__.facet.sort=index&f.__all__.facet.limit=5&facet.field=__other__&f.__other__.facet.limit=5&f.__other__.facet.sort=index", body)
-        self.assertEquals(3, total)
-        self.assertEquals(['1', '3', '5'], hits)
-        self.assertEquals(['__all__', '__other__'], result.keys())
-        self.assertEquals([("term_0", 1), ("term_1", 2)], list(result['__all__']))
-        self.assertEquals([("term_2", 3), ("term_3", 4)], list(result['__other__']))
+        self.assertEquals(3, response.total)
+        self.assertEquals(['1', '3', '5'], response.hits)
+        self.assertEquals(['__all__', '__other__'], [f for f, termCounts in response.drilldownData])
+        self.assertEquals(set(['__all__', '__other__']), set(response.drilldownDict.keys()))
+        self.assertEquals([("term_0", 1), ("term_1", 2)], list(response.drilldownDict['__all__']))
+        for fieldname, termCounts in response.drilldownData:
+            if fieldname == '__other__':
+                otherTermCounts = termCounts
+        self.assertEquals([("term_2", 3), ("term_3", 4)], list(termCounts))
 
     def testDrilldownOnSameFieldTwice(self):
-        total, hits, drilldownData, (path, body) = self.executeQuery("meresco.exists:true", fieldnamesAndMaximums=[('__all__', 5, False), ('__all__', 5, False)], response=RESPONSE % FACET_COUNTS_SAME_FIELD_TWICE)
+        response, (path, body) = self.executeQueryResponse("meresco.exists:true", fieldnamesAndMaximums=[('__all__', 5, False), ('__all__', 5, False)], response=RESPONSE % FACET_COUNTS_SAME_FIELD_TWICE)
         self.assertQueryArguments("facet.mincount=1&q=meresco.exists%3Atrue&start=0&rows=10&facet=on&facet.field=__all__&f.__all__.facet.sort=index&f.__all__.facet.limit=5&facet.field=__all__&f.__all__.facet.limit=5&f.__all__.facet.sort=index", body)
-        self.assertEquals(3, total)
-        self.assertEquals(['1', '3', '5'], hits)
-        self.assertEquals(2, len(drilldownData))
-        result = dict(drilldownData)
-        self.assertEquals(['__all__'], result.keys())
-        self.assertEquals([("term_0", 1), ("term_1", 2)], list(result['__all__']))
+        self.assertEquals(3, response.total)
+        self.assertEquals(['1', '3', '5'], response.hits)
+        self.assertEquals(2, len(response.drilldownData))
+        self.assertEquals(['__all__'], response.drilldownDict.keys())
+        self.assertEquals([("term_0", 1), ("term_1", 2)], list(response.drilldownDict['__all__']))
 
     def testExecuteQuerySolrHostFromObserver(self):
         solrInterface = SolrInterface()
@@ -228,10 +230,10 @@ class SolrInterfaceTest(TestCase):
         self.assertEquals(6, response.queryTime)
 
     def testSolrGivesSpellCheckResults(self):
-        total, hits, suggestions, (path, body) = self.executeQuery(query="__all__:aap AND __all__:bo", response=RESPONSE % SUGGESTIONS, suggestionsCount=2, suggestionsQuery="aap AND bo")
+        response, (path, body) = self.executeQueryResponse(query="__all__:aap AND __all__:bo", response=RESPONSE % SUGGESTIONS, suggestionsCount=2, suggestionsQuery="aap AND bo")
         self.assertQueryArguments('spellcheck.count=2&rows=10&spellcheck=true&spellcheck.q=aap+AND+bo&q=__all__%3Aaap+AND+__all__%3Abo&start=0', body)
-        self.assertEquals(['1','3','5'], hits)
-        self.assertEquals({'aap': (0, 3, ['aapje', 'raap']), 'bo': (8, 10, ['bio', 'bon'])}, suggestions)
+        self.assertEquals(['1','3','5'], response.hits)
+        self.assertEquals({'aap': (0, 3, ['aapje', 'raap']), 'bo': (8, 10, ['bio', 'bon'])}, response.suggestions)
 
     def testFieldnames(self):
         readData = []
@@ -248,9 +250,9 @@ class SolrInterfaceTest(TestCase):
         self.assertEquals(['__all__', '__exists__', '__id__', '__timestamp__', 'field0', 'field1', 'untokenized.field0'], response.hits)
 
     def testPassFilterQuery(self):
-        total, hits, (path, body) = self.executeQuery("*", filterQuery="field:value", response=RESPONSE) 
+        response, (path, body) = self.executeQueryResponse("*", filterQuery="field:value", response=RESPONSE) 
         self.assertQueryArguments("q=*&fq=field:value&start=0&rows=10", body)
-        total, hits, (path, body) = self.executeQuery("*", filterQuery="field:http\://host.nl", response=RESPONSE) 
+        response, (path, body) = self.executeQueryResponse("*", filterQuery="field:http\://host.nl", response=RESPONSE) 
         self.assertQueryArguments("q=*&fq=field:http\://host.nl&start=0&rows=10", body)
 
     def executeQueryResponse(self, query, response, solrInterface=None, **kwargs):
@@ -266,7 +268,7 @@ class SolrInterfaceTest(TestCase):
             gen.send(response)
         except StopIteration, e:
             (response,) = e.args 
-            return response, sendData
+            return response, sendData[0]
 
     def executePrefixSearch(self, response, solrInterface=None, **kwargs):
         if solrInterface is None:
@@ -283,16 +285,6 @@ class SolrInterfaceTest(TestCase):
             (response,) = e.args 
             return response, sendData[0]
     
-    def executeQuery(self, query, response, solrInterface=None, **kwargs):
-        response, sendData = self.executeQueryResponse(query, response, solrInterface=solrInterface, **kwargs)
-        result = [response.total, response.hits]
-        if getattr(response, 'drilldownData', None) is not None:
-            result.append(response.drilldownData)
-        if getattr(response, 'suggestions', None) is not None:
-            result.append(response.suggestions)
-        result.append(sendData[0])
-        return result
-
     def _returnValueFromGenerator(self, g, serverResponses, responseStatus='200'):
         for response in serverResponses:
             s = g.next()

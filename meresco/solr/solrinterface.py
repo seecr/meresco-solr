@@ -171,6 +171,7 @@ def _updateResponseWithDrilldownData(arguments, xml, response):
         drilldownResult = facet_fields.xpath('int')
         drilldownData.append((facet_fields.attrib["name"], ((termCount.attrib['name'], int(termCount.text)) for termCount in drilldownResult)))
     response.drilldownData = drilldownData
+    response.drilldownDict = dict(drilldownData)
 
 def _updateResponseWithSuggestionData(arguments, xml, response):
     suggestions = {}
