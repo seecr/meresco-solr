@@ -1,0 +1,132 @@
+Changeset created on Mon Dec 17 16:03:06 UTC 2012 by Seecr (Seek You Too B.V.)
+
+Description: Fixed memory leak by using Transaction.objectScope
+
+    A memory leak occurred when transactions were terminated without committing. By keeping
+    all fields on the transaction object itself these will be garbage collected automatically.
+
+Baseline version: 4.1.10
+
+From 9f2fb22ba01b09453b6327c27159ec803b4cdaf7 Mon Sep 17 00:00:00 2001
+From: Seecr Development Team <development@seecr.nl>
+Date: Mon, 17 Dec 2012 16:55:13 +0100
+Subject: [PATCH] HM/JPM: fixed memory leak (depends on new meresco-core)
+
+---
+ deps.txt                       |    2 +-
+ meresco/solr/fields2solrdoc.py |   13 ++++---------
+ test/fields2solrdoctest.py     |   25 +++++++++++++------------
+ 3 files changed, 18 insertions(+), 22 deletions(-)
+
+diff --git a/deps.txt b/deps.txt
+index cc3bafa..61e5197 100644
+--- a/deps.txt
++++ b/deps.txt
+@@ -1,6 +1,6 @@
+ python-meresco-components (>= 4.0)
+ python-meresco-components (<< 4.4)
+-python-meresco-core (>= 4.0)
++python-meresco-core (>= 4.0.3)
+ python-meresco-core (<< 4.1)
+ python-cqlparser (>= 1.7)
+ python-cqlparser (< 1.8)
+diff --git a/meresco/solr/fields2solrdoc.py b/meresco/solr/fields2solrdoc.py
+index 6dc9768..b1d0434 100644
+--- a/meresco/solr/fields2solrdoc.py
++++ b/meresco/solr/fields2solrdoc.py
+@@ -34,36 +34,31 @@ class Fields2SolrDoc(Observable):
+         self._transactionName = transactionName
+         self._partname = partname
+         self._singularValueFields = set(singularValueFields) if singularValueFields else set()
+-        self.txs = {}
+ 
+     def begin(self, name):
+         if name != self._transactionName:
+             return
+         tx = self.ctx.tx
+         tx.join(self)
+-        self.txs[tx.getId()] = {}
+ 
+     def addField(self, name, value):
+         tx = self.ctx.tx
+-        valueList = self.txs[tx.getId()].setdefault(name, [])
++        valueList = tx.objectScope(self).setdefault(name, [])
+         if len(valueList) == 1 and name in self._singularValueFields:
+             return
+         valueList.append(value)
+ 
+     def commit(self, id):
+-        fields = self.txs.pop(id)
++        tx = self.ctx.tx
++        fields = tx.objectScope(self)
+         if not fields:
+             return
+-
+-        tx = self.ctx.tx
+         recordIdentifier = tx.locals["id"]
+         specialFields = [
+             ('__id__', recordIdentifier), 
+         ] 
+         def fieldStatement(key, value):
+             return '<field name="%s">%s</field>' % (escapeXml(key), escapeXml(value))
+-        allFields = ((k,v) for k,vs in fields.items() for v in vs)
+-
++        allFields = ((k, v) for k, vs in fields.items() for v in vs)
+         xml = "<doc xmlns=''>%s</doc>" % ''.join(fieldStatement(*args) for args in chain(iter(specialFields), allFields))
+         yield self.all.add(identifier=recordIdentifier, partname=self._partname, data=xml)
+-
+diff --git a/test/fields2solrdoctest.py b/test/fields2solrdoctest.py
+index dc9eee5..aa122a6 100644
+--- a/test/fields2solrdoctest.py
++++ b/test/fields2solrdoctest.py
+@@ -32,23 +32,12 @@ from weightless.core import be, compose
+ from StringIO import StringIO
+ from lxml.etree import parse
+ 
+-def add(identifier, partname, data):
+-    return
+-    yield
+-
+-def todict(data):
+-    result = {}
+-    for field in parse(StringIO(data)).xpath('/doc/field'):
+-        result.setdefault(field.attrib['name'], []).append(field.text)
+-    return result
+ 
+ class Fields2SolrDocTest(SeecrTestCase):
+-
+     def setUp(self):
+         SeecrTestCase.setUp(self)
+-
+         ctx = CallTrace('CTX')
+-        tx = CallTrace('TX')
++        tx = Transaction('TX')
+         tx.locals = {'id': 'iden&tifier'}
+         tx.name = "tsName"
+         self.fxf = Fields2SolrDoc("tsName", "fields-partname")
+@@ -62,6 +51,7 @@ class Fields2SolrDocTest(SeecrTestCase):
+         self.fxf.addField("field_one", "valueOne")
+         self.fxf.addField("field_one", "anotherValueOne")
+         self.fxf.addField("field_two", "value<Two>")
++        self.assertEquals({'field_one': ['valueOne', 'anotherValueOne'], 'field_two': ['value<Two>']}, self.fxf.ctx.tx.objectScope(self.fxf))
+         list(compose(self.fxf.commit(self.fxf.ctx.tx.getId())))
+         self.assertEquals(["add"], [m.name for m in self.observer.calledMethods])
+         kwargs = self.observer.calledMethods[0].kwargs
+@@ -117,3 +107,14 @@ class Fields2SolrDocTest(SeecrTestCase):
+         list(compose(fxf.commit(__callstack_var_tx__.getId())))
+         method = observer.calledMethods[0]
+         self.assertEquals({'__id__': ['identifier'], 'once':['one'], 'twice': ['one', 'two']}, todict(method.kwargs['data']))
++
++
++def add(identifier, partname, data):
++    return
++    yield
++
++def todict(data):
++    result = {}
++    for field in parse(StringIO(data)).xpath('/doc/field'):
++        result.setdefault(field.attrib['name'], []).append(field.text)
++    return result
+-- 
+1.7.2.5
+

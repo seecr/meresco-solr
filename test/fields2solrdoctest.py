@@ -33,23 +33,12 @@ from weightless.core import be, compose
 from StringIO import StringIO
 from lxml.etree import parse
 
-def add(identifier, partname, data):
-    return
-    yield
-
-def todict(data):
-    result = {}
-    for field in parse(StringIO(data)).xpath('/doc/field'):
-        result.setdefault(field.attrib['name'], []).append(field.text)
-    return result
 
 class Fields2SolrDocTest(SeecrTestCase):
-
     def setUp(self):
         SeecrTestCase.setUp(self)
-
         ctx = CallTrace('CTX')
-        tx = CallTrace('TX')
+        tx = Transaction('TX')
         tx.locals = {'id': 'iden&tifier'}
         tx.name = "tsName"
         self.fxf = Fields2SolrDoc("tsName", "fields-partname")
@@ -63,6 +52,7 @@ class Fields2SolrDocTest(SeecrTestCase):
         self.fxf.addField("field_one", "valueOne")
         self.fxf.addField("field_one", "anotherValueOne")
         self.fxf.addField("field_two", "value<Two>")
+        self.assertEquals({'field_one': ['valueOne', 'anotherValueOne'], 'field_two': ['value<Two>']}, self.fxf.ctx.tx.objectScope(self.fxf))
         list(compose(self.fxf.commit(self.fxf.ctx.tx.getId())))
         self.assertEquals(["add"], [m.name for m in self.observer.calledMethods])
         kwargs = self.observer.calledMethods[0].kwargs
@@ -137,3 +127,13 @@ class Fields2SolrDocTest(SeecrTestCase):
     def testChooseSingularValueFieldsOrIsSingularValueField(self):
         self.assertRaises(ValueError, lambda: Fields2SolrDoc('name', singularValueFields=['fields'], isSingularValueField=lambda name: False))
 
+
+def add(identifier, partname, data):
+    return
+    yield
+
+def todict(data):
+    result = {}
+    for field in parse(StringIO(data)).xpath('/doc/field'):
+        result.setdefault(field.attrib['name'], []).append(field.text)
+    return result
