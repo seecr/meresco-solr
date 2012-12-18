@@ -71,7 +71,11 @@ Example config:
 
 if __name__ == '__main__':
     args = argv[1:]
-    options, arguments = parseArguments(args)
+    try:
+        options, arguments = parseArguments(args)
+    except ValueError, e:
+        print e
+        exit(1)
 
     if Popen(["java -version 2>&1 | grep 'libgcj' > /dev/null 2>&1"], shell=True).wait() == 0:
         print "Don't use GCJ as the default java JRE."
