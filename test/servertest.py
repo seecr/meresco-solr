@@ -26,12 +26,11 @@
 # 
 ## end license ##
 
-from StringIO import StringIO
-from os import mkdir, listdir, system
-from os.path import join, dirname, abspath, basename, isdir
+from os import mkdir, listdir, system, makedirs
+from os.path import join, dirname, abspath, isdir
 from shutil import rmtree
 from simplejson import dump as jsonDump
-from lxml.etree import parse, tostring
+from lxml.etree import parse
 
 from meresco.solr.server import Server
 
@@ -76,6 +75,8 @@ class ServerTest(SeecrTestCase):
     def testSetupSolrTwiceConfig(self):
         solrDataDir = join(self.tempdir, 'solr-data')
         self._createServer(stateDir=solrDataDir, port=8042, config={'core1': {}})
+        makedirs(join(solrDataDir, 'cores', 'core1', 'data'))
+        self.assertEquals(['data', 'conf'], listdir(join(solrDataDir, 'cores', 'core1')))
         self._createServer(stateDir=solrDataDir, port=8042, config={'core1': {}, 'córë2': {}})
         self.assertEquals(set(['contexts', 'cores', 'start.config', 'solr.xml', 'etc']), set(listdir(solrDataDir)))
         self.assertEquals(set(['webdefault.xml', 'jetty.xml']), set(listdir(join(solrDataDir, 'etc'))))
@@ -105,6 +106,8 @@ class ServerTest(SeecrTestCase):
 
         schema_core2_xml = parse(open(join(solrDataDir, 'cores', 'córë2', 'conf', 'schema.xml')))
         self.assertEquals(['meresco-córë2'], schema_core2_xml.xpath("/schema/@name"))
+
+        self.assertEquals(['data', 'conf'], listdir(join(solrDataDir, 'cores', 'core1')))
 
     def testSetupSolrConfigWithAutocomplete(self):
         solrDataDir = join(self.tempdir, 'solr-data')

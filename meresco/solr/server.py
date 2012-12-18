@@ -128,8 +128,11 @@ class Server(object):
         for core in cores:
             SubElement(coresElement, "core", attrib={'name': unicode(core), 'instanceDir': join('cores', unicode(core))})
             coreDir = join(self.stateDir, 'cores', core)
-            isdir(coreDir) and rmtree(coreDir)
-            copytree(join(usrShareDir, 'core-data'), coreDir)
+            if not isdir(coreDir):
+                makedirs(coreDir)
+            confDir = join(coreDir, 'conf')
+            isdir(confDir) and rmtree(confDir)
+            copytree(join(usrShareDir, 'core-data', 'conf'), confDir)
             schema_xml_path = join(coreDir, 'conf', 'schema.xml')
             schema_xml = parse(open(schema_xml_path))
             schema_xml.xpath("/schema")[0].attrib['name'] = unicode("meresco-%s" % core)
@@ -145,7 +148,7 @@ class Server(object):
 
     def _setupStartConfig(self):
         startConfigPath = join(self.stateDir, 'start.config')
-        startConfig = oldStartConfig = open(startConfigPath).read()
+        startConfig = open(startConfigPath).read()
         startConfig = compile('^jetty\.home=.*$', flags=MULTILINE).sub('jetty.home=' + self.stateDir, startConfig)
         startConfig = compile('^jetty\.lib=.*$', flags=MULTILINE).sub('jetty.lib=/usr/share/java/solr%s' % SOLR_VERSION, startConfig)
         open(startConfigPath, 'w').write(startConfig)
@@ -166,4 +169,3 @@ class Server(object):
 
     def _execvp(self, *args, **kwargs):
         execvp(*args, **kwargs)
-
