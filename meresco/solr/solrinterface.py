@@ -33,6 +33,7 @@ from time import sleep
 from xml.sax.saxutils import escape as escapeXml
 from weightless.http import httpget, httppost
 from meresco.core import Observable
+from warnings import warn
 
 from solrresponse import SolrResponse
 
@@ -71,7 +72,9 @@ class SolrInterface(Observable):
         path += "?commitWithin=%d" % self._commitWithin
         yield self._send(path=path, body="<delete><id>%s</id></delete>" % escapeXml(identifier))
 
-    def executeQuery(self, luceneQueryString, start=0, stop=10, sortKeys=None, fieldnamesAndMaximums=None, suggestionsCount=0, suggestionsQuery=None, filterQuery=None, **kwargs):
+    def executeQuery(self, luceneQueryString, start=0, stop=10, sortKeys=None, fieldnamesAndMaximums=None, suggestionsCount=0, suggestionsQuery=None, filterQuery=None, facets=None, **kwargs):
+        if fieldnamesAndMaximums:
+            warn("fieldnamesAndMaximums is deprecated. Please use facets")
         if not luceneQueryString:
             raise ValueError("Empty luceneQueryString not allowed.")
         arguments = dict(
@@ -84,6 +87,7 @@ class SolrInterface(Observable):
         if filterQuery:
             arguments['fq'] = filterQuery
 
+        arguments.update(_facetArguments(facets))
         arguments.update(_drilldownArguments(fieldnamesAndMaximums))
         if suggestionsCount > 0 and suggestionsQuery:
             arguments["spellcheck"] = 'true'
@@ -97,7 +101,7 @@ class SolrInterface(Observable):
         identifiers = xml.xpath('/response/result/doc/str[@name="__id__"]/text()')
         qtime = int(xml.xpath('/response/lst[@name="responseHeader"]/int[@name="QTime"]/text()')[0])
         response = SolrResponse(total=recordCount, hits=identifiers, queryTime=qtime)
-        if fieldnamesAndMaximums is not None:
+        if not (fieldnamesAndMaximums or facets) is None:
             _updateResponseWithDrilldownData(arguments, xml, response)
         if suggestionsCount > 0 and suggestionsQuery:
             _updateResponseWithSuggestionData(arguments, xml, response)
@@ -152,6 +156,32 @@ class SolrInterface(Observable):
     def _solrServer(self):
         return (self._host, self._port) if self._host else self.call.solrServer()
 
+def _facetArguments(facets):
+    def facetLimit(facet):
+        maxTerms = facet.get('maxTerms', None)
+        arguments.setdefault('f.%s.facet.limit' % facet['field'], []).append(maxTerms if maxTerms else -1)
+
+    def facetSort(facet):
+        sortByTerm = facet.get('sortByTerm', None)
+        if sortByTerm is not None:
+            arguments.setdefault('f.%s.facet.sort' % facet['field'], []).append('index' if sortByTerm else 'count')
+
+    arguments = {}
+    if facets is not None:
+        arguments['facet'] = "on"
+        arguments['facet.mincount'] = "1"
+        arguments['facet.field'] = []
+        for facet in facets:
+            if isinstance(facet, dict):
+                arguments['facet.field'].append(facet['field'])
+                facetLimit(facet)
+                facetSort(facet)
+            else:
+                arguments["facet.pivot"] = ','.join(f['field'] for f in facet)
+                for f in facet:
+                    facetLimit(f)
+                    facetSort(f)
+    return arguments
 
 def _drilldownArguments(fieldnamesAndMaximums):
     arguments = {}
@@ -159,10 +189,10 @@ def _drilldownArguments(fieldnamesAndMaximums):
         arguments['facet'] = "on"
         arguments['facet.mincount'] = "1"
         arguments['facet.field'] = []
-        for fieldname, maximumResults, howToSort in fieldnamesAndMaximums:
+        for fieldname, maxTerms, sortedByTermCount in fieldnamesAndMaximums:
             arguments['facet.field'].append(fieldname)
-            arguments.setdefault('f.%s.facet.limit' % fieldname, []).append(-1 if maximumResults == 0 else maximumResults)
-            arguments.setdefault('f.%s.facet.sort' % fieldname, []).append('count' if howToSort else 'index')
+            arguments.setdefault('f.%s.facet.limit' % fieldname, []).append(-1 if maxTerms == 0 else maxTerms)
+            arguments.setdefault('f.%s.facet.sort' % fieldname, []).append('count' if sortedByTermCount else 'index')
     return arguments
 
 def _updateResponseWithDrilldownData(arguments, xml, response):

@@ -183,6 +183,30 @@ class SolrInterfaceTest(TestCase):
         self.assertEquals(['__all__'], response.drilldownDict.keys())
         self.assertEquals([("term_0", 1), ("term_1", 2)], list(response.drilldownDict['__all__']))
 
+    def testPivotDrilldown(self):
+        response, (path, body) = self.executeQueryResponse("meresco.exists:true", facets=[
+                [
+                    {'field': '__all__', 'sortByTerm': True},
+                    {'field': '__other__', 'maxTerms': 5}
+                ], 
+                {'field': '__field1__', 'maxTerms': 2, 'sortByTerm': False},
+                {'field': '__field2__', 'maxTerms': None}
+            ], response=RESPONSE % FACET_COUNTS)
+        arguments = parse_qs(body, keep_blank_values=True)
+        self.assertEquals(['1'], arguments['facet.mincount'])
+        self.assertEquals(['meresco.exists:true'], arguments['q'])
+        self.assertEquals(['0'], arguments['start'])
+        self.assertEquals(['10'], arguments['rows'])
+        self.assertEquals(['on'], arguments['facet'])
+        self.assertEquals(['__all__,__other__'], arguments['facet.pivot'])
+        self.assertEquals(['__field1__', '__field2__'], arguments['facet.field'])
+        self.assertEquals(['count'], arguments['f.__field1__.facet.sort'])
+        self.assertEquals(['index'], arguments['f.__all__.facet.sort'])
+        self.assertEquals(['2'], arguments['f.__field1__.facet.limit'])
+        self.assertEquals(['-1'], arguments['f.__all__.facet.limit'])
+        self.assertEquals(['5'], arguments['f.__other__.facet.limit'])
+        self.assertEquals(['-1'], arguments['f.__field2__.facet.limit'])
+
     def testExecuteQuerySolrHostFromObserver(self):
         solrInterface = SolrInterface()
         observer = CallTrace(returnValues={'solrServer': ('localhost', 1234)})
