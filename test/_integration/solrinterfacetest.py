@@ -59,8 +59,9 @@ class SolrInterfaceTest(IntegrationTestCase):
 
     def testPivoting(self):
         response = self.executeQuery(luceneQueryString='*:*', facets=[
-            [{'field': 'untokenized.rdf:type'}, {'field': 'untokenized.dc:date'}]            
+            [{'field': 'untokenized.rdf:type'}, {'field': 'untokenized.dc:date', 'maxTerms': 4}]            
         ])
+        self.assertEquals({}, response)
 
     def executeQuery(self, **queryKwargs):
         header, body = postRequest(port=self.solrClientPort, path='/executeQuery', data=dumps(queryKwargs), parse=False)

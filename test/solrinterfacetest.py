@@ -25,20 +25,17 @@
 # 
 ## end license ##
 
-from unittest import TestCase
-
 from cgi import parse_qs
 
 from weightless.core import compose
 from weightless.io import Suspend
 from meresco.core import Observable
 from meresco.solr.solrinterface import SolrInterface
-from seecr.test import CallTrace
+from seecr.test import CallTrace, SeecrTestCase
 
-
-class SolrInterfaceTest(TestCase):
+class SolrInterfaceTest(SeecrTestCase):
     def setUp(self):
-        TestCase.setUp(self)
+        SeecrTestCase.setUp(self)
         self._solrInterface = SolrInterface("localhost", 8888)
 
     def testCoreSupport(self):
@@ -48,9 +45,9 @@ class SolrInterfaceTest(TestCase):
         list(interface.add(identifier="recordId", partname="ignored", data="<record><data>recordData</data></record>"))
         self.assertEquals(1, len(sendData))
         self.assertEquals(('/solr/THE_CORE/update?commitWithin=1000', '<add><record><data>recordData</data></record></add>'), sendData[0])
-        response, (path, body) = self.executeQueryResponse("meresco.exists:true", start=5, stop=10, sortKeys=[dict(sortBy="field", sortDescending=True)], response=RESPONSE, solrInterface=interface)
+        response, (path, body) = self.executeQueryResponse("meresco.exists:true", start=5, stop=10, sortKeys=[dict(sortBy="field", sortDescending=True)], response=JSON_RESPONSE % "", solrInterface=interface)
         self.assertEquals(path, "/solr/THE_CORE/select")
-        self.assertQueryArguments("q=meresco.exists%3Atrue&start=5&rows=5&sort=field+desc", body)
+        self.assertQueryArguments("q=meresco.exists%3Atrue&start=5&rows=5&sort=field+desc&wt=json", body)
 
     def testAdd(self):
         g = compose(self._solrInterface.add(identifier="recordId", partname="ignored", data="<record><data>recordData</data></record>"))
@@ -124,9 +121,9 @@ class SolrInterfaceTest(TestCase):
             self.assertEquals('Value commitTimeout should be greater then zero', str(e))
 
     def testExecuteQuery(self):
-        response, (path, body) = self.executeQueryResponse("meresco.exists:true", start=0, stop=10, sortKeys=None, response=RESPONSE) 
+        response, (path, body) = self.executeQueryResponse("meresco.exists:true", start=0, stop=10, sortKeys=None, response=JSON_RESPONSE % "") 
         self.assertEquals("/solr/select", path)
-        self.assertQueryArguments("q=meresco.exists%3Atrue&start=0&rows=10", body)
+        self.assertQueryArguments("q=meresco.exists%3Atrue&start=0&rows=10&wt=json", body)
         self.assertEquals(3, response.total)
         self.assertEquals(['1','3','5'], response.hits)
 
@@ -144,44 +141,40 @@ class SolrInterfaceTest(TestCase):
         self.assertQueryArguments('terms.limit=5&terms.prefix=ho&terms.fl=afield', body)
 
     def testExecuteEmptyQuery(self):
-        self.assertRaises(ValueError, self.executeQueryResponse, '', response=RESPONSE)
+        self.assertRaises(ValueError, self.executeQueryResponse, '', response=JSON_RESPONSE % "")
 
     def testExecuteQueryWithStartStopAndSortKeys(self):
-        response, (path, body) = self.executeQueryResponse("meresco.exists:true", start=5, stop=10, sortKeys=[dict(sortBy="field", sortDescending=True), dict(sortBy="anotherfield", sortDescending=False)], response=RESPONSE)
+        response, (path, body) = self.executeQueryResponse("meresco.exists:true", start=5, stop=10, sortKeys=[dict(sortBy="field", sortDescending=True), dict(sortBy="anotherfield", sortDescending=False)], response=JSON_RESPONSE % "")
         self.assertEquals("/solr/select", path)
-        self.assertQueryArguments("q=meresco.exists%3Atrue&start=5&rows=5&sort=field+desc,anotherfield+asc", body)
+        self.assertQueryArguments("q=meresco.exists%3Atrue&start=5&rows=5&sort=field+desc,anotherfield+asc&wt=json", body)
         self.assertEquals(3, response.total)
         self.assertEquals(['1','3','5'], response.hits)
 
     def testExecuteQuerySortAscending(self):
-        response, (path, body) = self.executeQueryResponse("meresco.exists:true", start=0, stop=10, sortKeys=[dict(sortBy="field", sortDescending=False)], response=RESPONSE)
+        response, (path, body) = self.executeQueryResponse("meresco.exists:true", start=0, stop=10, sortKeys=[dict(sortBy="field", sortDescending=False)], response=JSON_RESPONSE % "")
         self.assertEquals("/solr/select", path)
-        self.assertQueryArguments("q=meresco.exists%3Atrue&start=0&rows=10&sort=field+asc", body)
+        self.assertQueryArguments("q=meresco.exists%3Atrue&start=0&rows=10&sort=field+asc&wt=json", body)
         self.assertEquals(3, response.total)
         self.assertEquals(['1','3','5'], response.hits)
 
     def testDrilldown(self):
-        response, (path, body) = self.executeQueryResponse("meresco.exists:true", fieldnamesAndMaximums=[('__all__', 5, False), ('__other__', 5, False)], response=RESPONSE % FACET_COUNTS)
+        response, (path, body) = self.executeQueryResponse("meresco.exists:true", facets=[{'field': '__all__', 'maxTerms': 5, "sortByTerm": True}, {'field': '__other__', 'maxTerms': 5, 'sortByTerm': True}], response=JSON_RESPONSE % JSON_FACET_COUNTS)
         self.assertEquals("/solr/select", path)
-        self.assertQueryArguments("facet.mincount=1&q=meresco.exists%3Atrue&start=0&rows=10&facet=on&facet.field=__all__&f.__all__.facet.sort=index&f.__all__.facet.limit=5&facet.field=__other__&f.__other__.facet.limit=5&f.__other__.facet.sort=index", body)
+        self.assertQueryArguments("wt=json&facet.mincount=1&q=meresco.exists%3Atrue&start=0&rows=10&facet=on&facet.field=__all__&f.__all__.facet.sort=index&f.__all__.facet.limit=5&facet.field=__other__&f.__other__.facet.limit=5&f.__other__.facet.sort=index", body)
         self.assertEquals(3, response.total)
         self.assertEquals(['1', '3', '5'], response.hits)
-        self.assertEquals(['__all__', '__other__'], [f for f, termCounts in response.drilldownData])
-        self.assertEquals(set(['__all__', '__other__']), set(response.drilldownDict.keys()))
-        self.assertEquals([("term_0", 1), ("term_1", 2)], list(response.drilldownDict['__all__']))
-        for fieldname, termCounts in response.drilldownData:
-            if fieldname == '__other__':
-                otherTermCounts = termCounts
-        self.assertEquals([("term_2", 3), ("term_3", 4)], list(termCounts))
+        self.assertEquals(['__all__', '__other__'], [f['fieldname'] for f in response.drilldownData])
+        self.assertEquals([{'term': "term_0", 'count': 1}, {'term': "term_1", 'count': 2}], response.drilldownData[0]['terms'])
+        self.assertEquals([{'term': "term_2", 'count': 3}, {'term': "term_3", 'count': 4}], response.drilldownData[1]['terms'])
 
     def testDrilldownOnSameFieldTwice(self):
-        response, (path, body) = self.executeQueryResponse("meresco.exists:true", fieldnamesAndMaximums=[('__all__', 5, False), ('__all__', 5, False)], response=RESPONSE % FACET_COUNTS_SAME_FIELD_TWICE)
-        self.assertQueryArguments("facet.mincount=1&q=meresco.exists%3Atrue&start=0&rows=10&facet=on&facet.field=__all__&f.__all__.facet.sort=index&f.__all__.facet.limit=5&facet.field=__all__&f.__all__.facet.limit=5&f.__all__.facet.sort=index", body)
+        response, (path, body) = self.executeQueryResponse("meresco.exists:true", facets=[{'field': '__all__', 'maxTerms': 5, "sortByTerm":True}, {'field': '__all__', 'maxTerms': 5, 'sortByTerm': True}], response=JSON_RESPONSE % JSON_FACET_COUNTS_SAME_FIELD_TWICE)
+        self.assertQueryArguments("wt=json&facet.mincount=1&q=meresco.exists%3Atrue&start=0&rows=10&facet=on&facet.field=__all__&f.__all__.facet.sort=index&f.__all__.facet.limit=5&facet.field=__all__&f.__all__.facet.limit=5&f.__all__.facet.sort=index", body)
         self.assertEquals(3, response.total)
         self.assertEquals(['1', '3', '5'], response.hits)
-        self.assertEquals(2, len(response.drilldownData))
-        self.assertEquals(['__all__'], response.drilldownDict.keys())
-        self.assertEquals([("term_0", 1), ("term_1", 2)], list(response.drilldownDict['__all__']))
+        self.assertEquals(1, len(response.drilldownData))
+        self.assertEquals(['__all__'], [f['fieldname'] for f in response.drilldownData])
+        self.assertEquals([{'term': "term_0", 'count': 1}, {'term': "term_1", 'count': 2}], response.drilldownData[0]['terms'])
 
     def testPivotDrilldown(self):
         response, (path, body) = self.executeQueryResponse("meresco.exists:true", facets=[
@@ -191,7 +184,7 @@ class SolrInterfaceTest(TestCase):
                 ], 
                 {'field': '__field1__', 'maxTerms': 2, 'sortByTerm': False},
                 {'field': '__field2__', 'maxTerms': None}
-            ], response=RESPONSE % FACET_COUNTS)
+            ], response=JSON_RESPONSE % JSON_FACET_WITH_PIVOT)
         arguments = parse_qs(body, keep_blank_values=True)
         self.assertEquals(['1'], arguments['facet.mincount'])
         self.assertEquals(['meresco.exists:true'], arguments['q'])
@@ -206,6 +199,82 @@ class SolrInterfaceTest(TestCase):
         self.assertEquals(['-1'], arguments['f.__all__.facet.limit'])
         self.assertEquals(['5'], arguments['f.__other__.facet.limit'])
         self.assertEquals(['-1'], arguments['f.__field2__.facet.limit'])
+        self.assertEqualsWS(repr([
+                {
+                    'fieldname': '__field2__',
+                    'terms': [
+                        {
+                            'term': '4',
+                            'count': 4
+                        },
+                        {
+                            'term': '5',
+                            'count': 5
+                        },
+                        {
+                            'term': '6',
+                            'count': 6
+                        }
+                    ]
+                },
+                {
+                    'fieldname': '__field1__',
+                    'terms': [
+                        {
+                            'term': '1',
+                            'count': 1
+                        },
+                        {
+                            'term': '2',
+                            'count': 2
+                        },
+                        {
+                            'term': '3',
+                            'count': 3
+                        }
+                    ]
+                },
+                {
+                    'fieldname': '__all__',
+                    'terms': [
+                        {
+                            'term': 'all:1',
+                            'count': 1,
+                            'pivot': {
+                                'fieldname': '__other__',
+                                'terms': [
+                                    {
+                                        'term': 'other:1',
+                                        'count': 1
+                                    },
+                                    {
+                                        'term': 'other:2',
+                                        'count': 2
+                                    }
+                                ]
+                            }
+                            
+                        },
+                        {
+                            'term': 'all:2',
+                            'count': 2,
+                            'pivot': {
+                                'fieldname': '__other__',
+                                'terms': [
+                                    {
+                                        'term': 'other:3',
+                                        'count': 3
+                                    },
+                                    {
+                                        'term': 'other:4',
+                                        'count': 4
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]), repr(response.drilldownData))
 
     def testExecuteQuerySolrHostFromObserver(self):
         solrInterface = SolrInterface()
@@ -221,9 +290,9 @@ class SolrInterfaceTest(TestCase):
         solrInterface._httppost = httppost
 
         g = compose(solrInterface.executeQuery("meresco.exists:true"))
-        self._returnValueFromGenerator(g, [RESPONSE])
+        self._returnValueFromGenerator(g, [JSON_RESPONSE % ""])
         self.assertEquals(['solrServer'], observer.calledMethodNames())
-        self.assertQueryArguments('q=meresco.exists%3Atrue&start=0&rows=10', kwargs[0]['body'])
+        self.assertQueryArguments('q=meresco.exists%3Atrue&start=0&rows=10&wt=json', kwargs[0]['body'])
         self.assertEquals('localhost', kwargs[0]['host'])
         self.assertEquals('/solr/select', kwargs[0]['request'])
         self.assertEquals(1234, kwargs[0]['port'])
@@ -250,12 +319,12 @@ class SolrInterfaceTest(TestCase):
         self.assertEquals({'Content-Type': 'text/xml', 'Content-Length': len(kwargs[0]['body'])}, kwargs[0]['headers'])
 
     def testQueryResponseTime(self):
-        response, readData = self.executeQueryResponse("meresco.exists:true", response=RESPONSE % "")
+        response, readData = self.executeQueryResponse("meresco.exists:true", response=JSON_RESPONSE % "")
         self.assertEquals(6, response.queryTime)
 
     def testSolrGivesSpellCheckResults(self):
-        response, (path, body) = self.executeQueryResponse(query="__all__:aap AND __all__:bo", response=RESPONSE % SUGGESTIONS, suggestionsCount=2, suggestionsQuery="aap AND bo")
-        self.assertQueryArguments('spellcheck.count=2&rows=10&spellcheck=true&spellcheck.q=aap+AND+bo&q=__all__%3Aaap+AND+__all__%3Abo&start=0', body)
+        response, (path, body) = self.executeQueryResponse(query="__all__:aap AND __all__:bo", response=JSON_RESPONSE % JSON_SUGGESTIONS, suggestionsCount=2, suggestionsQuery="aap AND bo")
+        self.assertQueryArguments('spellcheck.count=2&rows=10&spellcheck=true&spellcheck.q=aap+AND+bo&q=__all__%3Aaap+AND+__all__%3Abo&start=0&wt=json', body)
         self.assertEquals(['1','3','5'], response.hits)
         self.assertEquals({'aap': (0, 3, ['aapje', 'raap']), 'bo': (8, 10, ['bio', 'bon'])}, response.suggestions)
 
@@ -274,10 +343,10 @@ class SolrInterfaceTest(TestCase):
         self.assertEquals(['__all__', '__exists__', '__id__', '__timestamp__', 'field0', 'field1', 'untokenized.field0'], response.hits)
 
     def testPassFilterQuery(self):
-        response, (path, body) = self.executeQueryResponse("*", filterQuery="field:value", response=RESPONSE) 
-        self.assertQueryArguments("q=*&fq=field:value&start=0&rows=10", body)
-        response, (path, body) = self.executeQueryResponse("*", filterQuery="field:http\://host.nl", response=RESPONSE) 
-        self.assertQueryArguments("q=*&fq=field:http\://host.nl&start=0&rows=10", body)
+        response, (path, body) = self.executeQueryResponse("*", filterQuery="field:value", response=JSON_RESPONSE % "") 
+        self.assertQueryArguments("q=*&fq=field:value&start=0&rows=10&wt=json", body)
+        response, (path, body) = self.executeQueryResponse("*", filterQuery="field:http\://host.nl", response=JSON_RESPONSE % "") 
+        self.assertQueryArguments("q=*&fq=field:http\://host.nl&start=0&rows=10&wt=json", body)
 
     def executeQueryResponse(self, query, response, solrInterface=None, **kwargs):
         if solrInterface is None:
@@ -327,33 +396,6 @@ class SolrInterfaceTest(TestCase):
         arguments2 = parse_qs(arguments2, keep_blank_values=True)
         self.assertEquals(arguments1, arguments2)
 
-RESPONSE = """
-<response>
-    <lst name="responseHeader">
-        <int name="status">0</int>
-        <int name="QTime">6</int>
-        <lst name="params">
-            <str name="indent">on</str>
-            <str name="start">0</str>
-            <str name="q">meresco.exists:true</str>
-            <str name="version">2.2</str>
-            <str name="rows">10</str>
-        </lst>
-    </lst>
-    <result name="response" numFound="3" start="0">
-        <doc>
-            <str name="__id__">1</str>
-        </doc>
-        <doc>
-            <str name="__id__">3</str>
-        </doc>
-        <doc>
-            <str name="__id__">5</str>
-        </doc>
-    </result>
-    %s
-</response>"""
-
 TERMS_PREFIX_RESPONSE = """
 <response>
     <lst name="responseHeader">
@@ -376,63 +418,50 @@ TERMS_PREFIX_RESPONSE = """
     </lst>
 </response>"""
 
-SUGGESTIONS="""
-<lst name="spellcheck">
-    <lst name="suggestions">
-        <lst name="aap">
-            <int name="numFound">2</int>
-            <int name="startOffset">0</int>
-            <int name="endOffset">3</int>
-            <arr name="suggestion">
-                <str>aapje</str>
-                <str>raap</str>
-            </arr>
-        </lst>
-        <lst name="bo">
-            <int name="numFound">2</int>
-            <int name="startOffset">8</int>
-            <int name="endOffset">10</int>
-            <arr name="suggestion">
-                <str>bio</str>
-                <str>bon</str>
-            </arr>
-        </lst>
-    </lst>
-</lst>"""
+JSON_SUGGESTIONS = """,
+"spellcheck":{
+    "suggestions":[
+        "aap",{
+            "numFound":2,
+            "startOffset":0,
+            "endOffset":3,
+            "suggestion":[
+                "aapje","raap"
+            ]
+        },
+        "bo",{
+            "numFound":2,
+            "startOffset":8,
+            "endOffset":10,
+            "suggestion":[
+                "bio","bon"
+            ]
+        }
+    ]
+}
+"""
 
-FACET_COUNTS="""
-<lst name="facet_counts">
-    <lst name="facet_queries"/>
-    <lst name="facet_fields">
-        <lst name="__all__">
-            <int name="term_0">1</int>
-            <int name="term_1">2</int>
-        </lst>
-        <lst name="__other__">
-            <int name="term_2">3</int>
-            <int name="term_3">4</int>
-        </lst>
-    </lst>
-    <lst name="facet_dates"/>
-    <lst name="facet_ranges"/>
-</lst>"""
+JSON_FACET_COUNTS = """,
+"facet_counts":{
+    "facet_queries":{},
+    "facet_fields":{
+        "__all__":["term_0",1,"term_1",2],
+        "__other__":["term_2",3,"term_3",4]
+    },
+    "facet_dates": {},
+    "facet_ranges": {}
+}"""
 
-FACET_COUNTS_SAME_FIELD_TWICE="""
-<lst name="facet_counts">
-    <lst name="facet_queries"/>
-    <lst name="facet_fields">
-        <lst name="__all__">
-            <int name="term_0">1</int>
-            <int name="term_1">2</int>
-        </lst>
-        <lst name="__all__">
-            <int name="term_0">1</int>
-            <int name="term_1">2</int>
-        </lst>
-    </lst>
-    <lst name="facet_dates"/>
-    <lst name="facet_ranges"/>
-</lst>"""
+JSON_FACET_COUNTS_SAME_FIELD_TWICE = """,
+"facet_counts":{
+    "facet_queries":{},
+    "facet_fields":{
+        "__all__":["term_0",1,"term_1",2],
+        "__all__":["term_0",1,"term_1",2]
+    },
+    "facet_dates": {},
+    "facet_ranges": {}
+}"""
 
 FIELDNAMES_RESPONSE="""
 <response>
@@ -465,3 +494,67 @@ org.apache.lucene.store.MMapDirectory:org.apache.lucene.store.MMapDirectory@/dat
 <lst name="info">...</lst>
 </response>
 """
+
+
+JSON_RESPONSE = """
+{
+    "responseHeader":{
+        "status":0,
+        "QTime":6
+    },
+    "response":{
+        "numFound":3,
+        "start":0,
+        "docs":[{"__id__": "1"}, {"__id__": "3"}, {"__id__": "5"}]
+    }
+    %s
+}"""
+
+JSON_FACET_WITH_PIVOT = """,
+"facet_counts":{
+    "facet_queries":{},
+    "facet_fields":{
+        "__field1__":["1",1,"2",2,"3",3],
+        "__field2__":["4",4,"5",5,"6",6]
+    },
+    "facet_dates":{},
+    "facet_ranges":{},
+    "facet_pivot":{
+        "__all__,__other__":[
+            {
+                "field":"__all__",
+                "value":"all:1",
+                "count":1,
+                "pivot":[
+                    {
+                        "field":"__other__",
+                        "value":"other:1",
+                        "count":1
+                    },
+                    {
+                        "field":"__other__",
+                        "value":"other:2",
+                        "count":2
+                    }
+                ]
+            },
+            {
+                "field":"__all__",
+                "value":"all:2",
+                "count":2,
+                "pivot":[
+                    {
+                        "field":"__other__",
+                        "value":"other:3",
+                        "count":3
+                    },
+                    {
+                        "field":"__other__",
+                        "value":"other:4",
+                        "count":4
+                    }
+                ]
+            }
+        ]
+    }
+}"""

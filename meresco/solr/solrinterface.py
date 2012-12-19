@@ -34,6 +34,7 @@ from xml.sax.saxutils import escape as escapeXml
 from weightless.http import httpget, httppost
 from meresco.core import Observable
 from warnings import warn
+from simplejson import loads
 
 from solrresponse import SolrResponse
 
@@ -81,6 +82,7 @@ class SolrInterface(Observable):
                 q=luceneQueryString, 
                 start=start, 
                 rows=stop-start, 
+                wt='json'
             )
         if sortKeys:
             arguments["sort"] = ','.join("%s %s" % (sortKey['sortBy'], 'desc' if sortKey['sortDescending'] else 'asc') for sortKey in sortKeys)
@@ -96,15 +98,15 @@ class SolrInterface(Observable):
 
         path = self._path('select')
         body = yield self._send(path, urlencode(arguments, doseq=True), contentType='application/x-www-form-urlencoded')
-        xml = parse(StringIO(body))
-        recordCount = int(xml.xpath('/response/result/@numFound')[0])
-        identifiers = xml.xpath('/response/result/doc/str[@name="__id__"]/text()')
-        qtime = int(xml.xpath('/response/lst[@name="responseHeader"]/int[@name="QTime"]/text()')[0])
+        jsonResponse = loads(body)
+        recordCount = jsonResponse['response']['numFound']
+        identifiers = [doc.values()[0] for doc in jsonResponse['response']['docs']]
+        qtime = jsonResponse['responseHeader']['QTime']
         response = SolrResponse(total=recordCount, hits=identifiers, queryTime=qtime)
         if not (fieldnamesAndMaximums or facets) is None:
-            _updateResponseWithDrilldownData(arguments, xml, response)
+             _updateResponseWithDrilldownData(arguments, jsonResponse['facet_counts'], response)
         if suggestionsCount > 0 and suggestionsQuery:
-            _updateResponseWithSuggestionData(arguments, xml, response)
+            _updateResponseWithSuggestionData(arguments, jsonResponse['spellcheck']['suggestions'], response)
         raise StopIteration(response)
 
     def prefixSearch(self, field, prefix, limit=10):
@@ -195,18 +197,32 @@ def _drilldownArguments(fieldnamesAndMaximums):
             arguments.setdefault('f.%s.facet.sort' % fieldname, []).append('count' if sortedByTermCount else 'index')
     return arguments
 
-def _updateResponseWithDrilldownData(arguments, xml, response):
+def _updateResponseWithDrilldownData(arguments, facetCounts, response):
     drilldownData = []
-    for facet_fields in xml.xpath('/response/lst[@name="facet_counts"]/lst[@name="facet_fields"]/lst'):
-        drilldownResult = facet_fields.xpath('int')
-        drilldownData.append((facet_fields.attrib["name"], ((termCount.attrib['name'], int(termCount.text)) for termCount in drilldownResult)))
+    for fieldname, termCounts in facetCounts['facet_fields'].items():
+        terms = []
+        for i in xrange(0, len(termCounts), 2):
+            terms.append({'term': termCounts[i], 'count': termCounts[i+1]})
+        drilldownData.append(dict(fieldname=fieldname, terms=terms))
+    if 'facet_pivot' in facetCounts:
+        for drilldown in facetCounts['facet_pivot'].values():
+            drilldownData.append(_buildDrilldownDict(drilldown))
     response.drilldownData = drilldownData
-    response.drilldownDict = dict(drilldownData)
 
-def _updateResponseWithSuggestionData(arguments, xml, response):
+def _buildDrilldownDict(drilldown):
+    fieldname = drilldown[0]['field']
+    terms = []
+    for d in drilldown:
+        termDict = {'term': d['value'], 'count': d['count']}
+        if 'pivot' in d:
+            termDict['pivot'] = _buildDrilldownDict(d['pivot'])
+        terms.append(termDict)
+    return dict(fieldname=fieldname, terms=terms)
+
+def _updateResponseWithSuggestionData(arguments, spellcheckResult, response):
     suggestions = {}
-    for suggestion in xml.xpath('/response/lst[@name="spellcheck"]/lst[@name="suggestions"]/lst'):
-        startOffset = int(suggestion.xpath('int[@name="startOffset"]/text()')[0])
-        endOffset = int(suggestion.xpath('int[@name="endOffset"]/text()')[0])
-        suggestions[suggestion.attrib['name']] = (startOffset, endOffset, suggestion.xpath('arr[@name="suggestion"]/str/text()'))
+    for i in xrange(0, len(spellcheckResult), 2):
+        name = spellcheckResult[i]
+        suggestion = spellcheckResult[i+1]
+        suggestions[name] = (suggestion['startOffset'], suggestion['endOffset'], suggestion['suggestion'])
     response.suggestions = suggestions
