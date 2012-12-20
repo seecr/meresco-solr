@@ -89,6 +89,7 @@ class IntegrationState(_IntegrationState):
         print "Creating database in", self.integrationTempdir
         try:
             self._uploadSolrData(join(self.testdataDir))
+            sleep(2)
             print "Finished creating database in %s seconds" % (time() - start)
         except Exception, e:
             print 'Error received while creating database for', self.stateName
@@ -97,6 +98,7 @@ class IntegrationState(_IntegrationState):
 
     def _uploadSolrData(self, dataDir):
         for docFile in sorted(glob(join(dataDir, '*.doc'))):
+            # print docFile
             identifier = basename(docFile).rsplit('.',1)[0]
             addKwargs=dict(
                 identifier=identifier,

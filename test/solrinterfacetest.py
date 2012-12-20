@@ -33,6 +33,7 @@ from meresco.core import Observable
 from meresco.solr.solrinterface import SolrInterface
 from seecr.test import CallTrace, SeecrTestCase
 
+
 class SolrInterfaceTest(SeecrTestCase):
     def setUp(self):
         SeecrTestCase.setUp(self)
@@ -158,17 +159,20 @@ class SolrInterfaceTest(SeecrTestCase):
         self.assertEquals(['1','3','5'], response.hits)
 
     def testDrilldown(self):
-        response, (path, body) = self.executeQueryResponse("meresco.exists:true", facets=[{'field': '__all__', 'maxTerms': 5, "sortByTerm": True}, {'field': '__other__', 'maxTerms': 5, 'sortByTerm': True}], response=JSON_RESPONSE % JSON_FACET_COUNTS)
+        response, (path, body) = self.executeQueryResponse("meresco.exists:true", facets=[{'field': '__all__', 'maxTerms': 5, "sortBy": "count"}, {'field': '__other__', 'maxTerms': 5, 'sortBy': "index"}], response=JSON_RESPONSE % JSON_FACET_COUNTS)
         self.assertEquals("/solr/select", path)
-        self.assertQueryArguments("wt=json&facet.mincount=1&q=meresco.exists%3Atrue&start=0&rows=10&facet=on&facet.field=__all__&f.__all__.facet.sort=index&f.__all__.facet.limit=5&facet.field=__other__&f.__other__.facet.limit=5&f.__other__.facet.sort=index", body)
+        self.assertQueryArguments("wt=json&facet.mincount=1&q=meresco.exists%3Atrue&start=0&rows=10&facet=on&facet.field=__all__&f.__all__.facet.sort=count&f.__all__.facet.limit=5&facet.field=__other__&f.__other__.facet.limit=5&f.__other__.facet.sort=index", body)
         self.assertEquals(3, response.total)
         self.assertEquals(['1', '3', '5'], response.hits)
         self.assertEquals(['__all__', '__other__'], [f['fieldname'] for f in response.drilldownData])
         self.assertEquals([{'term': "term_0", 'count': 1}, {'term': "term_1", 'count': 2}], response.drilldownData[0]['terms'])
         self.assertEquals([{'term': "term_2", 'count': 3}, {'term': "term_3", 'count': 4}], response.drilldownData[1]['terms'])
 
+    def testDrilldownUnsupportedSortBy(self):
+        self.assertRaises(ValueError, lambda: self.executeQueryResponse("meresco.exists:true", facets=[{'field': '__all__', 'maxTerms': 5, "sortBy": "timestamp"}], response=JSON_RESPONSE % JSON_FACET_COUNTS))
+
     def testDrilldownOnSameFieldTwice(self):
-        response, (path, body) = self.executeQueryResponse("meresco.exists:true", facets=[{'field': '__all__', 'maxTerms': 5, "sortByTerm":True}, {'field': '__all__', 'maxTerms': 5, 'sortByTerm': True}], response=JSON_RESPONSE % JSON_FACET_COUNTS_SAME_FIELD_TWICE)
+        response, (path, body) = self.executeQueryResponse("meresco.exists:true", facets=[{'field': '__all__', 'maxTerms': 5, "sortBy": "index"}, {'field': '__all__', 'maxTerms': 5, 'sortBy': "index"}], response=JSON_RESPONSE % JSON_FACET_COUNTS_SAME_FIELD_TWICE)
         self.assertQueryArguments("wt=json&facet.mincount=1&q=meresco.exists%3Atrue&start=0&rows=10&facet=on&facet.field=__all__&f.__all__.facet.sort=index&f.__all__.facet.limit=5&facet.field=__all__&f.__all__.facet.limit=5&f.__all__.facet.sort=index", body)
         self.assertEquals(3, response.total)
         self.assertEquals(['1', '3', '5'], response.hits)
@@ -179,10 +183,10 @@ class SolrInterfaceTest(SeecrTestCase):
     def testPivotDrilldown(self):
         response, (path, body) = self.executeQueryResponse("meresco.exists:true", facets=[
                 [
-                    {'field': '__all__', 'sortByTerm': True},
+                    {'field': '__all__', 'sortBy': 'index'},
                     {'field': '__other__', 'maxTerms': 5}
                 ], 
-                {'field': '__field1__', 'maxTerms': 2, 'sortByTerm': False},
+                {'field': '__field1__', 'maxTerms': 2, 'sortBy': 'count'},
                 {'field': '__field2__', 'maxTerms': None}
             ], response=JSON_RESPONSE % JSON_FACET_WITH_PIVOT)
         arguments = parse_qs(body, keep_blank_values=True)
@@ -271,6 +275,10 @@ class SolrInterfaceTest(SeecrTestCase):
                                     }
                                 ]
                             }
+                        },
+                        {
+                            'term': 'all:3',
+                            'count': 2
                         }
                     ]
                 }
@@ -554,6 +562,12 @@ JSON_FACET_WITH_PIVOT = """,
                         "count":4
                     }
                 ]
+            },
+            {
+                "field":"__all__",
+                "value":"all:3",
+                "count":2,
+                "pivot":[]
             }
         ]
     }

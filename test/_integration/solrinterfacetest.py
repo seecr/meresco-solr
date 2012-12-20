@@ -29,6 +29,7 @@ from seecr.test.utils import postRequest
 from simplejson import dumps, loads
 from time import sleep
 
+
 class SolrInterfaceTest(IntegrationTestCase):
     def testAddQueryDelete(self):
         addKwargs=dict(
@@ -40,15 +41,15 @@ class SolrInterfaceTest(IntegrationTestCase):
             )
         header, body = postRequest(port=self.solrClientPort, path='/add', data=dumps(addKwargs), parse=False)
         self.assertEquals('', body)
-        sleep(0.1)
-
+        sleep(0.6)
+        
         response = self.executeQuery(luceneQueryString='__id__:record\:testAddQueryDelete')
         self.assertEquals(1, response['total'])
         self.assertEquals(['record:testAddQueryDelete'], response['hits'])
 
         header, body = postRequest(port=self.solrClientPort, path='/delete', data=dumps(dict(identifier='record:testAddQueryDelete')), parse=False)
         self.assertEquals('', body)
-        sleep(0.1)
+        sleep(0.6)
 
         response = self.executeQuery(luceneQueryString='__id__:record\:testAddQueryDelete')
         self.assertEquals(0, response['total'])
@@ -59,9 +60,36 @@ class SolrInterfaceTest(IntegrationTestCase):
 
     def testPivoting(self):
         response = self.executeQuery(luceneQueryString='*:*', facets=[
-            [{'field': 'untokenized.rdf:type'}, {'field': 'untokenized.dc:date', 'maxTerms': 4}]            
+            [{'field': 'untokenized.rdf:type', 'maxTerms': 2}, {'field': 'untokenized.dc:date', 'maxTerms': 2}]            
         ])
-        self.assertEquals({}, response)
+        self.assertEquals([
+            {
+                "fieldname": "untokenized.rdf:type", 
+                "terms": [
+                    {
+                        "count": 46, 
+                        "pivot": {
+                            "fieldname": "untokenized.dc:date", 
+                            "terms": [
+                                {
+                                    "count": 5, 
+                                    "term": "1975"
+                                }, 
+                                {
+                                    "count": 4, 
+                                    "term": "1971"
+                                }, 
+                            ]
+                        }, 
+                        "term": "http://dbpedia.org/ontology/Book"
+                    }, 
+                    {
+                        "count": 4, 
+                        "term": "http://www.w3.org/2004/02/skos/core#Concept"
+                    }, 
+                ]
+            }
+        ], response['drilldownData'])
 
     def executeQuery(self, **queryKwargs):
         header, body = postRequest(port=self.solrClientPort, path='/executeQuery', data=dumps(queryKwargs), parse=False)
