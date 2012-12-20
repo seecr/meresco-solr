@@ -104,12 +104,12 @@ class SolrInterface(Observable):
             _updateResponseWithSuggestionData(arguments, jsonResponse['spellcheck']['suggestions'], response)
         raise StopIteration(response)
 
-    def prefixSearch(self, field, prefix, limit=10):
-        arguments = {'terms.fl': field, 'terms.prefix': prefix, 'terms.limit': limit, 'wt': 'json'}
+    def prefixSearch(self, fieldname, prefix, limit=10):
+        arguments = {'terms.fl': fieldname, 'terms.prefix': prefix, 'terms.limit': limit, 'wt': 'json'}
         path = self._path('terms')
         body = yield self._send(path, urlencode(arguments, doseq=True), contentType='application/x-www-form-urlencoded')
         jsonResponse = loads(body)
-        terms = jsonResponse['terms'][field][::2]
+        terms = jsonResponse['terms'][fieldname][::2]
         qtime = jsonResponse['responseHeader']['QTime']
         response = SolrResponse(total=len(terms), hits=terms, queryTime=qtime)
         raise StopIteration(response)
@@ -158,14 +158,14 @@ class SolrInterface(Observable):
 def _facetArguments(facets):
     def facetLimit(facet):
         maxTerms = facet.get('maxTerms', None)
-        arguments.setdefault('f.%s.facet.limit' % facet['field'], []).append(maxTerms if maxTerms else -1)
+        arguments.setdefault('f.%s.facet.limit' % facet['fieldname'], []).append(maxTerms if maxTerms else -1)
 
     def facetSort(facet):
         sortBy = facet.get('sortBy', None)
         if sortBy is not None:
             if not sortBy in SolrInterface.SUPPORTED_SORTBY_VALUES:
                 raise ValueError("'sortBy' should be one of %s" % SolrInterface.SUPPORTED_SORTBY_VALUES)
-            arguments.setdefault('f.%s.facet.sort' % facet['field'], []).append(sortBy)
+            arguments.setdefault('f.%s.facet.sort' % facet['fieldname'], []).append(sortBy)
 
     arguments = {}
     if facets is not None:
@@ -174,11 +174,11 @@ def _facetArguments(facets):
         arguments['facet.field'] = []
         for facet in facets:
             if isinstance(facet, dict):
-                arguments['facet.field'].append(facet['field'])
+                arguments['facet.field'].append(facet['fieldname'])
                 facetLimit(facet)
                 facetSort(facet)
             else:
-                arguments["facet.pivot"] = ','.join(f['field'] for f in facet)
+                arguments["facet.pivot"] = ','.join(f['fieldname'] for f in facet)
                 arguments['facet.pivot.mincount'] = "0"
                 for f in facet:
                     facetLimit(f)
