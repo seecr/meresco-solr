@@ -134,12 +134,12 @@ class SolrInterfaceTest(SeecrTestCase):
         self.assertEquals(10, response.total)
         self.assertEquals(76, response.queryTime)
         self.assertEquals('/solr/terms', path)
-        self.assertQueryArguments('terms.limit=10&terms.prefix=ho&terms.fl=afield', body)
+        self.assertQueryArguments('terms.limit=10&terms.prefix=ho&terms.fl=afield&wt=json', body)
 
     def testPrefixSearchWithLimit(self):
         response, (path, body) = self.executePrefixSearch(prefix="ho", field="afield", limit=5, response=TERMS_PREFIX_RESPONSE) 
         self.assertEquals('/solr/terms', path)
-        self.assertQueryArguments('terms.limit=5&terms.prefix=ho&terms.fl=afield', body)
+        self.assertQueryArguments('terms.limit=5&terms.prefix=ho&terms.fl=afield&wt=json', body)
 
     def testExecuteEmptyQuery(self):
         self.assertRaises(ValueError, self.executeQueryResponse, '', response=JSON_RESPONSE % "")
@@ -338,8 +338,8 @@ class SolrInterfaceTest(SeecrTestCase):
 
     def testFieldnames(self):
         readData = []
-        def read(path):
-            readData.append(path)
+        def read(path, arguments):
+            readData.append((path, arguments))
         self._solrInterface._read = read
         gen = self._solrInterface.fieldnames()
         gen.next()
@@ -347,8 +347,8 @@ class SolrInterfaceTest(SeecrTestCase):
             gen.send(FIELDNAMES_RESPONSE)
         except StopIteration, e:
             (response,) = e.args 
-        self.assertEquals(['/solr/admin/luke'], readData)
-        self.assertEquals(['__all__', '__exists__', '__id__', '__timestamp__', 'field0', 'field1', 'untokenized.field0'], response.hits)
+        self.assertEquals([('/solr/admin/luke', {'wt': 'json'})], readData)
+        self.assertEquals(sorted(['__all__', '__exists__', '__id__', '__timestamp__', 'field0', 'field1', 'untokenized.field0']), sorted(response.hits))
 
     def testPassFilterQuery(self):
         response, (path, body) = self.executeQueryResponse("*", filterQuery="field:value", response=JSON_RESPONSE % "") 
@@ -405,26 +405,28 @@ class SolrInterfaceTest(SeecrTestCase):
         self.assertEquals(arguments1, arguments2)
 
 TERMS_PREFIX_RESPONSE = """
-<response>
-    <lst name="responseHeader">
-        <int name="status">0</int>
-        <int name="QTime">76</int>
-    </lst>
-    <lst name="terms">
-        <lst name="afield">
-            <int name="hoogte">221194</int>
-            <int name="holland">162140</int>
-            <int name="hoe">57391</int>
-            <int name="horticulture">30914</int>
-            <int name="houden">15239</int>
-            <int name="housing">14980</int>
-            <int name="houdt">14178</int>
-            <int name="hoge">12870</int>
-            <int name="hoofd">12583</int>
-            <int name="houten">10945</int>
-        </lst>
-    </lst>
-</response>"""
+{
+    "responseHeader": 
+    {
+        "status":0,
+        "QTime":76
+    },
+    "terms":
+    {
+        "afield":[
+            "hoogte",221194,
+            "holland",162140,
+            "hoe",57391,
+            "horticulture",30914,
+            "houden",15239,
+            "housing",14980,
+            "houdt",14178,
+            "hoge",12870,
+            "hoofd",12583,
+            "houten",10945
+        ]
+    }
+}"""
 
 JSON_SUGGESTIONS = """,
 "spellcheck":{
@@ -472,36 +474,36 @@ JSON_FACET_COUNTS_SAME_FIELD_TWICE = """,
 }"""
 
 FIELDNAMES_RESPONSE="""
-<response>
-<lst name="responseHeader">
-<int name="status">0</int>
-<int name="QTime">4701</int>
-</lst>
-<lst name="index">
-<int name="numDocs">265054</int>
-<int name="maxDoc">332132</int>
-<int name="numTerms">1972551</int>
-<long name="version">1348587033477</long>
-<int name="segmentCount">11</int>
-<bool name="current">true</bool>
-<bool name="hasDeletions">true</bool>
-<str name="directory">
-org.apache.lucene.store.MMapDirectory:org.apache.lucene.store.MMapDirectory@/data/dev/index-state/14e40aff-9ee8-4b6c-826c-e0fb82232e33-solr/cores/records/data/index lockFactory=org.apache.lucene.store.NativeFSLockFactory@1c851ed
-</str>
-<date name="lastModified">2012-09-26T22:23:31Z</date>
-</lst>
-<lst name="fields">
-<lst name="__all__">...</lst>
-<lst name="__exists__">...</lst>
-<lst name="__id__">...</lst>
-<lst name="__timestamp__">...</lst>
-<lst name="field0">...</lst>
-<lst name="field1">...</lst>
-<lst name="untokenized.field0">...</lst>
-</lst>
-<lst name="info">...</lst>
-</response>
-"""
+{
+    "responseHeader":{
+        "status":0,
+        "QTime":2
+    },
+    "index":{
+        "numDocs":69,
+        "maxDoc":69,
+        "version":7,
+        "segmentCount":1,
+        "current":true,
+        "hasDeletions":false,
+        "directory":"org.apache.lucene.store.NRTCachingDirectory:NRTCachingDirectory(org.apache.lucene.store.MMapDirectory@/tmp/integrationtest-solr-default/solr/cores/records/data/index lockFactory=org.apache.lucene.store.NativeFSLockFactory@7d0c3a08; maxCacheMB=48.0 maxMergeSizeMB=4.0)",
+        "userData":{}
+    },
+    "fields": {
+        "__all__": {
+            "type":"text_ws",
+            "schema":"IT-M----------",
+            "index":"(unstored field)",
+            "docs":62
+        },
+        "__exists__": "...",
+        "__id__": "...",
+        "__timestamp__": "...",
+        "field0": "...",
+        "field1": "...",
+        "untokenized.field0": "..."
+    }
+}"""
 
 
 JSON_RESPONSE = """

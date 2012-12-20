@@ -51,10 +51,8 @@ Example config:
     "core1": {},
     "core2": {"feature": {"option": "value"}},
     "core3": {"booleanFeature": true},
-    "core4": {"schemaExtension": [
-        {"extensionType":"fieldTypeFilter", "fieldTypeName":"text_ws", "filterClass":"solr.ASCIIFoldingFilterFactory"}
-    ]},
-    "core5": {"additionalSolrConfig": "full path to additional solrconfig.xml"}
+    "core4": {"additionalSchemaXml": "path to additional schema.xml"},
+    "core5": {"additionalSolrConfig": "path to additional solrconfig.xml"}
 }
 """)
     parser.format_epilog = lambda formatter: parser.epilog

@@ -41,25 +41,25 @@ class SolrInterfaceTest(IntegrationTestCase):
             )
         header, body = postRequest(port=self.solrClientPort, path='/add', data=dumps(addKwargs), parse=False)
         self.assertEquals('', body)
-        sleep(0.6)
+        sleep(0.75)
         
-        response = self.executeQuery(luceneQueryString='__id__:record\:testAddQueryDelete')
+        response = self.solrRequest(luceneQueryString='__id__:record\:testAddQueryDelete')
         self.assertEquals(1, response['total'])
         self.assertEquals(['record:testAddQueryDelete'], response['hits'])
 
         header, body = postRequest(port=self.solrClientPort, path='/delete', data=dumps(dict(identifier='record:testAddQueryDelete')), parse=False)
         self.assertEquals('', body)
-        sleep(0.6)
+        sleep(0.75)
 
-        response = self.executeQuery(luceneQueryString='__id__:record\:testAddQueryDelete')
+        response = self.solrRequest(luceneQueryString='__id__:record\:testAddQueryDelete')
         self.assertEquals(0, response['total'])
 
     def testDatabase(self):
-        response = self.executeQuery(luceneQueryString='*:*')
+        response = self.solrRequest(luceneQueryString='*:*')
         self.assertEquals(69, response['total'])
 
     def testPivoting(self):
-        response = self.executeQuery(luceneQueryString='*:*', facets=[
+        response = self.solrRequest(luceneQueryString='*:*', facets=[
             [{'field': 'untokenized.rdf:type', 'maxTerms': 2}, {'field': 'untokenized.dc:date', 'maxTerms': 2}]            
         ])
         self.assertEquals([
@@ -91,8 +91,22 @@ class SolrInterfaceTest(IntegrationTestCase):
             }
         ], response['drilldownData'])
 
-    def executeQuery(self, **queryKwargs):
-        header, body = postRequest(port=self.solrClientPort, path='/executeQuery', data=dumps(queryKwargs), parse=False)
+    def testPrefixSearch(self):
+        response = self.solrRequest(path='/prefixSearch', prefix="cha", field='__all__')
+        self.assertEquals(['charles', 'challenge', 'chamber'], response['hits'])
+
+    def testFieldnames(self):
+        response = self.solrRequest(path='/fieldnames')
+        fields = response['hits']
+        self.assertEquals(28, len(fields))
+        self.assertTrue('__all__' in fields, fields)
+
+    def testSuggestions(self):
+        response = self.solrRequest(path='/executeQuery', luceneQueryString="*:*", suggestionsQuery='callenge', suggestionsCount=5)
+        self.assertEquals([0, 8, ['challenge', 'college', 'vallen', 'alleen', 'gallery']], response['suggestions']['callenge'])
+
+    def solrRequest(self, path="/executeQuery", **queryKwargs):
+        header, body = postRequest(port=self.solrClientPort, path=path, data=dumps(queryKwargs), parse=False)
         responseType, responseDict = body.split(': ', 1)
-        self.assertEquals('SolrResponse', responseType)
+        self.assertEquals('SolrResponse', responseType, responseType + responseDict)
         return loads(responseDict)

@@ -61,7 +61,7 @@ class IntegrationState(_IntegrationState):
 
         self.solrCore = "records"
         self.config = {
-                self.solrCore: {}
+                self.solrCore: {'autocomplete': True, 'suggestions': {'field': '__all__'}}
             }
         self.configPath = join(self.integrationTempdir, 'solr.config')
         with open(self.configPath, 'w') as f:

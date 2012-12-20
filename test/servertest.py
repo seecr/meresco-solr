@@ -209,18 +209,6 @@ class ServerTest(SeecrTestCase):
         ), execCalled[0][0])
         self.assertEquals({}, execCalled[0][1])
 
-    def testSetupSolrCoreWithExtraFilters(self):
-        solrDataDir = join(self.tempdir, 'solr-data')
-        self._createServer(stateDir=solrDataDir, port=8042, config={'core1': {'schemaExtension':[
-            { 
-                'extensionType': 'fieldTypeFilter',
-                'fieldTypeName': 'text_ws',
-                'filterClass': 'solr.ASCIIFoldingFilterFactory',
-            }
-        ]}})
-        schemaXml = parse(open(join(solrDataDir, 'cores', 'core1', 'conf', 'schema.xml')))
-        self.assertEquals(['solr.LowerCaseFilterFactory', 'solr.ASCIIFoldingFilterFactory'], schemaXml.xpath('/schema/types/fieldType[@name="text_ws"]/analyzer/filter/@class'))
-
     def xtestStartSolrReally(self):
         tempdir = "/tmp/testSetupSolrConfig"
         isdir(tempdir) and rmtree(tempdir)

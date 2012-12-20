@@ -66,24 +66,7 @@ class Server(object):
             for feature, options in features.items():
                 self._setupFeature(name=feature, core=core, options=options)
 
-    def _setupFeatureSchemaExtension(self, core, options):
-        schemaXmlFile = join(self.stateDir, 'cores', core, 'conf', 'schema.xml')
-        schemaXml = parse(open(schemaXmlFile))
-        for option in options:
-            if option.get('extensionType') == 'fieldTypeFilter':
-                fieldTypeName = option['fieldTypeName']
-                fieldTypes = schemaXml.xpath('/schema/types/fieldType[@name="%s"]' %  fieldTypeName)
-                assert len(fieldTypes) == 1
-                analyzer = fieldTypes[0].xpath('analyzer')[0]
-                SubElement(analyzer, 'filter', attrib={'class': option['filterClass']})
-
-        with open(schemaXmlFile, 'w') as f:
-            f.write(tostring(schemaXml, encoding="UTF-8", pretty_print=True, xml_declaration=True))
-
     def _setupFeature(self, name, core, options):
-        if name == 'schemaExtension':
-            self._setupFeatureSchemaExtension(core=core, options=options)
-            return
         if name == 'additionalSolrConfig':
             filepath = options if options.startswith('/') else join(self.configBasedir, options)
             self._extendSolrConfig(core=core, lxmlElementList=parse(open(filepath)).xpath('/config/*'))

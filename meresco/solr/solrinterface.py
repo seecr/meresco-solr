@@ -26,8 +26,6 @@
 ## end license ##
 
 from urllib import urlencode
-from lxml.etree import parse
-from StringIO import StringIO
 from xml.sax.saxutils import escape as escapeXml
 from weightless.http import httpget, httppost
 from meresco.core import Observable
@@ -35,8 +33,6 @@ from simplejson import loads
 
 from solrresponse import SolrResponse
 
-
-CRLF = '\r\n'
 
 class SolrInterface(Observable):
     COUNT = 'count'
@@ -109,21 +105,21 @@ class SolrInterface(Observable):
         raise StopIteration(response)
 
     def prefixSearch(self, field, prefix, limit=10):
-        arguments = {'terms.fl': field, 'terms.prefix': prefix, 'terms.limit': limit}
+        arguments = {'terms.fl': field, 'terms.prefix': prefix, 'terms.limit': limit, 'wt': 'json'}
         path = self._path('terms')
         body = yield self._send(path, urlencode(arguments, doseq=True), contentType='application/x-www-form-urlencoded')
-        xml = parse(StringIO(body))
-        terms = xml.xpath('/response/lst[@name="terms"]/lst[@name="%s"]/int/@name' % field)
-        qtime = int(xml.xpath('/response/lst[@name="responseHeader"]/int[@name="QTime"]/text()')[0])
+        jsonResponse = loads(body)
+        terms = jsonResponse['terms'][field][::2]
+        qtime = jsonResponse['responseHeader']['QTime']
         response = SolrResponse(total=len(terms), hits=terms, queryTime=qtime)
         raise StopIteration(response)
     
     def fieldnames(self):
         path = self._path('admin/luke')
-        body = yield self._read(path)
-        xml = parse(StringIO(body))
-        fieldnames = xml.xpath('/response/lst[@name="fields"]/lst/@name')
-        qtime = int(xml.xpath('/response/lst[@name="responseHeader"]/int[@name="QTime"]/text()')[0])
+        body = yield self._read(path, arguments={'wt': 'json'})
+        jsonResponse = loads(body)
+        fieldnames = jsonResponse['fields'].keys()
+        qtime = jsonResponse['responseHeader']['QTime']
         response = SolrResponse(total=len(fieldnames), hits=fieldnames, queryTime=qtime)
         raise StopIteration(response)
 
@@ -137,8 +133,10 @@ class SolrInterface(Observable):
         self._verify200(header, response)
         raise StopIteration(body)
 
-    def _read(self, path):
+    def _read(self, path, arguments=None):
         host, port = self._solrServer()
+        if arguments:
+            path += '?' + urlencode(arguments, doseq=True)
         response = yield self._httpget(host, port, path)
         header, body = response.split('\r\n\r\n', 1)
         self._verify200(header, response)
@@ -218,3 +216,4 @@ def _updateResponseWithSuggestionData(arguments, spellcheckResult, response):
         suggestion = spellcheckResult[i+1]
         suggestions[name] = (suggestion['startOffset'], suggestion['endOffset'], suggestion['suggestion'])
     response.suggestions = suggestions
+
