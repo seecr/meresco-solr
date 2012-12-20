@@ -42,7 +42,8 @@ from meresco.components import ParseArguments
 from meresco.solr import SolrInterface
 from traceback import format_exc
 
-class HelperHandler(Observable):
+
+class _HelperHandler(Observable):
     def handleRequest(self, path, Body, **kwargs):
         if path == '/ping':
             yield okPlainText
@@ -60,11 +61,10 @@ class HelperHandler(Observable):
         except:
             yield format_exc()
 
-
 def createServer(reactor, port, solrPort):
     return be((Observable(),
         (ObservableHttpServer(reactor, port),
-            (HelperHandler(),
+            (_HelperHandler(),
                 (SolrInterface(host='localhost', port=solrPort, core='records', commitTimeout=0.5),)
             )
         )
