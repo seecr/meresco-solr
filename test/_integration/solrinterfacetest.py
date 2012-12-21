@@ -60,7 +60,7 @@ class SolrInterfaceTest(IntegrationTestCase):
 
     def testPivoting(self):
         response = self.solrRequest(luceneQueryString='*:*', facets=[
-            [{'field': 'untokenized.rdf:type', 'maxTerms': 2}, {'field': 'untokenized.dc:date', 'maxTerms': 2}]            
+            [{'fieldname': 'untokenized.rdf:type', 'maxTerms': 2}, {'fieldname': 'untokenized.dc:date', 'maxTerms': 2}]            
         ])
         self.assertEquals([
             {
@@ -92,7 +92,7 @@ class SolrInterfaceTest(IntegrationTestCase):
         ], response['drilldownData'])
 
     def testPrefixSearch(self):
-        response = self.solrRequest(path='/prefixSearch', prefix="cha", field='__all__')
+        response = self.solrRequest(path='/prefixSearch', prefix="cha", fieldname='__all__')
         self.assertEquals(['charles', 'challenge', 'chamber'], response['hits'])
 
     def testFieldnames(self):
