@@ -3,8 +3,8 @@
 # "Meresco Solr" is a set of components and tools
 #  to integrate Solr into "Meresco." 
 # 
-# Copyright (C) 2011-2012 Seecr (Seek You Too B.V.) http://seecr.nl
-# Copyright (C) 2012 SURF http://www.surf.nl
+# Copyright (C) 2011-2013 Seecr (Seek You Too B.V.) http://seecr.nl
+# Copyright (C) 2012-2013 SURF http://www.surf.nl
 # Copyright (C) 2012 Stichting Bibliotheek.nl (BNL) http://www.bibliotheek.nl
 # 
 # This file is part of "Meresco Solr"
@@ -172,13 +172,14 @@ def _facetArguments(facets):
         arguments['facet'] = "on"
         arguments['facet.mincount'] = "1"
         arguments['facet.field'] = []
+        arguments['facet.pivot'] = []
         for facet in facets:
             if isinstance(facet, dict):
                 arguments['facet.field'].append(facet['fieldname'])
                 facetLimit(facet)
                 facetSort(facet)
             else:
-                arguments["facet.pivot"] = ','.join(f['fieldname'] for f in facet)
+                arguments["facet.pivot"].append(','.join(f['fieldname'] for f in facet))
                 arguments['facet.pivot.mincount'] = "0"
                 for f in facet:
                     facetLimit(f)

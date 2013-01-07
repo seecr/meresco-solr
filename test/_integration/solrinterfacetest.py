@@ -3,8 +3,8 @@
 # "Meresco Solr" is a set of components and tools
 #  to integrate Solr into "Meresco." 
 # 
-# Copyright (C) 2012 SURF http://www.surf.nl
-# Copyright (C) 2012 Seecr (Seek You Too B.V.) http://seecr.nl
+# Copyright (C) 2012-2013 SURF http://www.surf.nl
+# Copyright (C) 2012-2013 Seecr (Seek You Too B.V.) http://seecr.nl
 # 
 # This file is part of "Meresco Solr"
 # 
@@ -88,6 +88,63 @@ class SolrInterfaceTest(IntegrationTestCase):
                         "term": "http://www.w3.org/2004/02/skos/core#Concept"
                     }, 
                 ]
+            }
+        ], response['drilldownData'])
+
+    def testPivotingMultipleFacets(self):
+        response = self.solrRequest(luceneQueryString='*:*', facets=[
+            [{'fieldname': 'untokenized.rdf:type', 'maxTerms': 2}, {'fieldname': 'untokenized.dc:date', 'maxTerms': 2}],
+            [{'fieldname': 'untokenized.dc:subject', 'maxTerms': 2}, {'fieldname': 'untokenized.dc:date', 'maxTerms': 2}],
+        ])
+        self.assertEquals([
+            {
+                "fieldname": "untokenized.rdf:type", 
+                "terms": [
+                    {
+                        "count": 46, 
+                        "pivot": {
+                            "fieldname": "untokenized.dc:date", 
+                            "terms": [
+                                {
+                                    "count": 5, 
+                                    "term": "1975"
+                                }, 
+                                {
+                                    "count": 4, 
+                                    "term": "1971"
+                                }, 
+                            ]
+                        }, 
+                        "term": "http://dbpedia.org/ontology/Book"
+                    }, 
+                    {
+                        "count": 4, 
+                        "term": "http://www.w3.org/2004/02/skos/core#Concept"
+                    }, 
+                ]
+            },
+            {'fieldname': 'untokenized.dc:subject',
+                'terms': [{
+                    'count': 1, 
+                    'pivot': {
+                        'fieldname': 'untokenized.dc:date', 
+                        'terms': [{
+                            'count': 1, 
+                            'term': '1975'
+                        }]
+                    }, 
+                    'term': 'Bourbonnais (France)'
+                }, {
+                    'count': 1, 
+                    'pivot': {
+                        'fieldname': 'untokenized.dc:date', 
+                        'terms': [{
+                            'count': 1, 
+                            'term': '1966'
+                        }]
+                    }, 
+                    'term': 'Doesburg (Netherlands)'
+                }]
             }
         ], response['drilldownData'])
 
