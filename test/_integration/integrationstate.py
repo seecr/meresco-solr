@@ -89,7 +89,7 @@ class IntegrationState(_IntegrationState):
         print "Creating database in", self.integrationTempdir
         try:
             self._uploadSolrData(join(self.testdataDir))
-            sleep(2)
+            sleep(5)
             print "Finished creating database in %s seconds" % (time() - start)
         except Exception, e:
             print 'Error received while creating database for', self.stateName
