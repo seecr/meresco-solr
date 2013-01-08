@@ -194,8 +194,9 @@ def _updateResponseWithDrilldownData(arguments, facetCounts, response):
             terms.append({'term': termCounts[i], 'count': termCounts[i+1]})
         drilldownData.append(dict(fieldname=fieldname, terms=terms))
     if 'facet_pivot' in facetCounts:
-        for drilldown in facetCounts['facet_pivot'].values():
-            drilldownData.append(_buildDrilldownDict(drilldown))
+        drilldownData.extend([_buildDrilldownDict(drilldown) \
+                for drilldown in facetCounts['facet_pivot'].values() \
+                    if drilldown])
     response.drilldownData = drilldownData
 
 def _buildDrilldownDict(drilldown):

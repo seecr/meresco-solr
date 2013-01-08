@@ -284,6 +284,17 @@ class SolrInterfaceTest(SeecrTestCase):
                 }
             ]), repr(response.drilldownData))
 
+    def testPivotDrilldown(self):
+        response, (path, body) = self.executeQueryResponse("meresco.exists:true", facets=[
+                [
+                    {'fieldname': '__all__', 'sortBy': 'index'},
+                    {'fieldname': '__other__', 'maxTerms': 5}
+                ], 
+            ], response=JSON_RESPONSE % JSON_FACET_WITH_PIVOT_NO_RESPONSE)
+        arguments = parse_qs(body, keep_blank_values=True)
+        self.assertEqualsWS(repr([
+            ]), repr(response.drilldownData))
+
     def testExecuteQuerySolrHostFromObserver(self):
         solrInterface = SolrInterface()
         observer = CallTrace(returnValues={'solrServer': ('localhost', 1234)})
@@ -572,5 +583,16 @@ JSON_FACET_WITH_PIVOT = """,
                 "pivot":[]
             }
         ]
+    }
+}"""
+
+JSON_FACET_WITH_PIVOT_NO_RESPONSE = """,
+"facet_counts":{
+    "facet_queries":{},
+    "facet_dates":{},
+    "facet_fields":{},
+    "facet_ranges":{},
+    "facet_pivot":{
+        "__all__,__other__":[]
     }
 }"""
