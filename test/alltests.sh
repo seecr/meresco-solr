@@ -24,9 +24,13 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 # 
 ## end license ##
-
+set -o errexit
 export LANG=en_US.UTF-8
 export PYTHONPATH=.:"$PYTHONPATH"
 
+(
+    cd ..
+    ./build.sh
+)
 python2.6 _alltests.py "$@"
 

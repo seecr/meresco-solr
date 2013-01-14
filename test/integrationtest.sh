@@ -26,6 +26,13 @@
 # 
 ## end license ##
 
+set -o errexit
 export LANG=en_US.UTF-8
-export PYTHONPATH=.:$PYTHONPATH
+export PYTHONPATH=.:"$PYTHONPATH"
+
+(
+    cd ..
+    ./build.sh
+)
+
 python2.6 _integrationtest.py "$@"

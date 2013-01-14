@@ -5,6 +5,7 @@
         - Also both indices share the same counts of "fiets" over all docs: 5
         -->
   <field name="__id__">record:0001</field>
-  <field name="__all__">one two three four five six seven eight nine</field>
   <field name="__all__">fiets</field>
+  <field name="__all__">zadel</field>
+  <field name="__all__">one two three four five six seven eight</field>
 </doc>

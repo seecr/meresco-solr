@@ -1,5 +1,6 @@
 <doc xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <field name="__id__">record:0002</field>
-  <field name="__all__">one two three four five six seven eight</field>
   <field name="__all__">fiets fiets</field>
+  <field name="__all__">zadel wiel</field>
+  <field name="__all__">one two three four five six</field>
 </doc>
