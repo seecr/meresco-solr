@@ -26,6 +26,14 @@
       </analyzer>
     </fieldType>
 
+    <fieldType name="custom_similarity" class="solr.TextField" positionIncrementGap="100" omitNorms="false" multiValued="true" indexed="true" stored="false">
+      <analyzer>
+        <tokenizer class="solr.ClassicTokenizerFactory"/>
+        <filter class="solr.LowerCaseFilterFactory"/>
+      </analyzer>
+      <similarity class="org.meresco.solr.CoordSimilarity"/>
+    </fieldType>
+
     <fieldType name="untokenized_string" class="solr.StrField" sortMissingLast="true" omitNorms="true" multiValued="true" indexed="true" stored="false" />
 
     <fieldType name="sorted_string" class="solr.StrField" sortMissingLast="true" omitNorms="true" multiValued="false" indexed="true" stored="false" />
@@ -39,6 +47,8 @@
  <fields>
    <field name="__id__" type="string" stored="true" required="true" /> 
    <field name="__all__" type="text_ws" /> 
+   <field name="__all_similarity__" type="custom_similarity" />
+   <copyField source="__all__" dest="__all_similarity__" /> 
    <field name="__timestamp__" type="datetime" indexed="true" stored="false" default="NOW" sortMissingLast="true" omitNorms="true" multiValued="false" />
    <dynamicField name="range.double.*" type="trie_double"/>
    <dynamicField name="sorted.*" type="sorted_string" />
@@ -51,6 +61,5 @@
  <defaultSearchField>__all__</defaultSearchField>
 
  <solrQueryParser defaultOperator="AND"/>
-
- <similarity class="org.meresco.solr.CoordSimilarity"/>
+ <similarity class="solr.SchemaSimilarityFactory"/>
 </schema>
