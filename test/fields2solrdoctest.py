@@ -33,7 +33,6 @@ from weightless.core import be, compose
 from StringIO import StringIO
 from lxml.etree import parse
 
-
 class Fields2SolrDocTest(SeecrTestCase):
     def setUp(self):
         SeecrTestCase.setUp(self)

@@ -1,0 +1,10 @@
+<doc xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <!--  These 4 records are here to test tf/idf and the Solr sharding integration of results
+        - Each record has the same total number of terms: 10.
+        - Records differ only in the count of "fiets".
+        - Also both indices share the same counts of "fiets" over all docs: 5
+        -->
+  <field name="__id__">record:0001</field>
+  <field name="__all__">one two three four five six seven eight nine</field>
+  <field name="__all__">fiets</field>
+</doc>

@@ -52,8 +52,8 @@ projectDir = dirname(dirname(mydir))
 class IntegrationState(_IntegrationState):
     def __init__(self, stateName, tests=None, fastMode=False):
         _IntegrationState.__init__(self, "solr-"+stateName, tests=tests, fastMode=fastMode)
-        self.solr1 = SolrState("solr1", integrationTestDir=self.integrationTempdir)
-        self.solr2 = SolrState("solr2", integrationTestDir=self.integrationTempdir)
+        self.solr1 = SolrState("solr1", integrationTestDir=self.integrationTempdir, stateName=self.stateName)
+        self.solr2 = SolrState("solr2", integrationTestDir=self.integrationTempdir, stateName=self.stateName)
 
     def setUp(self):
         self.solr1.start(self)
@@ -70,8 +70,12 @@ class IntegrationState(_IntegrationState):
         start = time()
         print "Creating database in", self.integrationTempdir
         try:
-            self.solr1._uploadSolrData()
-            self.solr2._uploadSolrData()
+            if self.stateName == 'solr-default':
+                self.solr1._uploadSolrData("*.doc")
+                self.solr2._uploadSolrData("*.doc")
+            else:
+                self.solr1._uploadSolrData("*.solr1.doc")
+                self.solr2._uploadSolrData("*.solr2.doc")
             sleep(5)
             print "Finished creating database in %s seconds" % (time() - start)
         except Exception, e:
@@ -81,17 +85,17 @@ class IntegrationState(_IntegrationState):
 
 
 class SolrState(object):
-    def __init__(self, stateName, integrationTestDir):
-        self.stateName = stateName
-        self.testdataDir = join(dirname(mydir), 'data/integration')
-        self.solrStatePath = join(integrationTestDir, self.stateName)
+    def __init__(self, name, integrationTestDir, stateName):
+        self.name = name
+        self.testdataDir = join(dirname(mydir), 'data', stateName)
+        self.solrStatePath = join(integrationTestDir, self.name)
         self.solrPort = PortNumberGenerator.next()
         self.solrClientPort = PortNumberGenerator.next()
         self.solrCore = "records"
         self.config = {
                 self.solrCore: {'autocomplete': True, 'suggestions': {'field': '__all__'}}
             }
-        self.configPath = join(integrationTestDir, '%s.config' % self.stateName)
+        self.configPath = join(integrationTestDir, '%s.config' % self.name)
         with open(self.configPath, 'w') as f:
             f.write(dumps(self.config))
 
@@ -101,7 +105,7 @@ class SolrState(object):
    
     def _startSolrServer(self, integrationstate):
         integrationstate._startServer(
-                self.stateName,
+                self.name,
                 integrationstate.binPath('start-solr'),
                 'http://localhost:%s/solr/%s/admin/ping' % (self.solrPort, self.solrCore),
                 port=self.solrPort,
@@ -110,15 +114,15 @@ class SolrState(object):
 
     def _startMerescoSolrInterfaceServer(self, integrationstate):
         integrationstate._startServer(
-                self.stateName + 'client',
+                self.name + 'client',
                 integrationstate.binPath('solrclientserver.py', binDirs=[mydir]),
                 'http://localhost:%s/ping' % self.solrClientPort,
                 cwd=mydir,
                 port=self.solrClientPort,
                 solrPort=self.solrPort)
 
-    def _uploadSolrData(self):
-        for docFile in sorted(glob(join(self.testdataDir, '*.doc'))):
+    def _uploadSolrData(self, pathname):
+        for docFile in sorted(glob(join(self.testdataDir, pathname))):
             # print docFile
             identifier = basename(docFile).rsplit('.',1)[0]
             addKwargs=dict(

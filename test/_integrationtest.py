@@ -53,6 +53,12 @@ if __name__ == '__main__':
         tests=[
             '_integration.solrservertest.SolrServerTest',
             '_integration.solrinterfacetest.SolrInterfaceTest',
+        ],
+        fastMode=fastMode).addToTestRunner(runner)
+
+    IntegrationState(
+        "sharding", 
+        tests=[
             '_integration.solrshardingtest.SolrShardingTest',
         ],
         fastMode=fastMode).addToTestRunner(runner)
