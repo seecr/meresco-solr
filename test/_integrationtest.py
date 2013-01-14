@@ -53,7 +53,6 @@ if __name__ == '__main__':
         tests=[
             '_integration.solrservertest.SolrServerTest',
             '_integration.solrinterfacetest.SolrInterfaceTest',
-            '_integration.solrshardingtest.SolrShardingTest',
         ],
         fastMode=fastMode).addToTestRunner(runner)
 

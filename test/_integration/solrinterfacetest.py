@@ -39,7 +39,7 @@ class SolrInterfaceTest(IntegrationTestCase):
     <field name="title">The title</field>
 </doc>''',
             )
-        header, body = postRequest(port=self.solr1.solrClientPort, path='/add', data=dumps(addKwargs), parse=False)
+        header, body = postRequest(port=self.solrClientPort, path='/add', data=dumps(addKwargs), parse=False)
         self.assertEquals('', body)
         sleep(1)
         
@@ -47,7 +47,7 @@ class SolrInterfaceTest(IntegrationTestCase):
         self.assertEquals(1, response['total'])
         self.assertEquals(['record:testAddQueryDelete'], response['hits'])
 
-        header, body = postRequest(port=self.solr1.solrClientPort, path='/delete', data=dumps(dict(identifier='record:testAddQueryDelete')), parse=False)
+        header, body = postRequest(port=self.solrClientPort, path='/delete', data=dumps(dict(identifier='record:testAddQueryDelete')), parse=False)
         self.assertEquals('', body)
         sleep(1)
 
@@ -163,7 +163,7 @@ class SolrInterfaceTest(IntegrationTestCase):
         self.assertEquals([0, 8, ['challenge', 'college', 'vallen', 'alleen', 'gallery']], response['suggestions']['callenge'])
 
     def solrRequest(self, path="/executeQuery", **queryKwargs):
-        header, body = postRequest(port=self.solr1.solrClientPort, path=path, data=dumps(queryKwargs), parse=False)
+        header, body = postRequest(port=self.solrClientPort, path=path, data=dumps(queryKwargs), parse=False)
         responseType, responseDict = body.split(': ', 1)
         self.assertEquals('SolrResponse', responseType, responseType + responseDict)
         return loads(responseDict)
