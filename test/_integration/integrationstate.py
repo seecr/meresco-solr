@@ -1,35 +1,35 @@
 # -*- coding: utf-8 -*-
 ## begin license ##
-# 
+#
 # "Meresco Solr" is a set of components and tools
-#  to integrate Solr into "Meresco." 
-# 
+#  to integrate Solr into "Meresco."
+#
 # Copyright (C) 2012 SURF http://www.surf.nl
 # Copyright (C) 2012 Seecr (Seek You Too B.V.) http://seecr.nl
 # Copyright (C) 2012 Stichting Bibliotheek.nl (BNL) http://www.bibliotheek.nl
-# 
+#
 # This file is part of "Meresco Solr"
-# 
+#
 # "Meresco Solr" is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
-# 
+#
 # "Meresco Solr" is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with "Meresco Solr"; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-# 
+#
 ## end license ##
 
 from os.path import isdir, join, abspath, dirname, basename, isfile
 from os import makedirs
 from sys import path as systemPath
-from time import sleep, time 
+from time import sleep, time
 from traceback import print_exc
 from uuid import uuid4
 from simplejson import dump
@@ -102,11 +102,16 @@ class SolrState(object):
     def start(self, integrationstate):
         self._startSolrServer(integrationstate)
         self._startMerescoSolrInterfaceServer(integrationstate)
-   
+
     def _startSolrServer(self, integrationstate):
+        startSolrPath = integrationstate.binPath('start-solr')
+        print 'startSolrPath', startSolrPath
+        print
+        from sys import stdout; stdout.flush()
+
         integrationstate._startServer(
                 self.name,
-                integrationstate.binPath('start-solr'),
+                startSolrPath,
                 'http://localhost:%s/solr/%s/admin/ping' % (self.solrPort, self.solrCore),
                 port=self.solrPort,
                 stateDir=self.solrStatePath,
@@ -131,5 +136,5 @@ class SolrState(object):
             )
             header, body = postRequest(port=self.solrClientPort, path='/add', data=dumps(addKwargs), parse=False)
             assert '' == body, 'Something bad happened:\n' + body
-               
+
 

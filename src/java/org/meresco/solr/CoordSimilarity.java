@@ -4,12 +4,14 @@ import org.apache.lucene.search.similarities.DefaultSimilarity;
 import org.apache.lucene.index.FieldInvertState;
 import org.apache.lucene.index.Norm;
 
+
 public class CoordSimilarity extends DefaultSimilarity {
     /**
      * All OR clauses count equally.
      */
     @Override
     public float coord(int overlap, int maxOverlap) {
+        System.err.println("[coord] overlap: " + overlap + ", maxOverlap" + maxOverlap);
         return 1F / maxOverlap;
     }
 
@@ -33,7 +35,9 @@ public class CoordSimilarity extends DefaultSimilarity {
      */
     @Override
     public void computeNorm(FieldInvertState state, Norm norm) {
+        System.err.println("[computeNorm] state: " + state + ", norm: " + norm);
     }
+
 
     /**
      * Ignore queryNorm to establish deterministic scoring

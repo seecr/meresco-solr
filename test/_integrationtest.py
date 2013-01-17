@@ -1,29 +1,29 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 ## begin license ##
-# 
+#
 # "Meresco Solr" is a set of components and tools
-#  to integrate Solr into "Meresco." 
-# 
+#  to integrate Solr into "Meresco."
+#
 # Copyright (C) 2012 SURF http://www.surf.nl
 # Copyright (C) 2012 Seecr (Seek You Too B.V.) http://seecr.nl
-# 
+#
 # This file is part of "Meresco Solr"
-# 
+#
 # "Meresco Solr" is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
-# 
+#
 # "Meresco Solr" is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with "Meresco Solr"; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-# 
+#
 ## end license ##
 
 from os import system                               #DO_NOT_DISTRIBUTE
@@ -38,7 +38,7 @@ from sys import argv
 
 from seecr.test.testrunner import TestRunner
 from _integration import IntegrationState
-
+from _integration.existingindexesstate import ExistingIndexesState
 
 if __name__ == '__main__':
     flags = ['--fast']
@@ -49,7 +49,7 @@ if __name__ == '__main__':
 
     runner = TestRunner()
     IntegrationState(
-        "default", 
+        "default",
         tests=[
             '_integration.solrservertest.SolrServerTest',
             '_integration.solrinterfacetest.SolrInterfaceTest',
@@ -57,12 +57,29 @@ if __name__ == '__main__':
         fastMode=fastMode).addToTestRunner(runner)
 
     IntegrationState(
-        "sharding", 
+        "sharding",
         tests=[
             '_integration.solrshardingtest.SolrShardingTest',
         ],
         fastMode=fastMode).addToTestRunner(runner)
 
+    spikeBasePath = '/home/pair/zandbak/combine_different_indexes_spike'
+    ExistingIndexesState(
+        "existingIndexes",
+        tests=[
+            '_integration.shardexistingtest.ShardExistingTest',
+        ],
+        indexes={
+            'edurep': {
+                'dir': spikeBasePath + '/edurepSolrData',
+                'core': 'lom'
+            },
+            'zp': {
+                'dir': spikeBasePath + '/zpSolrData',
+                'core': 'records'
+            },
+        }).addToTestRunner(runner)
+
     testnames = argv[1:]
     runner.run(testnames)
-    
+

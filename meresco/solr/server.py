@@ -1,33 +1,33 @@
 ## begin license ##
-# 
+#
 # "Meresco Solr" is a set of components and tools
-#  to integrate Solr into "Meresco." 
-# 
+#  to integrate Solr into "Meresco."
+#
 # Copyright (C) 2012 SURF http://www.surf.nl
 # Copyright (C) 2012 Seecr (Seek You Too B.V.) http://seecr.nl
 # Copyright (C) 2012 Stichting Bibliotheek.nl (BNL) http://www.bibliotheek.nl
-# 
+#
 # This file is part of "Meresco Solr"
-# 
+#
 # "Meresco Solr" is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
-# 
+#
 # "Meresco Solr" is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with "Meresco Solr"; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-# 
+#
 ## end license ##
 
 from os import makedirs, listdir, system, execvp
 from os.path import dirname, abspath, isdir, isfile, join
-from shutil import copytree, rmtree
+from shutil import copyfile, copytree, rmtree
 from re import compile, MULTILINE
 from StringIO import StringIO
 from lxml.etree import parse, SubElement, tostring
@@ -57,6 +57,7 @@ class Server(object):
                 if currentMatchVersion != newMatchVersion:
                     raise ValueError("LuceneMatchVersion in core '%s' does not match the new configuration. Remove the old index." % coreDir)
 
+        self._updateLibs()
         self._setupJettyXml()
         self._setupStartConfig()
         self._setupSolrXml()
@@ -66,42 +67,25 @@ class Server(object):
             for feature, options in features.items():
                 self._setupFeature(name=feature, core=core, options=options)
 
-    def _setupFeature(self, name, core, options):
-        if name == 'additionalSolrConfig':
-            filepath = options if options.startswith('/') else join(self.configBasedir, options)
-            self._extendSolrConfig(core=core, lxmlElementList=parse(open(filepath)).xpath('/config/*'))
-            return
-        if name == 'additionalSchemaXml':
-            filepath = options if options.startswith('/') else join(self.configBasedir, options)
-            self._extendSchemaXml(core=core, lxmlElementList=parse(open(filepath)).xpath('/schema/*'))
-            return
-        if options == False:
-            return
-        featureFilename = join(usrShareDir, 'solrconfig.d', '%s.xml' % name)
-        if not isfile(featureFilename):
-            raise ValueError("Unknown feature '%s'" % name)
+    def start(self, javaMX):
+        self._execvp(
+            'java', [
+                'java',
+                '-Xmx%s' % javaMX,
+                '-Djetty.port=%s' % self.port,
+                '-DSTART=%s/start.config' % self.stateDir,
+                '-Dsolr.solr.home=%s' % self.stateDir,
+                '-jar', '/usr/share/java/solr%s/start.jar' % SOLR_VERSION,
+            ])
 
-        feature = open(featureFilename).read()
-        if type(options) is dict:
-            feature = feature % options
-        feature_xml = parse(StringIO(feature))
-        self._extendSolrConfig(core=core, lxmlElementList=feature_xml.xpath('/config/*'))
 
-    def _extendSolrConfig(self, core, lxmlElementList):
-        if not lxmlElementList:
-            raise ValueError("No elements found with which to extend the solrconfig.xml")
-        solrconfig_file = join(self.stateDir, 'cores', core, 'conf', 'solrconfig.xml')
-        core_sorlconfig = parse(open(solrconfig_file))
-        core_sorlconfig.getroot().extend(lxmlElementList)
-        open(solrconfig_file, 'w').write(tostring(core_sorlconfig, pretty_print=True, encoding="UTF-8"))
-
-    def _extendSchemaXml(self, core, lxmlElementList):
-        if not lxmlElementList:
-            raise ValueError("No elements found with which to extend the schema.xml")
-        schemaxml_file = join(self.stateDir, 'cores', core, 'conf', 'schema.xml')
-        core_sorlconfig = parse(open(schemaxml_file))
-        core_sorlconfig.getroot().extend(lxmlElementList)
-        open(schemaxml_file, 'w').write(tostring(core_sorlconfig, pretty_print=True, encoding="UTF-8"))
+    def _updateLibs(self):
+        # always run with latest (installed) Meresco-Solr jar(s)
+        for filename in listdir(join(usrShareDir, 'solr-data/lib')):
+            if filename.endswith('.jar'):
+                copyfile(
+                    join(usrShareDir, 'solr-data/lib', filename),
+                    join(self.stateDir, 'lib', filename))
 
     def _setupCoreData(self):
         cores = self.config.keys()
@@ -139,16 +123,42 @@ class Server(object):
     def _setupSolrXml(self):
         system(r"""sed -e "s,<Set name=\"war\">.*</Set>,<Set name=\"war\">/usr/share/java/webapps/apache-solr-%s.war</Set>," -i %s/contexts/solr.xml""" % (SOLR_VERSION, self.stateDir))
 
-    def start(self, javaMX):
-        self._execvp(
-            'java', [
-                'java',
-                '-Xmx%s' % javaMX, 
-                '-Djetty.port=%s' % self.port,
-                '-DSTART=%s/start.config' % self.stateDir,
-                '-Dsolr.solr.home=%s' % self.stateDir, 
-                '-jar', '/usr/share/java/solr%s/start.jar' % SOLR_VERSION,
-            ])
+    def _setupFeature(self, name, core, options):
+        if name == 'additionalSolrConfig':
+            filepath = options if options.startswith('/') else join(self.configBasedir, options)
+            self._extendSolrConfig(core=core, lxmlElementList=parse(open(filepath)).xpath('/config/*'))
+            return
+        if name == 'additionalSchemaXml':
+            filepath = options if options.startswith('/') else join(self.configBasedir, options)
+            self._extendSchemaXml(core=core, lxmlElementList=parse(open(filepath)).xpath('/schema/*'))
+            return
+        if options == False:
+            return
+        featureFilename = join(usrShareDir, 'solrconfig.d', '%s.xml' % name)
+        if not isfile(featureFilename):
+            raise ValueError("Unknown feature '%s'" % name)
+
+        feature = open(featureFilename).read()
+        if type(options) is dict:
+            feature = feature % options
+        feature_xml = parse(StringIO(feature))
+        self._extendSolrConfig(core=core, lxmlElementList=feature_xml.xpath('/config/*'))
+
+    def _extendSolrConfig(self, core, lxmlElementList):
+        if not lxmlElementList:
+            raise ValueError("No elements found with which to extend the solrconfig.xml")
+        solrconfig_file = join(self.stateDir, 'cores', core, 'conf', 'solrconfig.xml')
+        core_sorlconfig = parse(open(solrconfig_file))
+        core_sorlconfig.getroot().extend(lxmlElementList)
+        open(solrconfig_file, 'w').write(tostring(core_sorlconfig, pretty_print=True, encoding="UTF-8"))
+
+    def _extendSchemaXml(self, core, lxmlElementList):
+        if not lxmlElementList:
+            raise ValueError("No elements found with which to extend the schema.xml")
+        schemaxml_file = join(self.stateDir, 'cores', core, 'conf', 'schema.xml')
+        core_sorlconfig = parse(open(schemaxml_file))
+        core_sorlconfig.getroot().extend(lxmlElementList)
+        open(schemaxml_file, 'w').write(tostring(core_sorlconfig, pretty_print=True, encoding="UTF-8"))
 
     def _execvp(self, *args, **kwargs):
         execvp(*args, **kwargs)
