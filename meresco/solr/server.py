@@ -62,9 +62,17 @@ class Server(object):
         self._setupSolrXml()
         self._setupCoreData()
 
+        self._setFeatureDefaults('autoCommit', {'autoCommitMaxTime': 1000})
         for core, features in self.config.items():
             for feature, options in features.items():
                 self._setupFeature(name=feature, core=core, options=options)
+
+    def _setFeatureDefaults(self, featureName, defaultOptions):
+        for core, features in self.config.items():
+            feature = features.setdefault(featureName, {})
+            for key, value in defaultOptions.items():
+                if not key in feature:
+                    feature[key] = value
 
     def _setupFeature(self, name, core, options):
         if name == 'additionalSolrConfig':

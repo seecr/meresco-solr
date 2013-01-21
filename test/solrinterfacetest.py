@@ -45,7 +45,7 @@ class SolrInterfaceTest(SeecrTestCase):
         interface._send = lambda path, body: sendData.append((path, body))
         list(interface.add(identifier="recordId", partname="ignored", data="<record><data>recordData</data></record>"))
         self.assertEquals(1, len(sendData))
-        self.assertEquals(('/solr/THE_CORE/update?commitWithin=1000', '<add><record><data>recordData</data></record></add>'), sendData[0])
+        self.assertEquals(('/solr/THE_CORE/update', '<add><record><data>recordData</data></record></add>'), sendData[0])
         response, (path, body) = self.executeQueryResponse("meresco.exists:true", start=5, stop=10, sortKeys=[dict(sortBy="field", sortDescending=True)], response=JSON_RESPONSE % "", solrInterface=interface)
         self.assertEquals(path, "/solr/THE_CORE/select")
         self.assertQueryArguments("q=meresco.exists%3Atrue&start=5&rows=5&sort=field+desc&wt=json", body)
@@ -63,15 +63,15 @@ class SolrInterfaceTest(SeecrTestCase):
         self._solrInterface._send = lambda path, body: sendData.append((path, body))
         list(self._solrInterface.add(identifier="recordId", partname="ignored", data="<record><data>recordData</data></record>"))
         self.assertEquals(1, len(sendData))
-        self.assertEquals(('/solr/update?commitWithin=1000', '<add><record><data>recordData</data></record></add>'), sendData[0])
+        self.assertEquals(('/solr/update', '<add><record><data>recordData</data></record></add>'), sendData[0])
 
     def testAddWithTimeOut(self):
         sent_data = []
-        iSolr = SolrInterface("localhost", "8889", commitTimeout=10)
+        iSolr = SolrInterface("localhost", "8889")
         iSolr._send = lambda path, body: sent_data.append((path, body))
         r = iSolr.add(identifier="record1", partname="part0", data="<record><data>data here</data></record>")
         list(r)
-        self.assertEquals('/solr/update?commitWithin=10000', sent_data[0][0])
+        self.assertEquals('/solr/update', sent_data[0][0])
         self.assertEquals(1, len(sent_data))
 
     def testObservableName(self):
@@ -87,7 +87,7 @@ class SolrInterfaceTest(SeecrTestCase):
         list(compose(observable.all['index1'].add(identifier="recordId", partname="partname", data="data")))
 
         self.assertEquals([
-                ('1', '/solr/index1/update?commitWithin=1000', '<add>data</add>'),
+                ('1', '/solr/index1/update', '<add>data</add>'),
             ], sendData)
 
     def testDelete(self):
@@ -103,23 +103,16 @@ class SolrInterfaceTest(SeecrTestCase):
         self._solrInterface._send = lambda path, body: sendData.append((path, body))
         list(self._solrInterface.delete("record&:1"))
         self.assertEquals(1, len(sendData))
-        self.assertEquals(('/solr/update?commitWithin=1000', '<delete><id>%s</id></delete>' % "record&amp;:1"), sendData[0])
+        self.assertEquals(('/solr/update', '<delete><id>%s</id></delete>' % "record&amp;:1"), sendData[0])
 
     def testDeleteWithTimeOut(self):
         sent_data = []
-        iSolr = SolrInterface("localhost", "8889", commitTimeout=10)
+        iSolr = SolrInterface("localhost", "8889")
         iSolr._send = lambda path, body: sent_data.append((path, body))
         r = iSolr.delete("record1")
         list(r)
-        self.assertEquals('/solr/update?commitWithin=10000', sent_data[0][0])
+        self.assertEquals('/solr/update', sent_data[0][0])
         self.assertEquals(1, len(sent_data))
-
-    def testSolrTimeoutShouldBeGreaterThenZero(self):
-        try:
-            iSolr = SolrInterface("localhost", "8889", commitTimeout=-1)
-            self.fail()
-        except ValueError, e:
-            self.assertEquals('Value commitTimeout should be greater then zero', str(e))
 
     def testExecuteQuery(self):
         response, (path, body) = self.executeQueryResponse("meresco.exists:true", start=0, stop=10, sortKeys=None, response=JSON_RESPONSE % "") 

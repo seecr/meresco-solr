@@ -1,0 +1,7 @@
+<config>
+    <updateHandler class="solr.DirectUpdateHandler2">
+        <autoCommit>
+            <maxTime>%(autoCommitMaxTime)s</maxTime>
+        </autoCommit>
+    </updateHandler>
+</config>

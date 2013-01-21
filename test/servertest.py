@@ -171,6 +171,20 @@ class ServerTest(SeecrTestCase):
         self.assertFalse('suggestions' in solrconfig_xml.xpath("/config/requestHandler[@name='/select']/arr/str/text()"))
         self.assertFalse('suggestions' in solrconfig_xml.xpath("/config/searchComponent/@name"))
 
+    def testDefaultCommitWithingFeature(self):
+        solrDataDir = join(self.tempdir, 'solr-data')
+        config = {'core1': {}}
+        self._createServer(stateDir=solrDataDir, port=8042, config=config)
+        solrconfig_xml = parse(open(join(solrDataDir, 'cores', 'core1', 'conf', 'solrconfig.xml')))
+        self.assertEquals(['1000'], solrconfig_xml.xpath("/config/updateHandler[@class='solr.DirectUpdateHandler2']/autoCommit/maxTime/text()"))
+
+    def testCommitWithinFeature(self):
+        solrDataDir = join(self.tempdir, 'solr-data')
+        config = {'core1': {'autoCommit': {'autoCommitMaxTime': '100'}}}
+        self._createServer(stateDir=solrDataDir, port=8042, config=config)
+        solrconfig_xml = parse(open(join(solrDataDir, 'cores', 'core1', 'conf', 'solrconfig.xml')))
+        self.assertEquals(['100'], solrconfig_xml.xpath("/config/updateHandler[@class='solr.DirectUpdateHandler2']/autoCommit/maxTime/text()"))
+
     def testInvalidCoreConfig(self):
         solrDataDir = join(self.tempdir, 'solr-data')
         config = {'core1': {'suggestions': False}, 'core2': False}

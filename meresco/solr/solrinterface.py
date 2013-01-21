@@ -39,14 +39,11 @@ class SolrInterface(Observable):
     INDEX = 'index'
     SUPPORTED_SORTBY_VALUES = [COUNT, INDEX]
 
-    def __init__(self, host=None, port=None, core=None, commitTimeout=1):
+    def __init__(self, host=None, port=None, core=None):
         Observable.__init__(self)
         self._host = host
         self._port = port
         self._core = core
-        self._commitWithin = int(commitTimeout * 1000)
-        if self._commitWithin <= 0:
-            raise ValueError("Value commitTimeout should be greater then zero")
         if core is not None:
             self.observable_name = lambda: core
 
@@ -63,12 +60,10 @@ class SolrInterface(Observable):
 
     def add(self, identifier, data, **kwargs):
         path = self._path('update')
-        path += "?commitWithin=%d" % self._commitWithin
         yield self._send(path=path, body="<add>%s</add>" % data)
 
     def delete(self, identifier):
         path = self._path('update')
-        path += "?commitWithin=%d" % self._commitWithin
         yield self._send(path=path, body="<delete><id>%s</id></delete>" % escapeXml(identifier))
 
     def executeQuery(self, luceneQueryString, start=0, stop=10, sortKeys=None, suggestionsCount=0, suggestionsQuery=None, filterQuery=None, facets=None, **kwargs):

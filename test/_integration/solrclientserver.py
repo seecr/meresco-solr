@@ -65,7 +65,7 @@ def createServer(reactor, port, solrPort):
     return be((Observable(),
         (ObservableHttpServer(reactor, port),
             (_HelperHandler(),
-                (SolrInterface(host='localhost', port=solrPort, core='records', commitTimeout=0.5),)
+                (SolrInterface(host='localhost', port=solrPort, core='records'),)
             )
         )
     ))
