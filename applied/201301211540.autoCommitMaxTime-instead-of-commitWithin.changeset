@@ -1,0 +1,224 @@
+Changeset created on Mon Jan 21 15:40:52 UTC 2013 by Seecr (Seek You Too B.V.)
+
+Description: AutoCommit maxTime is used instead of commitWithin
+
+    CommitWithin in solr4.0 is a soft-commit instead of a hard-commit in solr 3.6. 
+    AutoCommit maxTime in solrConfig is used to do a hard-commit every (by default)
+    1 second after an add.
+    Optional a autoCommit feature can be configured with a different autoCommitMaxTime.
+
+Baseline version: 5.0.4
+
+From 8d6e8d3e04580d84bff6043281ed9fbb30db2f64 Mon Sep 17 00:00:00 2001
+From: Hendrik Moree <hendrik@seecr.nl>
+Date: Mon, 21 Jan 2013 16:39:14 +0100
+Subject: [PATCH] JPM/HM: Autocommit feature iso using commitWithin in add/delete
+
+---
+ meresco/solr/server.py                |    8 ++++++++
+ meresco/solr/solrinterface.py         |    7 +------
+ test/_integration/integrationstate.py |    6 +++++-
+ test/_integration/solrclientserver.py |    2 +-
+ test/servertest.py                    |   14 ++++++++++++++
+ test/solrinterfacetest.py             |   23 ++++++++---------------
+ usr-share/solrconfig.d/autoCommit.xml |    7 +++++++
+ 7 files changed, 44 insertions(+), 23 deletions(-)
+ create mode 100644 usr-share/solrconfig.d/autoCommit.xml
+
+diff --git a/meresco/solr/server.py b/meresco/solr/server.py
+index f41d8be..9464f76 100644
+--- a/meresco/solr/server.py
++++ b/meresco/solr/server.py
+@@ -62,10 +62,18 @@ class Server(object):
+         self._setupSolrXml()
+         self._setupCoreData()
+ 
++        self._setFeatureDefaults('autoCommit', {'autoCommitMaxTime': 1000})
+         for core, features in self.config.items():
+             for feature, options in features.items():
+                 self._setupFeature(name=feature, core=core, options=options)
+ 
++    def _setFeatureDefaults(self, featureName, defaultOptions):
++        for core, features in self.config.items():
++            feature = features.setdefault(featureName, {})
++            for key, value in defaultOptions.items():
++                if not key in feature:
++                    feature[key] = value
++
+     def _setupFeature(self, name, core, options):
+         if name == 'additionalSolrConfig':
+             filepath = options if options.startswith('/') else join(self.configBasedir, options)
+diff --git a/meresco/solr/solrinterface.py b/meresco/solr/solrinterface.py
+index 2a0e220..e269cfb 100644
+--- a/meresco/solr/solrinterface.py
++++ b/meresco/solr/solrinterface.py
+@@ -39,14 +39,11 @@ class SolrInterface(Observable):
+     INDEX = 'index'
+     SUPPORTED_SORTBY_VALUES = [COUNT, INDEX]
+ 
+-    def __init__(self, host=None, port=None, core=None, commitTimeout=1):
++    def __init__(self, host=None, port=None, core=None):
+         Observable.__init__(self)
+         self._host = host
+         self._port = port
+         self._core = core
+-        self._commitWithin = int(commitTimeout * 1000)
+-        if self._commitWithin <= 0:
+-            raise ValueError("Value commitTimeout should be greater then zero")
+         if core is not None:
+             self.observable_name = lambda: core
+ 
+@@ -63,12 +60,10 @@ class SolrInterface(Observable):
+ 
+     def add(self, identifier, data, **kwargs):
+         path = self._path('update')
+-        path += "?commitWithin=%d" % self._commitWithin
+         yield self._send(path=path, body="<add>%s</add>" % data)
+ 
+     def delete(self, identifier):
+         path = self._path('update')
+-        path += "?commitWithin=%d" % self._commitWithin
+         yield self._send(path=path, body="<delete><id>%s</id></delete>" % escapeXml(identifier))
+ 
+     def executeQuery(self, luceneQueryString, start=0, stop=10, sortKeys=None, suggestionsCount=0, suggestionsQuery=None, filterQuery=None, facets=None, **kwargs):
+diff --git a/test/_integration/integrationstate.py b/test/_integration/integrationstate.py
+index 9e46197..8ca3717 100644
+--- a/test/_integration/integrationstate.py
++++ b/test/_integration/integrationstate.py
+@@ -61,7 +61,11 @@ class IntegrationState(_IntegrationState):
+ 
+         self.solrCore = "records"
+         self.config = {
+-                self.solrCore: {'autocomplete': True, 'suggestions': {'field': '__all__'}}
++                self.solrCore: {
++                    'autocomplete': True, 
++                    'suggestions': {'field': '__all__'},
++                    'autoCommit': {'autoCommitMaxTime': 500}
++                }
+             }
+         self.configPath = join(self.integrationTempdir, 'solr.config')
+         with open(self.configPath, 'w') as f:
+diff --git a/test/_integration/solrclientserver.py b/test/_integration/solrclientserver.py
+index b0d46f8..d8d21a6 100755
+--- a/test/_integration/solrclientserver.py
++++ b/test/_integration/solrclientserver.py
+@@ -65,7 +65,7 @@ def createServer(reactor, port, solrPort):
+     return be((Observable(),
+         (ObservableHttpServer(reactor, port),
+             (_HelperHandler(),
+-                (SolrInterface(host='localhost', port=solrPort, core='records', commitTimeout=0.5),)
++                (SolrInterface(host='localhost', port=solrPort, core='records'),)
+             )
+         )
+     ))
+diff --git a/test/servertest.py b/test/servertest.py
+index caac6cd..6030a12 100644
+--- a/test/servertest.py
++++ b/test/servertest.py
+@@ -171,6 +171,20 @@ class ServerTest(SeecrTestCase):
+         self.assertFalse('suggestions' in solrconfig_xml.xpath("/config/requestHandler[@name='/select']/arr/str/text()"))
+         self.assertFalse('suggestions' in solrconfig_xml.xpath("/config/searchComponent/@name"))
+ 
++    def testDefaultCommitWithingFeature(self):
++        solrDataDir = join(self.tempdir, 'solr-data')
++        config = {'core1': {}}
++        self._createServer(stateDir=solrDataDir, port=8042, config=config)
++        solrconfig_xml = parse(open(join(solrDataDir, 'cores', 'core1', 'conf', 'solrconfig.xml')))
++        self.assertEquals(['1000'], solrconfig_xml.xpath("/config/updateHandler[@class='solr.DirectUpdateHandler2']/autoCommit/maxTime/text()"))
++
++    def testCommitWithinFeature(self):
++        solrDataDir = join(self.tempdir, 'solr-data')
++        config = {'core1': {'autoCommit': {'autoCommitMaxTime': '100'}}}
++        self._createServer(stateDir=solrDataDir, port=8042, config=config)
++        solrconfig_xml = parse(open(join(solrDataDir, 'cores', 'core1', 'conf', 'solrconfig.xml')))
++        self.assertEquals(['100'], solrconfig_xml.xpath("/config/updateHandler[@class='solr.DirectUpdateHandler2']/autoCommit/maxTime/text()"))
++
+     def testInvalidCoreConfig(self):
+         solrDataDir = join(self.tempdir, 'solr-data')
+         config = {'core1': {'suggestions': False}, 'core2': False}
+diff --git a/test/solrinterfacetest.py b/test/solrinterfacetest.py
+index d7218eb..3db0124 100644
+--- a/test/solrinterfacetest.py
++++ b/test/solrinterfacetest.py
+@@ -45,7 +45,7 @@ class SolrInterfaceTest(SeecrTestCase):
+         interface._send = lambda path, body: sendData.append((path, body))
+         list(interface.add(identifier="recordId", partname="ignored", data="<record><data>recordData</data></record>"))
+         self.assertEquals(1, len(sendData))
+-        self.assertEquals(('/solr/THE_CORE/update?commitWithin=1000', '<add><record><data>recordData</data></record></add>'), sendData[0])
++        self.assertEquals(('/solr/THE_CORE/update', '<add><record><data>recordData</data></record></add>'), sendData[0])
+         response, (path, body) = self.executeQueryResponse("meresco.exists:true", start=5, stop=10, sortKeys=[dict(sortBy="field", sortDescending=True)], response=JSON_RESPONSE % "", solrInterface=interface)
+         self.assertEquals(path, "/solr/THE_CORE/select")
+         self.assertQueryArguments("q=meresco.exists%3Atrue&start=5&rows=5&sort=field+desc&wt=json", body)
+@@ -63,15 +63,15 @@ class SolrInterfaceTest(SeecrTestCase):
+         self._solrInterface._send = lambda path, body: sendData.append((path, body))
+         list(self._solrInterface.add(identifier="recordId", partname="ignored", data="<record><data>recordData</data></record>"))
+         self.assertEquals(1, len(sendData))
+-        self.assertEquals(('/solr/update?commitWithin=1000', '<add><record><data>recordData</data></record></add>'), sendData[0])
++        self.assertEquals(('/solr/update', '<add><record><data>recordData</data></record></add>'), sendData[0])
+ 
+     def testAddWithTimeOut(self):
+         sent_data = []
+-        iSolr = SolrInterface("localhost", "8889", commitTimeout=10)
++        iSolr = SolrInterface("localhost", "8889")
+         iSolr._send = lambda path, body: sent_data.append((path, body))
+         r = iSolr.add(identifier="record1", partname="part0", data="<record><data>data here</data></record>")
+         list(r)
+-        self.assertEquals('/solr/update?commitWithin=10000', sent_data[0][0])
++        self.assertEquals('/solr/update', sent_data[0][0])
+         self.assertEquals(1, len(sent_data))
+ 
+     def testObservableName(self):
+@@ -87,7 +87,7 @@ class SolrInterfaceTest(SeecrTestCase):
+         list(compose(observable.all['index1'].add(identifier="recordId", partname="partname", data="data")))
+ 
+         self.assertEquals([
+-                ('1', '/solr/index1/update?commitWithin=1000', '<add>data</add>'),
++                ('1', '/solr/index1/update', '<add>data</add>'),
+             ], sendData)
+ 
+     def testDelete(self):
+@@ -103,24 +103,17 @@ class SolrInterfaceTest(SeecrTestCase):
+         self._solrInterface._send = lambda path, body: sendData.append((path, body))
+         list(self._solrInterface.delete("record&:1"))
+         self.assertEquals(1, len(sendData))
+-        self.assertEquals(('/solr/update?commitWithin=1000', '<delete><id>%s</id></delete>' % "record&amp;:1"), sendData[0])
++        self.assertEquals(('/solr/update', '<delete><id>%s</id></delete>' % "record&amp;:1"), sendData[0])
+ 
+     def testDeleteWithTimeOut(self):
+         sent_data = []
+-        iSolr = SolrInterface("localhost", "8889", commitTimeout=10)
++        iSolr = SolrInterface("localhost", "8889")
+         iSolr._send = lambda path, body: sent_data.append((path, body))
+         r = iSolr.delete("record1")
+         list(r)
+-        self.assertEquals('/solr/update?commitWithin=10000', sent_data[0][0])
++        self.assertEquals('/solr/update', sent_data[0][0])
+         self.assertEquals(1, len(sent_data))
+ 
+-    def testSolrTimeoutShouldBeGreaterThenZero(self):
+-        try:
+-            iSolr = SolrInterface("localhost", "8889", commitTimeout=-1)
+-            self.fail()
+-        except ValueError, e:
+-            self.assertEquals('Value commitTimeout should be greater then zero', str(e))
+-
+     def testExecuteQuery(self):
+         response, (path, body) = self.executeQueryResponse("meresco.exists:true", start=0, stop=10, sortKeys=None, response=JSON_RESPONSE % "") 
+         self.assertEquals("/solr/select", path)
+diff --git a/usr-share/solrconfig.d/autoCommit.xml b/usr-share/solrconfig.d/autoCommit.xml
+new file mode 100644
+index 0000000..500ef2c
+--- /dev/null
++++ b/usr-share/solrconfig.d/autoCommit.xml
+@@ -0,0 +1,7 @@
++<config>
++    <updateHandler class="solr.DirectUpdateHandler2">
++        <autoCommit>
++            <maxTime>%(autoCommitMaxTime)s</maxTime>
++        </autoCommit>
++    </updateHandler>
++</config>
+\ No newline at end of file
+-- 
+1.7.2.5
+
