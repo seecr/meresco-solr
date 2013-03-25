@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ## begin license ##
 # 
 # "Meresco Solr" is a set of components and tools
@@ -57,6 +58,16 @@ class SolrInterfaceTest(IntegrationTestCase):
     def testDatabase(self):
         response = self.solrRequest(luceneQueryString='*:*')
         self.assertEquals(69, response['total'])
+
+    def testAsciiFoldingFilterFactoryForTextWSFields(self):
+        response = self.solrRequest(luceneQueryString='Morée')
+        self.assertEquals(1, response['total'])
+        response = self.solrRequest(luceneQueryString='Moree')
+        self.assertEquals(1, response['total'])
+        response = self.solrRequest(luceneQueryString='Morèe')
+        self.assertEquals(1, response['total'])
+        response = self.solrRequest(luceneQueryString='More\u0301e')
+        self.assertEquals(0, response['total'])
 
     def testPivoting(self):
         response = self.solrRequest(luceneQueryString='*:*', facets=[
