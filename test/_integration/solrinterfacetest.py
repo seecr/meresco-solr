@@ -170,6 +170,9 @@ class SolrInterfaceTest(IntegrationTestCase):
         self.assertTrue('__all__' in fields, fields)
 
     def testSuggestions(self):
+        response = self.solrRequest(path='/executeQuery', luceneQueryString="*:*", suggestionsQuery='*', suggestionsCount=5)
+        self.assertFalse('suggestions' in response, response)
+
         response = self.solrRequest(path='/executeQuery', luceneQueryString="*:*", suggestionsQuery='callenge', suggestionsCount=5)
         self.assertEquals([0, 8, ['challenge', 'college', 'vallen', 'alleen', 'gallery']], response['suggestions']['callenge'])
 

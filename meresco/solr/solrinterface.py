@@ -95,7 +95,7 @@ class SolrInterface(Observable):
         response = SolrResponse(total=recordCount, hits=identifiers, queryTime=qtime)
         if not facets is None:
              _updateResponseWithDrilldownData(arguments, jsonResponse['facet_counts'], response)
-        if suggestionsCount > 0 and suggestionsQuery:
+        if suggestionsCount > 0 and suggestionsQuery and 'spellcheck' in jsonResponse:
             _updateResponseWithSuggestionData(arguments, jsonResponse['spellcheck']['suggestions'], response)
         raise StopIteration(response)
 
