@@ -43,7 +43,7 @@ class ServerTest(SeecrTestCase):
     def testSetupSolrConfig(self):
         solrDataDir = join(self.tempdir, 'solr-data')
         self._createServer(stateDir=solrDataDir, port=8042, config={'core1': {}, 'córë2': {}})
-        self.assertEquals(set(['contexts', 'cores', 'start.config', 'solr.xml', 'etc']), set(listdir(solrDataDir)))
+        self.assertEquals(set(['lib', 'contexts', 'cores', 'start.config', 'solr.xml', 'etc']), set(listdir(solrDataDir)))
         self.assertEquals(set(['webdefault.xml', 'jetty.xml']), set(listdir(join(solrDataDir, 'etc'))))
         jetty_xml = parse(open(join(solrDataDir, 'etc', 'jetty.xml')))
         self.assertEquals(['8042'], jetty_xml.xpath('//SystemProperty[@name="jetty.port"]/@default'))
@@ -78,7 +78,7 @@ class ServerTest(SeecrTestCase):
         makedirs(join(solrDataDir, 'cores', 'core1', 'data'))
         self.assertEquals(set(['data', 'conf']), set(listdir(join(solrDataDir, 'cores', 'core1'))))
         self._createServer(stateDir=solrDataDir, port=8042, config={'core1': {}, 'córë2': {}})
-        self.assertEquals(set(['contexts', 'cores', 'start.config', 'solr.xml', 'etc']), set(listdir(solrDataDir)))
+        self.assertEquals(set(['lib', 'contexts', 'cores', 'start.config', 'solr.xml', 'etc']), set(listdir(solrDataDir)))
         self.assertEquals(set(['webdefault.xml', 'jetty.xml']), set(listdir(join(solrDataDir, 'etc'))))
         jetty_xml = parse(open(join(solrDataDir, 'etc', 'jetty.xml')))
         self.assertEquals(['8042'], jetty_xml.xpath('//SystemProperty[@name="jetty.port"]/@default'))
@@ -170,20 +170,6 @@ class ServerTest(SeecrTestCase):
         solrconfig_xml = parse(open(join(solrDataDir, 'cores', 'core2', 'conf', 'solrconfig.xml')))
         self.assertFalse('suggestions' in solrconfig_xml.xpath("/config/requestHandler[@name='/select']/arr/str/text()"))
         self.assertFalse('suggestions' in solrconfig_xml.xpath("/config/searchComponent/@name"))
-
-    def testDefaultCommitWithingFeature(self):
-        solrDataDir = join(self.tempdir, 'solr-data')
-        config = {'core1': {}}
-        self._createServer(stateDir=solrDataDir, port=8042, config=config)
-        solrconfig_xml = parse(open(join(solrDataDir, 'cores', 'core1', 'conf', 'solrconfig.xml')))
-        self.assertEquals(['1000'], solrconfig_xml.xpath("/config/updateHandler[@class='solr.DirectUpdateHandler2']/autoCommit/maxTime/text()"))
-
-    def testCommitWithinFeature(self):
-        solrDataDir = join(self.tempdir, 'solr-data')
-        config = {'core1': {'autoCommit': {'autoCommitMaxTime': '100'}}}
-        self._createServer(stateDir=solrDataDir, port=8042, config=config)
-        solrconfig_xml = parse(open(join(solrDataDir, 'cores', 'core1', 'conf', 'solrconfig.xml')))
-        self.assertEquals(['100'], solrconfig_xml.xpath("/config/updateHandler[@class='solr.DirectUpdateHandler2']/autoCommit/maxTime/text()"))
 
     def testInvalidCoreConfig(self):
         solrDataDir = join(self.tempdir, 'solr-data')
