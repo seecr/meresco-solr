@@ -1,8 +1,10 @@
 package org.meresco.solr;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 
@@ -28,14 +30,6 @@ public class JoinFacetComponent extends SearchComponent {
 	    if (rb.doFacets) {
 	        SolrParams params = rb.req.getParams();
 	        
-	        String joinFacetField = params.get("joinFacet.field");
-	        JoinQuery parsedJoinFacetField = null;
-	        try {
-	            parsedJoinFacetField = (JoinQuery) JoinComponent.getQuery(rb.req, joinFacetField);
-	        } catch (ParseException e) {
-	            throw new SolrException(SolrException.ErrorCode.BAD_REQUEST, e);
-	        }	        
-	        
 	        Map<String, String[]> paramsMap = new HashMap<String, String[]>();
 	        for (Iterator<String> iter = params.getParameterNamesIterator(); iter.hasNext();) {
 	        	String name = (String) iter.next();
@@ -44,17 +38,30 @@ public class JoinFacetComponent extends SearchComponent {
 	        		continue;
 	        	}
 	        	if ("joinFacet.field".equals(name)) {
-	        		name = "facet.field";
-	        		values = new String[] {parsedJoinFacetField.v};
+	        		continue;
 	        	}
 	        	paramsMap.put(name, values);
+	        }        
+	        
+	        String otherCoreName = null;
+	        String[] joinFacetFields = params.getParams("joinFacet.field");
+	        List<String> facetFieldValues = new ArrayList<String>();
+	        for (String joinFacetField: joinFacetFields) {
+		        try {
+		            JoinQuery parsedJoinFacetField = (JoinQuery) JoinComponent.getQuery(rb.req, joinFacetField);
+		            otherCoreName = parsedJoinFacetField.core;
+		            facetFieldValues.add(parsedJoinFacetField.v);
+		        } catch (ParseException e) {
+		            throw new SolrException(SolrException.ErrorCode.BAD_REQUEST, e);
+		        }
 	        }
+	        paramsMap.put("facet.field", facetFieldValues.toArray(new String[0]));
 
 	        SimpleFacets f = new JoinSimpleFacets(rb.req,
 	                ((JoinDocSet)rb.getResults().docSet).getOtherCoreDocSet(),
 	                new MultiMapSolrParams(paramsMap),
 	                rb,
-	                parsedJoinFacetField.core);
+	                otherCoreName);
 
 	        NamedList<Object> counts = f.getFacetCounts();
 //	        String[] pivots = params.getParams( FacetParams.FACET_PIVOT );
