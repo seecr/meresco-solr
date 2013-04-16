@@ -5,13 +5,12 @@ import org.apache.solr.common.SolrException;
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.common.util.NamedList;
 import org.apache.solr.core.CoreContainer;
+import org.apache.solr.core.CoreDescriptor;
 import org.apache.solr.core.SolrCore;
 import org.apache.solr.request.LocalSolrQueryRequest;
 import org.apache.solr.request.SolrQueryRequest;
 import org.apache.solr.search.QParser;
 import org.apache.solr.search.QParserPlugin;
-import org.apache.solr.search.SolrIndexSearcher;
-import org.apache.solr.util.RefCounted;
 import org.apache.lucene.queryparser.classic.ParseException;
 
 public class JoinParserPlugin extends QParserPlugin {
@@ -26,40 +25,29 @@ public class JoinParserPlugin extends QParserPlugin {
     public QParser createParser(String qstr, SolrParams localParams, SolrParams params, SolrQueryRequest req) {
         return new QParser(qstr, localParams, params, req) {
             public Query parse() throws ParseException {
-                String core = getParam("core");
+                String otherCoreName = getParam("core");
                 String v = localParams.get("v");
-                Query fromQuery;
-                // long fromCoreOpenTime = 0;
+                Query query;
 
-                if (!core.equals(req.getCore().getCoreDescriptor().getName()) ) {
-                    CoreContainer container = req.getCore().getCoreDescriptor().getCoreContainer();
-
-                    final SolrCore fromCore = container.getCore(core);
-                    RefCounted<SolrIndexSearcher> fromHolder = null;
-
-                    if (fromCore == null) {
-                        throw new SolrException(SolrException.ErrorCode.BAD_REQUEST, "Cross-core join: no such core " + core);
+                CoreDescriptor coreDescriptor = req.getCore().getCoreDescriptor();
+                if (otherCoreName.equals(coreDescriptor.getName()) ) {
+                    query = subQuery(v, null).getQuery();	
+                }
+                else {
+                    CoreContainer container = coreDescriptor.getCoreContainer();
+                    final SolrCore otherCore = container.getCore(otherCoreName);
+                    if (otherCore == null) {
+                        throw new SolrException(SolrException.ErrorCode.BAD_REQUEST, "Cross-core join: no such core " + otherCoreName);
                     }
-
-                    LocalSolrQueryRequest otherReq = new LocalSolrQueryRequest(fromCore, params);
+                    LocalSolrQueryRequest otherReq = new LocalSolrQueryRequest(otherCore, params);
                     try {
-                        QParser parser = QParser.getParser(v, "lucene", otherReq);
-                        fromQuery = parser.getQuery();
-                        fromHolder = fromCore.getRegisteredSearcher();
-                        // if (fromHolder != null) fromCoreOpenTime = fromHolder.get().getOpenTime();
+                        query = QParser.getParser(v, "lucene", otherReq).getQuery();
                     } finally {
                         otherReq.close();
-                        fromCore.close();
-                        if (fromHolder != null) fromHolder.decref();
+                        otherCore.close();
                     }
-                } else {
-                    QParser fromQueryParser = subQuery(v, null);
-                    fromQuery = fromQueryParser.getQuery();
                 }
-
-                JoinQuery jq = new JoinQuery(core, fromQuery);
-                // jq.fromCoreOpenTime = fromCoreOpenTime;
-                return jq;
+                return new JoinQuery(otherCoreName, query, v);
             }
         };
     }
@@ -68,15 +56,16 @@ public class JoinParserPlugin extends QParserPlugin {
 class JoinQuery extends Query {
     String core;
     Query query;
+    String v;
 
-    public JoinQuery(String core, Query query) {
+    public JoinQuery(String core, Query query, String v) {
         this.core = core;
         this.query = query;
+        this.v = v;
     }
 
     @Override
     public String toString(String arg0) {
-        // TODO Auto-generated method stub
-        return null;
+       return core + ":" + query;
     }
 }

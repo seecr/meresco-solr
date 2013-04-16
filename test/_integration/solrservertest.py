@@ -27,7 +27,7 @@
 from seecr.test import IntegrationTestCase
 from seecr.test.utils import getRequest, postRequest
 from time import sleep
-from meresco.xml import xpath
+from meresco.xml import xpathFirst, xpath
 from lxml.etree import tostring
 
 class SolrServerTest(IntegrationTestCase): 
@@ -41,10 +41,13 @@ class SolrServerTest(IntegrationTestCase):
 
     def testJoin(self):
         print postRequest(port=self.solrPort, path='/solr/core2/update', data="""<add xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><doc>
-  <field name="__id__">record:1001</field>
+  <field name="__id__">record:0001</field>
+  <field name="field0">value</field>
 </doc></add> 
 """, contentType='text/xml')
         sleep(2)
-        header, body = getRequest(port=self.solrPort, path='/solr/records/join', arguments={'q': '*:*', 'join': '{!myjoin core=core2}__id__:record\:1001'}, parse=True)
-        print tostring(body)
-        print tostring(xpath(body, '//result[@name="joinResponse"]')[0])
+        header, body = getRequest(port=self.solrPort, path='/solr/records/join', arguments={'q': '*:*', 'join': '{!myjoin core=core2}*:*', 'facet': 'on', 'facet.field': '__id__', 'facet.mincount': 1, 'joinFacet.field': '{!myjoin core=core2}field0'}, parse=True)
+        print tostring(body, pretty_print=True)
+        self.assertEquals(['record:0001'], xpath(body, '//result[@name="joinResponse"]/doc/str[@name="__id__"]/text()'))
+        self.assertEquals('record:0001', xpathFirst(body, '//lst[@name="facet_fields"]/lst[@name="__id__"]/int/@name'))
+        self.assertEquals('value', xpathFirst(body, '//lst[@name="join_facet_counts"]//lst[@name="field0"]/int/@name'))
