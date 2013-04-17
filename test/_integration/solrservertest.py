@@ -40,17 +40,23 @@ class SolrServerTest(IntegrationTestCase):
         self.assertTrue('<title>Solr Admin</title>' in body, body)
 
     def testJoin(self):
-        print postRequest(port=self.solrPort, path='/solr/core2/update', data="""<add xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><doc>
+        postRequest(port=self.solrPort, path='/solr/core2/update', data="""<add xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><doc>
   <field name="__id__">record:0001</field>
   <field name="field0">value</field>
   <field name="field1">value2</field>
 </doc></add> 
 """, contentType='text/xml')
+        postRequest(port=self.solrPort, path='/solr/core3/update', data="""<add xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><doc>
+  <field name="__id__">record:0001</field>
+  <field name="field2">value3</field>
+</doc></add> 
+""", contentType='text/xml')
         sleep(2)
-        header, body = getRequest(port=self.solrPort, path='/solr/records/join', arguments={'q': '*:*', 'join': '{!myjoin core=core2}*:*', 'facet': 'on', 'facet.field': '__id__', 'facet.mincount': 1, 'joinFacet.field': ['{!myjoin core=core2}field0', '{!myjoin core=core2}field1']}, parse=True)
+        header, body = getRequest(port=self.solrPort, path='/solr/records/join', arguments={'q': '*:*', 'join': '{!myjoin core=core2}*:*', 'facet': 'on', 'facet.field': '__id__', 'facet.mincount': 1, 'joinFacet.field': ['{!myjoin core=core2}field0', '{!myjoin core=core2}field1', '{!myjoin core=core3}field2']}, parse=True)
         print tostring(body, pretty_print=True)
         self.assertEquals(['record:0001'], xpath(body, '//result[@name="joinResponse"]/doc/str[@name="__id__"]/text()'))
         self.assertEquals('record:0001', xpathFirst(body, '//lst[@name="facet_fields"]/lst[@name="__id__"]/int/@name'))
         self.assertEquals('value', xpathFirst(body, '//lst[@name="join_facet_counts"]//lst[@name="field0"]/int/@name'))
         self.assertEquals('value2', xpathFirst(body, '//lst[@name="join_facet_counts"]//lst[@name="field1"]/int/@name'))
+        self.assertEquals('value3', xpathFirst(body, '//lst[@name="join_facet_counts"]//lst[@name="field2"]/int/@name'))
 

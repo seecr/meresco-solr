@@ -66,7 +66,8 @@ class IntegrationState(_IntegrationState):
                     'suggestions': {'field': '__all__'},
                     'autoCommit': {'autoCommitMaxTime': 500}
                 },
-                'core2': {}
+                'core2': {},
+                'core3': {}
             }
         self.configPath = join(self.integrationTempdir, 'solr.config')
         with open(self.configPath, 'w') as f:

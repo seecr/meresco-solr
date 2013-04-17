@@ -43,27 +43,25 @@ public class JoinFacetComponent extends SearchComponent {
 	        	paramsMap.put(name, values);
 	        }        
 	        
-	        String otherCoreName = null;
+	        NamedList<Object> counts = new NamedList<Object>();
 	        String[] joinFacetFields = params.getParams("joinFacet.field");
-	        List<String> facetFieldValues = new ArrayList<String>();
 	        for (String joinFacetField: joinFacetFields) {
+	        	JoinQuery parsedJoinFacetField = null;
 		        try {
-		            JoinQuery parsedJoinFacetField = (JoinQuery) JoinComponent.getQuery(rb.req, joinFacetField);
-		            otherCoreName = parsedJoinFacetField.core;
-		            facetFieldValues.add(parsedJoinFacetField.v);
+		            parsedJoinFacetField = (JoinQuery) JoinComponent.getQuery(rb.req, joinFacetField);
 		        } catch (ParseException e) {
 		            throw new SolrException(SolrException.ErrorCode.BAD_REQUEST, e);
 		        }
+		        paramsMap.put("facet.field", new String[] {parsedJoinFacetField.v});
+
+		        SimpleFacets f = new JoinSimpleFacets(rb.req,
+		                ((JoinDocSet)rb.getResults().docSet).getOtherCoreDocSet(),
+		                new MultiMapSolrParams(paramsMap),
+		                rb,
+		                parsedJoinFacetField.core);
+		        counts.addAll(f.getFacetCounts());
 	        }
-	        paramsMap.put("facet.field", facetFieldValues.toArray(new String[0]));
 
-	        SimpleFacets f = new JoinSimpleFacets(rb.req,
-	                ((JoinDocSet)rb.getResults().docSet).getOtherCoreDocSet(),
-	                new MultiMapSolrParams(paramsMap),
-	                rb,
-	                otherCoreName);
-
-	        NamedList<Object> counts = f.getFacetCounts();
 //	        String[] pivots = params.getParams( FacetParams.FACET_PIVOT );
 //	        if( pivots != null && pivots.length > 0 ) {
 //	          NamedList v = pivotHelper.process(rb, params, pivots);
