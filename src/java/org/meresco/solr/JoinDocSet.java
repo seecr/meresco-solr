@@ -1,5 +1,7 @@
 package org.meresco.solr;
 
+import java.util.HashMap;
+
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.util.OpenBitSet;
@@ -8,15 +10,15 @@ import org.apache.solr.search.DocSet;
 
 class JoinDocSet implements DocSet {
 	private DocSet docSet;
-	private DocSet otherCoreDocSet;
+	private HashMap<String, DocSet> otherCoreDocSets;
 
-	public JoinDocSet(DocSet docSet, DocSet otherCoreDocSet) {
+	public JoinDocSet(DocSet docSet, HashMap<String, DocSet> otherCoreDocSets) {
 		this.docSet = docSet;
-		this.otherCoreDocSet = otherCoreDocSet;
+		this.otherCoreDocSets = otherCoreDocSets;
 	}
 	
-	public DocSet getOtherCoreDocSet() {
-		return otherCoreDocSet;
+	public DocSet getOtherCoreDocSet(String core) {
+		return otherCoreDocSets.get(core);
 	}
 	
 	@Override

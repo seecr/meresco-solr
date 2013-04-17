@@ -19,6 +19,8 @@ import org.apache.solr.request.SimpleFacets;
 import org.apache.solr.request.SolrQueryRequest;
 import org.apache.solr.search.DocSet;
 
+import com.google.common.collect.Multiset.Entry;
+
 
 public class JoinFacetComponent extends SearchComponent {
 	@Override
@@ -43,7 +45,8 @@ public class JoinFacetComponent extends SearchComponent {
 	        	paramsMap.put(name, values);
 	        }        
 	        
-	        NamedList<Object> counts = new NamedList<Object>();
+	        NamedList<Object> responseValues = rb.rsp.getValues(); 
+	        NamedList<Object> facet_counts = (NamedList<Object>) responseValues.get("facet_counts");
 	        String[] joinFacetFields = params.getParams("joinFacet.field");
 	        for (String joinFacetField: joinFacetFields) {
 	        	JoinQuery parsedJoinFacetField = null;
@@ -55,11 +58,11 @@ public class JoinFacetComponent extends SearchComponent {
 		        paramsMap.put("facet.field", new String[] {parsedJoinFacetField.v});
 
 		        SimpleFacets f = new JoinSimpleFacets(rb.req,
-		                ((JoinDocSet)rb.getResults().docSet).getOtherCoreDocSet(),
+		                ((JoinDocSet) rb.getResults().docSet).getOtherCoreDocSet(parsedJoinFacetField.core),
 		                new MultiMapSolrParams(paramsMap),
 		                rb,
 		                parsedJoinFacetField.core);
-		        counts.addAll(f.getFacetCounts());
+		        updateCounts(facet_counts, f.getFacetCounts());
 	        }
 
 //	        String[] pivots = params.getParams( FacetParams.FACET_PIVOT );
@@ -69,11 +72,23 @@ public class JoinFacetComponent extends SearchComponent {
 //	            counts.add( PIVOT_KEY, v );
 //	          }
 //	        }
-
-	        rb.rsp.add( "join_facet_counts", counts );
 	    }
 	}
 
+	private void updateCounts(NamedList<Object> counts, NamedList<Object> newCounts) {
+		for (Iterator<Map.Entry<String, Object>> iterator = newCounts.iterator(); iterator.hasNext(); ) {
+			Map.Entry<String, Object> entry = iterator.next();
+			String countsName = entry.getKey();		
+			NamedList<Object> newCountValues = (NamedList<Object>) entry.getValue();
+			NamedList<Object> existingCountValues = (NamedList<Object>) counts.get(countsName);
+			if (existingCountValues == null) {
+				counts.add(countsName, newCountValues);
+			} else {
+				existingCountValues.addAll(newCountValues);
+			}
+		}
+	}
+	
 	@Override
 	public String getDescription() {
 		return "Facets on joined core";

@@ -12,6 +12,7 @@ import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.Query;
 import org.apache.solr.common.SolrException;
 import org.apache.solr.common.params.SolrParams;
+import org.apache.solr.common.util.NamedList;
 import org.apache.solr.core.CoreContainer;
 import org.apache.solr.core.SolrCore;
 import org.apache.solr.handler.component.ResponseBuilder;
@@ -54,37 +55,45 @@ public class JoinComponent extends SearchComponent {
         SolrQueryResponse rsp = rb.rsp;
 
         DocSet docSet = rb.getResults().docSet;
-        SolrIndexSearcher searcher = req.getSearcher();
-        IdSet idSet = idSetFromDocSet(docSet, searcher);
+        IdSet idIntersection = idSetFromDocSet(docSet, req.getSearcher());
 
-        DocSet otherDocSet = null;
-        String join = params.get("join");
-        JoinQuery joinQuery = null;
-        try {
-            joinQuery = (JoinQuery) getQuery(req, join);
-        } catch (ParseException e) {
-            throw new SolrException(SolrException.ErrorCode.BAD_REQUEST, e);
+        HashMap<String, IdSet> core2IdSet = new HashMap<String, IdSet>();
+        String[] joins = params.getParams("join");
+        for (String join : joins) {
+        	JoinQuery joinQuery = null;
+            try {
+                joinQuery = (JoinQuery) getQuery(req, join);
+            } catch (ParseException e) {
+                throw new SolrException(SolrException.ErrorCode.BAD_REQUEST, e);
+            }	
+            
+            SolrIndexSearcher coreSearcher = searcherForCore(req, joinQuery.core);
+            DocSet otherDocSet = coreSearcher.getDocSet(joinQuery.query);
+            IdSet otherIdSet = idSetFromDocSet(otherDocSet, coreSearcher);
+            core2IdSet.put(joinQuery.core, otherIdSet);
+            idIntersection.retainAll(otherIdSet);
         }
-
-        SolrIndexSearcher coreSearcher = searcherForCore(req, joinQuery.core);
-        otherDocSet = coreSearcher.getDocSet(joinQuery.query);
-        IdSet otherIdSet = idSetFromDocSet(otherDocSet, coreSearcher);
-        IdSet idIntersection = idSet.intersect(otherIdSet);
-
+       
+        HashMap<String, DocSet> core2DocSet = new HashMap<String, DocSet>();
+        for (Iterator<String> iterator = core2IdSet.keySet().iterator(); iterator.hasNext(); ) {
+        	String core = iterator.next();
+        	core2DocSet.put(core, idIntersection.makeDocSet(core2IdSet.get(core)));
+        }
         JoinDocSet joinDocSet = new JoinDocSet(
-        		idIntersection.getDocSet(), 
-        		idIntersection.getDocSetForIds(otherIdSet));
+        		idIntersection.makeDocSet(), 
+        		core2DocSet);
         
         DocListAndSet res = new DocListAndSet();
         res.docList = docList(luceneIdsFromDocset(joinDocSet));
         res.docSet = joinDocSet;
         rb.setResults(res);
 
+		NamedList<Object> responseValues = rsp.getValues(); 
+        responseValues.remove("response");
         ResultContext ctx = new ResultContext();
         ctx.docs = rb.getResults().docList;
         ctx.query = null; // anything?
-        rsp.add("joinResponse", ctx);
-        return;
+        responseValues.add("response", ctx);
     }
 
     private IdSet idSetFromDocSet(DocSet docSet, SolrIndexSearcher searcher) {
@@ -123,7 +132,6 @@ public class JoinComponent extends SearchComponent {
 
     public static Query getQuery(SolrQueryRequest req, String queryParameter) throws ParseException {
         QParser parser = QParser.getParser(queryParameter, null, req);
-        System.out.println("parser: " + queryParameter + ":" + parser.getClass().getName());
         return parser.getQuery();
     }
 
@@ -142,48 +150,41 @@ public class JoinComponent extends SearchComponent {
         return luceneIds;
     }
     
+    
     private class IdSet {
+    	private Set<Integer> ids = new HashSet<Integer>();
     	private Map<Integer, Integer> id2docId = new HashMap<Integer, Integer>();
 
     	public void add(int id, int docId) {
+    		ids.add(id);
     		id2docId.put(id, docId);
     	}
-
-    	public int size() {
-    		return id2docId.size();
+    	
+    	public int get(int id) {
+    		return id2docId.get(id);
     	}
 
     	public Set<Integer> ids() {
-    		return id2docId.keySet();
+    		return ids;
+    	}
+    	
+    	public void retainAll(IdSet idSet) {
+    		ids.retainAll(idSet.ids());
     	}
 
-    	public Iterator<Integer> iterator() {
-    		return ids().iterator();
-    	}
-
-    	public IdSet intersect(IdSet idSet) {
-    		IdSet result = new IdSet();
-    		Set<Integer> newKeys = new HashSet<Integer>(id2docId.keySet());
-    		newKeys.retainAll(idSet.ids());
-    		for (Iterator<Integer> iter = newKeys.iterator(); iter.hasNext();) {
-    			int id = iter.next();
-    			result.add(id, id2docId.get(id));
-    		}
-    		return result;
-    	}
-
-    	public DocSet getDocSetForIds(IdSet ids) {
-        	int[] docIds = new int[ids.size()];
+    	public DocSet makeDocSet(IdSet mapping) {
+    		int length = ids.size();
+        	int[] docIds = new int[length];
         	int docs = 0;
         	Iterator<Integer> iter = ids.iterator();
         	while (iter.hasNext()) {
-        		docIds[docs++] = id2docId.get(iter.next());
+        		docIds[docs++] = mapping.get(iter.next());
         	}
-    		return new HashDocSet(docIds, 0, ids.size());
+    		return new HashDocSet(docIds, 0, length);
     	}
 
-    	public DocSet getDocSet() {
-    		return getDocSetForIds(this);
+    	public DocSet makeDocSet() {
+    		return makeDocSet(this);
     	}
     }
 }
