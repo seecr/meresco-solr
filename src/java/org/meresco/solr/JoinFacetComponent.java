@@ -13,12 +13,14 @@ import org.apache.solr.common.SolrException;
 import org.apache.solr.common.params.MultiMapSolrParams;
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.common.util.NamedList;
+import org.apache.solr.core.SolrCore;
 import org.apache.solr.handler.component.ResponseBuilder;
 import org.apache.solr.handler.component.SearchComponent;
 import org.apache.solr.request.SimpleFacets;
 import org.apache.solr.request.SolrQueryRequest;
 import org.apache.solr.search.DocSet;
 import org.apache.solr.search.SolrIndexSearcher;
+import org.apache.solr.util.RefCounted;
 
 
 public class JoinFacetComponent extends SearchComponent {
@@ -59,12 +61,21 @@ public class JoinFacetComponent extends SearchComponent {
 		        }
 		        paramsMap.put("facet.field", new String[] {parsedJoinFacetField.v});
 
-		        SimpleFacets f = new JoinSimpleFacets(rb.req,
-		                docSetForCore(rb, parsedJoinFacetField.core),
+		        SolrCore core = JoinComponent.getCoreByName(rb.req, parsedJoinFacetField.core);
+		        RefCounted<SolrIndexSearcher> coreSearcher = JoinComponent.getSearcher(core);
+		        try {
+			        SimpleFacets f = new JoinSimpleFacets(
+		        		rb.req,
+		                docSetForCore(rb, parsedJoinFacetField.core, coreSearcher.get()),
 		                new MultiMapSolrParams(paramsMap),
 		                rb,
-		                parsedJoinFacetField.core);
-		        updateCounts(facet_counts, f.getFacetCounts());
+		                coreSearcher.get());
+			        updateCounts(facet_counts, f.getFacetCounts());
+		        }
+		        finally {
+		        	coreSearcher.decref();
+		        	core.close();
+		        }
 	        }
 
 //	        String[] pivots = params.getParams( FacetParams.FACET_PIVOT );
@@ -77,14 +88,13 @@ public class JoinFacetComponent extends SearchComponent {
 	    }
 	}
 
-	private DocSet docSetForCore(ResponseBuilder rb, String core) throws IOException {
+	private DocSet docSetForCore(ResponseBuilder rb, String coreName, SolrIndexSearcher coreSearcher) throws IOException {
 		DocSet docSet = null;
 		DocSet givenDocSet = rb.getResults().docSet;
 		if (givenDocSet instanceof JoinDocSet) {
-			docSet = ((JoinDocSet) givenDocSet).getOtherCoreDocSet(core);
+			docSet = ((JoinDocSet) givenDocSet).getOtherCoreDocSet(coreName);
 		}
 		if (docSet == null) {
-            SolrIndexSearcher coreSearcher = JoinComponent.searcherForCore(rb.req, core);
             DocSet otherDocSet = coreSearcher.getDocSet(new MatchAllDocsQuery());
             IdSet otherIdSet = IdSet.idSetFromDocSet(otherDocSet, coreSearcher);
             IdSet givenDocSetIds = IdSet.idSetFromDocSet(givenDocSet, rb.req.getSearcher());
@@ -119,14 +129,14 @@ public class JoinFacetComponent extends SearchComponent {
 	}
 
 	class JoinSimpleFacets extends SimpleFacets {
-		 public JoinSimpleFacets(
+		public JoinSimpleFacets(
 				 SolrQueryRequest req,
                  DocSet docs,
                  SolrParams params,
                  ResponseBuilder rb,
-                 String core) {
+                 SolrIndexSearcher searcher) {
 			super(req, docs, params, rb);
-			this.searcher = JoinComponent.searcherForCore(req, core);
-		 }
+			this.searcher = searcher;
+		}
 	}
 }

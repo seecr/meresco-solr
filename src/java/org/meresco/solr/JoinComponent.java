@@ -68,11 +68,17 @@ public class JoinComponent extends SearchComponent {
                 throw new SolrException(SolrException.ErrorCode.BAD_REQUEST, "Not a valid join query: " + join);
             }
             
-            SolrIndexSearcher coreSearcher = searcherForCore(req, joinQuery.core);
-            DocSet otherDocSet = coreSearcher.getDocSet(joinQuery.query);
-            IdSet otherIdSet = IdSet.idSetFromDocSet(otherDocSet, coreSearcher);
-            core2IdSet.put(joinQuery.core, otherIdSet);
-            idIntersection.retainAll(otherIdSet);
+            SolrCore core = getCoreByName(req, joinQuery.core);
+            RefCounted<SolrIndexSearcher> coreSearcher = getSearcher(core);
+            try {
+	            DocSet otherDocSet = coreSearcher.get().getDocSet(joinQuery.query);
+	            IdSet otherIdSet = IdSet.idSetFromDocSet(otherDocSet, coreSearcher.get());
+	            core2IdSet.put(joinQuery.core, otherIdSet);
+	            idIntersection.retainAll(otherIdSet);
+            } finally {
+            	coreSearcher.decref();
+            	core.close();
+            }
         }
        
         HashMap<String, DocSet> core2DocSet = new HashMap<String, DocSet>();
@@ -98,19 +104,14 @@ public class JoinComponent extends SearchComponent {
         responseValues.add("response", ctx);
     }
 
-    public static SolrIndexSearcher searcherForCore(SolrQueryRequest req, String name) {
-        //Copied from JoinQParserPlugin
-        CoreContainer container = req.getCore().getCoreDescriptor().getCoreContainer();
-        SolrCore core = container.getCore(name);
-        // This could block if there is a static warming query with a join in it, and if useColdSearcher is true.
-        // Deadlock could result if two cores both had useColdSearcher and had joins that used eachother.
-        // This would be very predictable though (should happen every time if misconfigured)
-        RefCounted<SolrIndexSearcher> fromRef = core.getSearcher(false, true, null);
-
-        // be careful not to do anything with this searcher that requires the thread local
-        // SolrRequestInfo in a manner that requires the core in the request to match
-        return fromRef.get();
+    public static RefCounted<SolrIndexSearcher> getSearcher(SolrCore core) {
+        return core.getSearcher(false, true, null);
     }
+
+	public static SolrCore getCoreByName(SolrQueryRequest req, String name) {
+        CoreContainer container = req.getCore().getCoreDescriptor().getCoreContainer();
+        return container.getCore(name);
+	}
 
     public static Query getQuery(SolrQueryRequest req, String queryParameter) throws ParseException {
         QParser parser = QParser.getParser(queryParameter, null, req);
