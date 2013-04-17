@@ -9,16 +9,22 @@ import org.apache.solr.search.DocIterator;
 import org.apache.solr.search.DocSet;
 
 class JoinDocSet implements DocSet {
+	private IdSet idSet;
 	private DocSet docSet;
 	private HashMap<String, DocSet> otherCoreDocSets;
 
-	public JoinDocSet(DocSet docSet, HashMap<String, DocSet> otherCoreDocSets) {
-		this.docSet = docSet;
+	public JoinDocSet(IdSet idSet, HashMap<String, DocSet> otherCoreDocSets) {
+		this.idSet = idSet;
+		this.docSet = idSet.makeDocSet();
 		this.otherCoreDocSets = otherCoreDocSets;
 	}
 	
 	public DocSet getOtherCoreDocSet(String core) {
 		return otherCoreDocSets.get(core);
+	}
+	
+	public IdSet getIdSet() {
+		return idSet;
 	}
 	
 	@Override

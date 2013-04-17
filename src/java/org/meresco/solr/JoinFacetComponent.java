@@ -7,8 +7,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
 import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.solr.common.SolrException;
 import org.apache.solr.common.params.MultiMapSolrParams;
 import org.apache.solr.common.params.SolrParams;
@@ -18,8 +18,7 @@ import org.apache.solr.handler.component.SearchComponent;
 import org.apache.solr.request.SimpleFacets;
 import org.apache.solr.request.SolrQueryRequest;
 import org.apache.solr.search.DocSet;
-
-import com.google.common.collect.Multiset.Entry;
+import org.apache.solr.search.SolrIndexSearcher;
 
 
 public class JoinFacetComponent extends SearchComponent {
@@ -48,6 +47,9 @@ public class JoinFacetComponent extends SearchComponent {
 	        NamedList<Object> responseValues = rb.rsp.getValues(); 
 	        NamedList<Object> facet_counts = (NamedList<Object>) responseValues.get("facet_counts");
 	        String[] joinFacetFields = params.getParams("joinFacet.field");
+	        if (joinFacetFields == null) {
+	        	return;
+	        }
 	        for (String joinFacetField: joinFacetFields) {
 	        	JoinQuery parsedJoinFacetField = null;
 		        try {
@@ -58,7 +60,7 @@ public class JoinFacetComponent extends SearchComponent {
 		        paramsMap.put("facet.field", new String[] {parsedJoinFacetField.v});
 
 		        SimpleFacets f = new JoinSimpleFacets(rb.req,
-		                ((JoinDocSet) rb.getResults().docSet).getOtherCoreDocSet(parsedJoinFacetField.core),
+		                docSetForCore(rb, parsedJoinFacetField.core),
 		                new MultiMapSolrParams(paramsMap),
 		                rb,
 		                parsedJoinFacetField.core);
@@ -73,6 +75,23 @@ public class JoinFacetComponent extends SearchComponent {
 //	          }
 //	        }
 	    }
+	}
+
+	private DocSet docSetForCore(ResponseBuilder rb, String core) throws IOException {
+		DocSet docSet = null;
+		DocSet givenDocSet = rb.getResults().docSet;
+		if (givenDocSet instanceof JoinDocSet) {
+			docSet = ((JoinDocSet) givenDocSet).getOtherCoreDocSet(core);
+		}
+		if (docSet == null) {
+            SolrIndexSearcher coreSearcher = JoinComponent.searcherForCore(rb.req, core);
+            DocSet otherDocSet = coreSearcher.getDocSet(new MatchAllDocsQuery());
+            IdSet otherIdSet = IdSet.idSetFromDocSet(otherDocSet, coreSearcher);
+            IdSet givenDocSetIds = IdSet.idSetFromDocSet(givenDocSet, rb.req.getSearcher());
+            otherIdSet.retainAll(givenDocSetIds);
+            docSet = otherIdSet.makeDocSet();
+		}
+		return docSet;
 	}
 
 	private void updateCounts(NamedList<Object> counts, NamedList<Object> newCounts) {
