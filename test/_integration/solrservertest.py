@@ -27,7 +27,7 @@
 from seecr.test import IntegrationTestCase
 from seecr.test.utils import getRequest, postRequest, sleepWheel
 from meresco.xml import xpathFirst, xpath
-from lxml.etree import tostring
+from lxml.etree import tostring, XML
 
 class SolrServerTest(IntegrationTestCase): 
     def testAdminPingInterface(self):
@@ -39,6 +39,14 @@ class SolrServerTest(IntegrationTestCase):
         self.assertTrue('<title>Solr Admin</title>' in body, body)
 
     def testJoin(self):
+        postToCore(self.solrPort, 'core2', [('__id__', 'record:0001'), ('field0', 'value'), ('field1', 'value2')])
+        sleepWheel(2)
+        header, body = getRequest(port=self.solrPort, path='/solr/records/join', arguments={'q': '*:*', 'join': ['{!myjoin core=core2}*:*']}, parse=False)
+        self.assertTrue('200 OK' in header, header+body)
+        body = XML(body)
+        self.assertEquals(['record:0001'], xpath(body, '//result[@name="response"]/doc/str[@name="__id__"]/text()'))
+
+    def testJoinMultiple(self):
         postToCore(self.solrPort, 'core2', [('__id__', 'record:0001'), ('field0', 'value'), ('field1', 'value2')])
         postToCore(self.solrPort, 'core2', [('__id__', 'record:0002'), ('field1', 'value3')])
         postToCore(self.solrPort, 'core3', [('__id__', 'record:0001'), ('field2', 'value3')])
@@ -52,6 +60,23 @@ class SolrServerTest(IntegrationTestCase):
         self.assertEquals('1', xpathFirst(body, '//lst[@name="facet_counts"]//lst[@name="field1"]/int/text()'))
         self.assertEquals('value3', xpathFirst(body, '//lst[@name="facet_counts"]//lst[@name="field2"]/int/@name'))
         self.assertEquals('1', xpathFirst(body, '//lst[@name="facet_counts"]//lst[@name="field2"]/int/text()'))
+
+    def testJoinHybridWithSolrJoinComponent(self):
+        postToCore(self.solrPort, 'core2', [('__id__', 'record:0001'), ('field0', 'value'), ('field1', 'value2')])
+        postToCore(self.solrPort, 'core2', [('__id__', 'record:0002'), ('field1', 'value3')])
+        postToCore(self.solrPort, 'core3', [('__id__', 'record:0001'), ('field2', 'value3')])
+        sleepWheel(2)
+        header, body = getRequest(port=self.solrPort, path='/solr/records/join', arguments={'q': '*:*', 'fq': ['{!join fromIndex=core2 from=__id__ to=__id__}*:*', '{!join fromIndex=core3 from=__id__ to=__id__}__id__:record\:0001'], 'facet': 'on', 'facet.field': '__id__', 'facet.mincount': 1, 'joinFacet.field': ['{!myjoin core=core2}field0', '{!myjoin core=core2}field1', '{!myjoin core=core3}field2']}, parse=True)
+        self.assertEquals(['record:0001'], xpath(body, '//result[@name="response"]/doc/str[@name="__id__"]/text()'))
+        self.assertEquals('record:0001', xpathFirst(body, '//lst[@name="facet_counts"]//lst[@name="__id__"]/int/@name'))
+        self.assertEquals('value', xpathFirst(body, '//lst[@name="facet_counts"]//lst[@name="field0"]/int/@name'))
+        self.assertEquals('1', xpathFirst(body, '//lst[@name="facet_counts"]//lst[@name="field0"]/int/text()'))
+        self.assertEquals('value2', xpathFirst(body, '//lst[@name="facet_counts"]//lst[@name="field1"]/int/@name'))
+        self.assertEquals('1', xpathFirst(body, '//lst[@name="facet_counts"]//lst[@name="field1"]/int/text()'))
+        self.assertEquals('value3', xpathFirst(body, '//lst[@name="facet_counts"]//lst[@name="field2"]/int/@name'))
+        self.assertEquals('1', xpathFirst(body, '//lst[@name="facet_counts"]//lst[@name="field2"]/int/text()'))
+
+
 
     def testJoinWithUnknownCore(self):
         header, body = getRequest(port=self.solrPort, path='/solr/records/join', arguments={'q': '*:*', 'join': '{!myjoin core=core_unknown}*:*'}, parse=False)
@@ -98,6 +123,32 @@ class SolrServerTest(IntegrationTestCase):
         self.assertTrue('400 Bad Request' in header, header + body)
         self.assertTrue("Not a valid join query: field:value" in body, body)
 
+    # def testJoinScore(self):
+    #     postToCore(self.solrPort, 'core2', [('__id__', 'record:0001')])
+    #     postToCore(self.solrPort, 'core2', [('__id__', 'record:0019')])
+    #     postToCore(self.solrPort, 'core2', [('__id__', 'record:0025')])
+    #     postToCore(self.solrPort, 'core2', [('__id__', 'record:0037')])
+    #     sleepWheel(2)
+    #     header, body = getRequest(port=self.solrPort, path='/solr/records/join', arguments={'q': '__all__:history', 'fl': '*,score'}, parse=True)
+    #     self.assertEquals(['record:0001', 'record:0019', 'record:0037', 'record:0025'], xpath(body, '//result[@name="response"]/doc/str[@name="__id__"]/text()'))
+    #     self.assertEquals(['0.7928962', '0.67962533', '0.56635445', '0.45308354'], xpath(body, '//result[@name="response"]/doc/float[@name="score"]/text()'))
+
+    #     header, body = getRequest(port=self.solrPort, path='/solr/records/join', arguments={'q': '__all__:history', 'fl': '*,score', 'join': '{!myjoin core=core2}*:*'}, parse=True)
+    #     print tostring(body)
+    #     self.assertEquals(['record:0001', 'record:0019', 'record:0037', 'record:0025'], xpath(body, '//result[@name="response"]/doc/str[@name="__id__"]/text()'))
+    #     self.assertEquals(['0.7928962', '0.67962533', '0.56635445', '0.45308354'], xpath(body, '//result[@name="response"]/doc/float[@name="score"]/text()'))
+
+    # def testJoinResultList(self):
+    #     postToCore(self.solrPort, 'core2', [('__id__', 'record:0001')])
+    #     postToCore(self.solrPort, 'core2', [('__id__', 'record:0019')])
+    #     postToCore(self.solrPort, 'core2', [('__id__', 'record:0025')])
+    #     postToCore(self.solrPort, 'core2', [('__id__', 'record:0037')])
+    #     sleepWheel(2)
+    #     header, body = getRequest(port=self.solrPort, path='/solr/records/join', arguments={'q': '__all__:history', 'fl': '*,score', 'rows': '1'}, parse=True)
+    #     self.assertEquals(1, len(xpath(body, '//result[@name="response"]/doc/str[@name="__id__"]/text()')))
+
+    #     header, body = getRequest(port=self.solrPort, path='/solr/records/join', arguments={'q': '__all__:history', 'fl': '*,score', 'rows': '1', 'join': '{!myjoin core=core2}*:*'}, parse=True)
+    #     self.assertEquals(1, len(xpath(body, '//result[@name="response"]/doc/str[@name="__id__"]/text()')))
 
 def postToCore(port, core, fields):
     postRequest(port=port, 

@@ -46,12 +46,13 @@ public class JoinFacetComponent extends SearchComponent {
 	        	paramsMap.put(name, values);
 	        }        
 	        
-	        NamedList<Object> responseValues = rb.rsp.getValues(); 
-	        NamedList<Object> facet_counts = (NamedList<Object>) responseValues.get("facet_counts");
 	        String[] joinFacetFields = params.getParams("joinFacet.field");
 	        if (joinFacetFields == null) {
 	        	return;
 	        }
+	        NamedList<Object> responseValues = rb.rsp.getValues(); 
+	        NamedList<Object> facet_counts = (NamedList<Object>) responseValues.get("facet_counts");
+	        Map<String, DocSet> coreDocSets = new HashMap<String, DocSet>();
 	        for (String joinFacetField: joinFacetFields) {
 	        	JoinQuery parsedJoinFacetField = null;
 		        try {
@@ -59,14 +60,20 @@ public class JoinFacetComponent extends SearchComponent {
 		        } catch (ParseException e) {
 		            throw new SolrException(SolrException.ErrorCode.BAD_REQUEST, e);
 		        }
-		        paramsMap.put("facet.field", new String[] {parsedJoinFacetField.v});
+		        paramsMap.put("facet.field", new String[] {parsedJoinFacetField.localQueryString});
 
-		        SolrCore core = JoinComponent.getCoreByName(rb.req, parsedJoinFacetField.core);
+		        String coreName = parsedJoinFacetField.coreName;
+				SolrCore core = JoinComponent.getCoreByName(rb.req, coreName);
 		        RefCounted<SolrIndexSearcher> coreSearcher = JoinComponent.getSearcher(core);
 		        try {
-			        SimpleFacets f = new JoinSimpleFacets(
+		        	DocSet docSet = coreDocSets.get(coreName);
+		        	if (docSet == null) {
+		        		docSet = docSetForCore(rb, coreName, coreSearcher.get());
+		        		coreDocSets.put(coreName, docSet);
+		        	}
+					SimpleFacets f = new JoinSimpleFacets(
 		        		rb.req,
-		                docSetForCore(rb, parsedJoinFacetField.core, coreSearcher.get()),
+		                docSet,
 		                new MultiMapSolrParams(paramsMap),
 		                rb,
 		                coreSearcher.get());

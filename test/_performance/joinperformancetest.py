@@ -40,13 +40,13 @@ class JoinPerformanceTest(IntegrationTestCase):
         t = 42
         print 'baseline (intersection within 1 core):', t
 
-        # header, body = getRequest(port=self.solrPort, path='/solr/core1/join', arguments={'q': '*:*', 'join': ['{!myjoin core=core2}*:*']}, parse=False)
-        # body = XML(body)
-        # t = qtime(body)
-        t = 159
+        header, body = getRequest(port=self.solrPort, path='/solr/core1/join', arguments={'q': '*:*', 'fq': ['{!join fromIndex=core2 from=__id__ to=__id__}*:*']}, parse=False)
+        body = XML(body)
+        t = qtime(body)
+        #t = 63
         print '1 intersect over 2 cores:', t
 
-        header, body = getRequest(port=self.solrPort, path='/solr/core1/join', arguments={'q': '*:*', 'join': ['{!myjoin core=core2}*:*', '{!myjoin core=core3}*:*']}, parse=False)
+        header, body = getRequest(port=self.solrPort, path='/solr/core1/join', arguments={'q': '*:*', 'fq': ['{!join fromIndex=core2 from=__id__ to=__id__}*:*', '{!join fromIndex=core3 from=__id__ to=__id__}*:*']}, parse=False)
         self.assertTrue('200 OK' in header, header + body)
         body = XML(body)
         t = qtime(body)

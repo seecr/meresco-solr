@@ -68,12 +68,12 @@ public class JoinComponent extends SearchComponent {
                 throw new SolrException(SolrException.ErrorCode.BAD_REQUEST, "Not a valid join query: " + join);
             }
             
-            SolrCore core = getCoreByName(req, joinQuery.core);
+            SolrCore core = getCoreByName(req, joinQuery.coreName);
             RefCounted<SolrIndexSearcher> coreSearcher = getSearcher(core);
             try {
 	            DocSet otherDocSet = coreSearcher.get().getDocSet(joinQuery.query);
 	            IdSet otherIdSet = IdSet.idSetFromDocSet(otherDocSet, coreSearcher.get());
-	            core2IdSet.put(joinQuery.core, otherIdSet);
+	            core2IdSet.put(joinQuery.coreName, otherIdSet);
 	            idIntersection.retainAll(otherIdSet);
             } finally {
             	coreSearcher.decref();
@@ -90,7 +90,6 @@ public class JoinComponent extends SearchComponent {
     		idIntersection, 
     		core2DocSet
     	);
-        
         DocListAndSet res = new DocListAndSet();
         res.docList = docList(luceneIdsFromDocset(joinDocSet));
         res.docSet = joinDocSet;
@@ -119,6 +118,14 @@ public class JoinComponent extends SearchComponent {
         return container.getCore(name);
 	}
 
+    /**
+     * Returned core must be closed!
+     */
+	public static SolrCore getCoreByName(SolrIndexSearcher searcher, String name) {
+        CoreContainer container = searcher.getCore().getCoreDescriptor().getCoreContainer();
+        return container.getCore(name);
+	}
+	
     public static Query getQuery(SolrQueryRequest req, String queryParameter) throws ParseException {
         QParser parser = QParser.getParser(queryParameter, null, req);
         return parser.getQuery();
