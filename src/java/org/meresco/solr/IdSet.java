@@ -38,14 +38,14 @@ public class IdSet {
 		id2docId.put(id, docId);
 	}
 	
-	public int get(int id) {
+	public int getDocId(int id) {
 		return id2docId.get(id);
 	}
 
 	public Set<Integer> ids() {
 		return ids;
 	}
-	
+		
 	public void retainAll(IdSet idSet) {
 		ids.retainAll(idSet.ids());
 	}
@@ -56,7 +56,7 @@ public class IdSet {
     	int docs = 0;
     	Iterator<Integer> iter = ids.iterator();
     	while (iter.hasNext()) {
-    		docIds[docs++] = mapping.get(iter.next());
+    		docIds[docs++] = mapping.getDocId(iter.next());
     	}
 		return new HashDocSet(docIds, 0, length);
 	}
@@ -66,12 +66,11 @@ public class IdSet {
 	}
 
 	private static int idForDocId(int docId, SolrIndexSearcher searcher) {
-		Document doc = null;
 		try {
-			doc = searcher.doc(docId, IdSet.ID_FIELDS);
+			Document doc = searcher.doc(docId, IdSet.ID_FIELDS);
+			return doc.get("__id__").hashCode();
 		} catch (IOException e) {
 			throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, e);
 		}
-		return doc.get("__id__").hashCode();
 	}
 }

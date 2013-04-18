@@ -98,6 +98,7 @@ class SolrServerTest(IntegrationTestCase):
         self.assertTrue('400 Bad Request' in header, header + body)
         self.assertTrue("Not a valid join query: field:value" in body, body)
 
+
 def postToCore(port, core, fields):
     postRequest(port=port, 
         path='/solr/%s/update' % core, 

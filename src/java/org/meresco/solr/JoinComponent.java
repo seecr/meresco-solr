@@ -104,10 +104,16 @@ public class JoinComponent extends SearchComponent {
         responseValues.add("response", ctx);
     }
 
+    /**
+     * Returned RefCounted<SolrIndexSearcher> instance must be decref'ed!
+     */
     public static RefCounted<SolrIndexSearcher> getSearcher(SolrCore core) {
         return core.getSearcher(false, true, null);
     }
 
+    /**
+     * Returned core must be closed!
+     */
 	public static SolrCore getCoreByName(SolrQueryRequest req, String name) {
         CoreContainer container = req.getCore().getCoreDescriptor().getCoreContainer();
         return container.getCore(name);
