@@ -68,7 +68,7 @@
 
   <searchComponent name="suggestions" class="solr.SpellCheckComponent"/>
 
-  <queryParser name="myjoin" class="org.meresco.solr.JoinParserPlugin" />
+  <queryParser name="facetjoin" class="org.meresco.solr.JoinParserPlugin" />
   <searchComponent name="joinFacet" class="org.meresco.solr.JoinFacetComponent"/>
 
   <requestHandler name="/select" class="solr.SearchHandler">

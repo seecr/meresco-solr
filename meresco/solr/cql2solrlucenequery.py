@@ -30,13 +30,16 @@ from meresco.components.statistics import Logger
 from meresco.components.clausecollector import ClauseCollector
 from meresco.solr.solrlucenequerycomposer import SolrLuceneQueryComposer
 
-class Cql2SolrLuceneQuery(Observable, Logger):
 
+class Cql2SolrLuceneQuery(Observable, Logger):
     def __init__(self, unqualifiedFields, name=None):
         Observable.__init__(self, name=name)
         self._cqlComposer = SolrLuceneQueryComposer(unqualifiedFields)
 
     def executeQuery(self, cqlAbstractSyntaxTree, *args, **kwargs):
+        joinQueries = kwargs.get('joinQueries', [])
+        for jq in joinQueries:
+            jq['query'] = self._convert(jq['query'])
         response = yield self.any.executeQuery(luceneQueryString=self._convert(cqlAbstractSyntaxTree), *args, **kwargs)
         raise StopIteration(response)
 

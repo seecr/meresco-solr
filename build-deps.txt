@@ -1,0 +1,4 @@
+#lenny:openjdk-6-jdk
+#squeeze:openjdk-6-jdk
+#centos5:java-1.6.0-openjdk-devel
+#centos6:java-1.6.0-openjdk-devel

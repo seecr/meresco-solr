@@ -31,28 +31,20 @@ from meresco.solr.cql2solrlucenequery import Cql2SolrLuceneQuery
 from meresco.core import Observable
 from weightless.core import be, compose
 
-def executeQueryMock(luceneQueryString, *args, **kwargs):
-    return
-    yield
 
 class Cql2SolrLuceneQueryTest(TestCase):
     def setUp(self):
         self.convertor = Cql2SolrLuceneQuery([('field', 1.0)])
         self.observer = CallTrace('Query responder', methods={'executeQuery': executeQueryMock})
         self.dna = be((Observable(),
-            (self.convertor, 
+            (self.convertor,
                 (self.observer,),
             )
         ))
         self.loggedClauses = []
-        def logShunt(clause, **kwargs):
+        def log(clause, **kwargs):
             self.loggedClauses.append(clause)
-        self.convertor.log = logShunt
-
-    def assertConversion(self, expectedClauses, query):
-        self.loggedClauses = []
-        list(compose(self.dna.any.executeQuery(cqlAbstractSyntaxTree=parseString(query))))
-        self.assertEquals(expectedClauses, self.loggedClauses)
+        self.convertor.log = log
 
     def testOneTerm(self):
         self.assertConversion(['term'], 'term')
@@ -79,3 +71,16 @@ class Cql2SolrLuceneQueryTest(TestCase):
     def testBraces(self):
         self.assertConversion(['term'], '(term)')
 
+    def testJoinQueries(self):
+        self.assertConversion(['term2', 'term1'], query='term1', joinQueries=[dict(someKey='someValue', query=parseString('term2'))])
+
+
+    def assertConversion(self, expectedClauses, query, **kwargs):
+        self.loggedClauses = []
+        list(compose(self.dna.any.executeQuery(cqlAbstractSyntaxTree=parseString(query), **kwargs)))
+        self.assertEquals(expectedClauses, self.loggedClauses)
+
+
+def executeQueryMock(luceneQueryString, *args, **kwargs):
+    return
+    yield

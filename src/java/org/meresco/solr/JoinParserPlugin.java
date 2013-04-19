@@ -41,7 +41,7 @@ import org.apache.lucene.queryparser.classic.ParseException;
 
 public class JoinParserPlugin extends QParserPlugin {
     //Copied from JoinQParserPlugin
-    public static String NAME = "myjoin";
+    public static String NAME = "facetjoin";
 
     @Override
     public void init(NamedList args) {

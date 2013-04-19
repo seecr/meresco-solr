@@ -250,7 +250,6 @@ class SolrInterfaceTest(SeecrTestCase):
                                     }
                                 ]
                             }
-                            
                         },
                         {
                             'term': 'all:2',
@@ -277,14 +276,14 @@ class SolrInterfaceTest(SeecrTestCase):
                 }
             ]), repr(response.drilldownData))
 
-    def testPivotDrilldown(self):
+    def testPivotDrilldownNoResponse(self):
         response, (path, body) = self.executeQueryResponse("meresco.exists:true", facets=[
                 [
                     {'fieldname': '__all__', 'sortBy': 'index'},
                     {'fieldname': '__other__', 'maxTerms': 5}
                 ], 
             ], response=JSON_RESPONSE % JSON_FACET_WITH_PIVOT_NO_RESPONSE)
-        arguments = parse_qs(body, keep_blank_values=True)
+        parse_qs(body, keep_blank_values=True)
         self.assertEqualsWS(repr([
             ]), repr(response.drilldownData))
 
@@ -296,7 +295,7 @@ class SolrInterfaceTest(SeecrTestCase):
         def httppost(**_kwargs):
             kwargs.append(_kwargs)
             s = Suspend()
-            response = yield s
+            yield s
             result = s.getResult()
             raise StopIteration(result)
         solrInterface._httppost = httppost
@@ -318,7 +317,7 @@ class SolrInterfaceTest(SeecrTestCase):
         def httppost(**_kwargs):
             kwargs.append(_kwargs)
             s = Suspend()
-            response = yield s
+            yield s
             result = s.getResult()
             raise StopIteration(result)
         solrInterface._httppost = httppost
@@ -354,11 +353,20 @@ class SolrInterfaceTest(SeecrTestCase):
         self.assertEquals([('/solr/admin/luke', {'wt': 'json'})], readData)
         self.assertEquals(sorted(['__all__', '__exists__', '__id__', '__timestamp__', 'field0', 'field1', 'untokenized.field0']), sorted(response.hits))
 
-    def testPassFilterQuery(self):
-        response, (path, body) = self.executeQueryResponse("*", filterQuery="field:value", response=JSON_RESPONSE % "") 
+    def testPassfilterQueries(self):
+        response, (path, body) = self.executeQueryResponse("*", filterQueries="field:value", response=JSON_RESPONSE % "") 
         self.assertQueryArguments("q=*&fq=field:value&start=0&rows=10&wt=json", body)
-        response, (path, body) = self.executeQueryResponse("*", filterQuery="field:http\://host.nl", response=JSON_RESPONSE % "") 
+        response, (path, body) = self.executeQueryResponse("*", filterQueries="field:http\://host.nl", response=JSON_RESPONSE % "") 
         self.assertQueryArguments("q=*&fq=field:http\://host.nl&start=0&rows=10&wt=json", body)
+
+    def testJoinQueries(self):
+        response, (path, body) = self.executeQueryResponse("*", joinQueries=[dict(core='aCore', fromField='field0', toField='field1', query='aQuery')], response=JSON_RESPONSE % "")
+        self.assertQueryArguments("q=*&fq={!join fromIndex=aCore fromField=field0 toField=field1}aQuery&start=0&rows=10&wt=json", body)
+
+    def testJoinFacets(self):
+        response, (path, body) = self.executeQueryResponse("*", joinFacets=[dict(core='aCore', field='field0')], response=JSON_RESPONSE % "")
+        self.assertQueryArguments("q=*&facet=on&facet.mincount=1&joinFacet.field={!facetjoin core=aCore}field0&start=0&rows=10&wt=json", body)
+
 
     def executeQueryResponse(self, query, response, solrInterface=None, **kwargs):
         if solrInterface is None:
@@ -372,7 +380,7 @@ class SolrInterfaceTest(SeecrTestCase):
         try:
             gen.send(response)
         except StopIteration, e:
-            (response,) = e.args 
+            (response,) = e.args
             return response, sendData[0]
 
     def executePrefixSearch(self, response, solrInterface=None, **kwargs):
@@ -387,7 +395,7 @@ class SolrInterfaceTest(SeecrTestCase):
         try:
             gen.send(response)
         except StopIteration, e:
-            (response,) = e.args 
+            (response,) = e.args
             return response, sendData[0]
     
     def _returnValueFromGenerator(self, g, serverResponses, responseStatus='200'):
