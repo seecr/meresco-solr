@@ -59,10 +59,10 @@ public class JoinParserPlugin extends QParserPlugin {
                         query = QParser.getParser(localQueryString, "lucene", otherReq).getQuery();
                     } finally {
                         otherReq.close();
-                        otherCore.close();
+                      	otherCore.close();
                     }
                 }
-                return new JoinQuery(otherCoreName, query, localQueryString);
+                return new JoinQuery(otherCoreName, localQueryString);
             }
         };
     }
@@ -71,17 +71,20 @@ public class JoinParserPlugin extends QParserPlugin {
 
 class JoinQuery extends Query {
 	String coreName;
-    Query query;
     String localQueryString;
+    Query query = null;
 
-    public JoinQuery(String coreName, Query query, String localQueryString) {
+    public JoinQuery(String coreName, String localQueryString) {
         this.coreName = coreName;
-        this.query = query;
         this.localQueryString = localQueryString;
     }
 
     @Override
     public String toString(String arg0) {
-       return coreName + ":" + query;
+       return coreName + ":" + this.localQueryString;
     }   
+    
+    public void setQuery(Query q) {
+    	this.query = q;
+    }
 }

@@ -8,10 +8,4 @@
       <str name="buildOnCommit">true</str>
     </lst>
   </searchComponent>
-
-  <requestHandler name="/select" class="solr.SearchHandler" startup="lazy">
-    <arr name="last-components">
-      <str>suggestions</str>
-    </arr>
-  </requestHandler>
 </config>

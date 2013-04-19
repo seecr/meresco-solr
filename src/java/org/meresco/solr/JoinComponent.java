@@ -13,6 +13,7 @@ import org.apache.solr.core.CoreContainer;
 import org.apache.solr.core.SolrCore;
 import org.apache.solr.handler.component.ResponseBuilder;
 import org.apache.solr.handler.component.SearchComponent;
+import org.apache.solr.request.LocalSolrQueryRequest;
 import org.apache.solr.request.SolrQueryRequest;
 import org.apache.solr.response.ResultContext;
 import org.apache.solr.response.SolrQueryResponse;
@@ -60,16 +61,19 @@ public class JoinComponent extends SearchComponent {
         
         for (String join : joins) {
         	JoinQuery joinQuery = null;
+        	SolrCore core = null;
             try {
-                joinQuery = (JoinQuery) getQuery(req, join);
+                joinQuery = (JoinQuery) Utils.getQuery(req, join);
+                core = Utils.getCoreByName(req, joinQuery.coreName);
+                joinQuery.setQuery(parseQuery(joinQuery.localQueryString, core, params));
             } catch (ParseException e) {
                 throw new SolrException(SolrException.ErrorCode.BAD_REQUEST, e);
             } catch (ClassCastException e) {
                 throw new SolrException(SolrException.ErrorCode.BAD_REQUEST, "Not a valid join query: " + join);
             }
             
-            SolrCore core = getCoreByName(req, joinQuery.coreName);
-            RefCounted<SolrIndexSearcher> coreSearcher = getSearcher(core);
+            
+            RefCounted<SolrIndexSearcher> coreSearcher = Utils.getSearcher(core);
             try {
 	            DocSet otherDocSet = coreSearcher.get().getDocSet(joinQuery.query);
 	            IdSet otherIdSet = IdSet.idSetFromDocSet(otherDocSet, coreSearcher.get());
@@ -102,33 +106,14 @@ public class JoinComponent extends SearchComponent {
         ctx.query = null; // anything?
         responseValues.add("response", ctx);
     }
-
-    /**
-     * Returned RefCounted<SolrIndexSearcher> instance must be decref'ed!
-     */
-    public static RefCounted<SolrIndexSearcher> getSearcher(SolrCore core) {
-        return core.getSearcher(false, true, null);
-    }
-
-    /**
-     * Returned core must be closed!
-     */
-	public static SolrCore getCoreByName(SolrQueryRequest req, String name) {
-        CoreContainer container = req.getCore().getCoreDescriptor().getCoreContainer();
-        return container.getCore(name);
-	}
-
-    /**
-     * Returned core must be closed!
-     */
-	public static SolrCore getCoreByName(SolrIndexSearcher searcher, String name) {
-        CoreContainer container = searcher.getCore().getCoreDescriptor().getCoreContainer();
-        return container.getCore(name);
-	}
-	
-    public static Query getQuery(SolrQueryRequest req, String queryParameter) throws ParseException {
-        QParser parser = QParser.getParser(queryParameter, null, req);
-        return parser.getQuery();
+    
+    private Query parseQuery(String query, SolrCore core, SolrParams params) throws ParseException {
+    	LocalSolrQueryRequest otherReq = new LocalSolrQueryRequest(core, params);
+        try {
+            return QParser.getParser(query, "lucene", otherReq).getQuery();
+        } finally {
+            otherReq.close();
+        }
     }
 
     private DocSlice docList(int[] luceneIds) {

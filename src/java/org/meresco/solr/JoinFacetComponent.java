@@ -56,15 +56,15 @@ public class JoinFacetComponent extends SearchComponent {
 	        for (String joinFacetField: joinFacetFields) {
 	        	JoinQuery parsedJoinFacetField = null;
 		        try {
-		            parsedJoinFacetField = (JoinQuery) JoinComponent.getQuery(rb.req, joinFacetField);
+		            parsedJoinFacetField = (JoinQuery) Utils.getQuery(rb.req, joinFacetField);
 		        } catch (ParseException e) {
 		            throw new SolrException(SolrException.ErrorCode.BAD_REQUEST, e);
 		        }
 		        paramsMap.put("facet.field", new String[] {parsedJoinFacetField.localQueryString});
 
 		        String coreName = parsedJoinFacetField.coreName;
-				SolrCore core = JoinComponent.getCoreByName(rb.req, coreName);
-		        RefCounted<SolrIndexSearcher> coreSearcher = JoinComponent.getSearcher(core);
+				SolrCore core = Utils.getCoreByName(rb.req, coreName);
+		        RefCounted<SolrIndexSearcher> coreSearcher = Utils.getSearcher(core);
 		        try {
 		        	DocSet docSet = coreDocSets.get(coreName);
 		        	if (docSet == null) {

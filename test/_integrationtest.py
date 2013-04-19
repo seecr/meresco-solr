@@ -51,6 +51,7 @@ if __name__ == '__main__':
     IntegrationState(
         "default", 
         tests=[
+            '_integration.solrjointest.SolrJoinTest',
             '_integration.solrservertest.SolrServerTest',
             '_integration.solrinterfacetest.SolrInterfaceTest',
         ],
