@@ -127,12 +127,12 @@ class ServerTest(SeecrTestCase):
         self._createServer(stateDir=solrDataDir, port=8042, config=config)
         solrconfig_xml = parse(open(join(solrDataDir, 'cores', 'core2', 'conf', 'solrconfig.xml')))
         self.assertTrue('suggestions' in solrconfig_xml.xpath("/config/requestHandler[@name='/select']/arr/str/text()"))
-        self.assertTrue('suggestions' in solrconfig_xml.xpath("/config/searchComponent/@name"))
+        self.assertTrue('textSpell' in solrconfig_xml.xpath("/config/searchComponent/str/text()"))
         self.assertEquals(['afieldname'], solrconfig_xml.xpath('/config/searchComponent[@name="suggestions"]/lst/str[@name="field"]/text()'))
 
         solrconfig_xml = parse(open(join(solrDataDir, 'cores', 'core1', 'conf', 'solrconfig.xml')))
-        self.assertFalse('suggestions' in solrconfig_xml.xpath("/config/requestHandler[@name='/select']/arr/str/text()"))
-        self.assertFalse('suggestions' in solrconfig_xml.xpath("/config/searchComponent/@name"))
+        self.assertTrue('suggestions' in solrconfig_xml.xpath("/config/requestHandler[@name='/select']/arr/str/text()"))
+        self.assertFalse('textSpell' in solrconfig_xml.xpath("/config/searchComponent/str/text()"))
 
     def testSetupSolrConfigWithAdditionalSolrConfig(self):
         solrDataDir = join(self.tempdir, 'solr-data')
@@ -164,12 +164,12 @@ class ServerTest(SeecrTestCase):
         config = {'core1': {'suggestions': False}, 'core2': {}}
         self._createServer(stateDir=solrDataDir, port=8042, config=config)
         solrconfig_xml = parse(open(join(solrDataDir, 'cores', 'core1', 'conf', 'solrconfig.xml')))
-        self.assertFalse('suggestions' in solrconfig_xml.xpath("/config/requestHandler[@name='/select']/arr/str/text()"))
-        self.assertFalse('suggestions' in solrconfig_xml.xpath("/config/searchComponent/@name"))
+        self.assertTrue('suggestions' in solrconfig_xml.xpath("/config/requestHandler[@name='/select']/arr/str/text()"))
+        self.assertFalse('textSpell' in solrconfig_xml.xpath("/config/searchComponent/str/text()"))
 
         solrconfig_xml = parse(open(join(solrDataDir, 'cores', 'core2', 'conf', 'solrconfig.xml')))
-        self.assertFalse('suggestions' in solrconfig_xml.xpath("/config/requestHandler[@name='/select']/arr/str/text()"))
-        self.assertFalse('suggestions' in solrconfig_xml.xpath("/config/searchComponent/@name"))
+        self.assertTrue('suggestions' in solrconfig_xml.xpath("/config/requestHandler[@name='/select']/arr/str/text()"))
+        self.assertFalse('textSpell' in solrconfig_xml.xpath("/config/searchComponent/str/text()"))
 
     def testInvalidCoreConfig(self):
         solrDataDir = join(self.tempdir, 'solr-data')
