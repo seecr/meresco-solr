@@ -354,14 +354,14 @@ class SolrInterfaceTest(SeecrTestCase):
         self.assertEquals(sorted(['__all__', '__exists__', '__id__', '__timestamp__', 'field0', 'field1', 'untokenized.field0']), sorted(response.hits))
 
     def testPassfilterQueries(self):
-        response, (path, body) = self.executeQueryResponse("*", filterQueries="field:value", response=JSON_RESPONSE % "") 
+        response, (path, body) = self.executeQueryResponse("*", filterQueries=["field:value"], response=JSON_RESPONSE % "") 
         self.assertQueryArguments("q=*&fq=field:value&start=0&rows=10&wt=json", body)
-        response, (path, body) = self.executeQueryResponse("*", filterQueries="field:http\://host.nl", response=JSON_RESPONSE % "") 
+        response, (path, body) = self.executeQueryResponse("*", filterQueries=["field:http\://host.nl"], response=JSON_RESPONSE % "") 
         self.assertQueryArguments("q=*&fq=field:http\://host.nl&start=0&rows=10&wt=json", body)
 
     def testJoinQueries(self):
         response, (path, body) = self.executeQueryResponse("*", joinQueries=[dict(core='aCore', fromField='field0', toField='field1', query='aQuery')], response=JSON_RESPONSE % "")
-        self.assertQueryArguments("q=*&fq={!join fromIndex=aCore fromField=field0 toField=field1}aQuery&start=0&rows=10&wt=json", body)
+        self.assertQueryArguments("q=*&fq={!join fromIndex=aCore from=field0 to=field1}aQuery&start=0&rows=10&wt=json", body)
 
     def testJoinFacets(self):
         response, (path, body) = self.executeQueryResponse("*", joinFacets=[dict(core='aCore', field='field0')], response=JSON_RESPONSE % "")
