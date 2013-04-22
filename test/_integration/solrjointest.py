@@ -32,12 +32,34 @@ from meresco.xml import xpath, xpathFirst
 
 
 class SolrJoinTest(IntegrationTestCase):
+    def setUp(self):
+        IntegrationTestCase.setUp(self)
+        self._adds = []
+
+    def tearDown(self):
+        for (core, fields) in self._adds:
+            id = dict(fields)['__id__']
+            self._removeFromCore(core, id)
+
     def testJoinHybridWithSolrJoinComponent(self):
-        postToCore(self.solrPort, 'core2', [('__id__', 'record:0001'), ('field0', 'value'), ('field1', 'value2')])
-        postToCore(self.solrPort, 'core2', [('__id__', 'record:0002'), ('field1', 'value3')])
-        postToCore(self.solrPort, 'core3', [('__id__', 'record:0001'), ('field2', 'value3')])
+        self.postToCore('core2', [('__id__', 'record:0001'), ('field0', 'value'), ('field1', 'value2')])
+        self.postToCore('core2', [('__id__', 'record:0002'), ('field1', 'value3')])
+        self.postToCore('core3', [('__id__', 'record:0001'), ('field2', 'value3')])
+
         sleepWheel(2)
-        header, body = getRequest(port=self.solrPort, path='/solr/records/select', arguments={'q': '*:*', 'fq': ['{!join fromIndex=core2 from=__id__ to=__id__}*:*', '{!join fromIndex=core3 from=__id__ to=__id__}__id__:record\:0001'], 'facet': 'on', 'facet.field': '__id__', 'facet.mincount': 1, 'joinFacet.field': ['{!facetjoin core=core2}field0', '{!facetjoin core=core2}field1', '{!facetjoin core=core3}field2']}, parse=True)
+        header, body = getRequest(port=self.solrPort, path='/solr/records/select', arguments={
+                'q': '*:*',
+                'fq': [
+                    '{!join fromIndex=core2 from=__id__ to=__id__}*:*',
+                    '{!join fromIndex=core3 from=__id__ to=__id__}__id__:record\:0001'],
+                'facet': 'on',
+                'facet.field': '__id__',
+                'facet.mincount': 1,
+                'joinFacet.field': [
+                    '{!facetjoin core=core2}field0',
+                    '{!facetjoin core=core2}field1',
+                    '{!facetjoin core=core3}field2']
+            }, parse=True)
         self.assertEquals(['record:0001'], xpath(body, '//result[@name="response"]/doc/str[@name="__id__"]/text()'))
         self.assertEquals('record:0001', xpathFirst(body, '//lst[@name="facet_counts"]//lst[@name="__id__"]/int/@name'))
         self.assertEquals('value', xpathFirst(body, '//lst[@name="facet_counts"]//lst[@name="field0"]/int/@name'))
@@ -53,7 +75,7 @@ class SolrJoinTest(IntegrationTestCase):
         self.assertTrue('Cross-core join: no such core core_unknown' in body, body)
 
     def testFacetJoinWithoutJoinQuery(self):
-        postToCore(self.solrPort, 'core2', [('__id__', 'record:0001')])
+        self.postToCore('core2', [('__id__', 'record:0001')])
         sleepWheel(2)
         header, body = getRequest(port=self.solrPort, path='/solr/records/select', arguments={'q': '*:*', 'facet': 'on', 'joinFacet.field': '{!facetjoin core=core2}__id__'}, parse=True)
         self.assertTrue('200 OK' in header, header + tostring(body))
@@ -71,36 +93,53 @@ class SolrJoinTest(IntegrationTestCase):
         self.assertTrue('200 OK' in header, header + tostring(body))
         self.assertEquals(0, len(xpath(body, '//lst[@name="field:value:other"]/str')))
 
-    # def testJoinScore(self):
-    #     postToCore(self.solrPort, 'core2', [('__id__', 'record:0001')])
-    #     postToCore(self.solrPort, 'core2', [('__id__', 'record:0019')])
-    #     postToCore(self.solrPort, 'core2', [('__id__', 'record:0025')])
-    #     postToCore(self.solrPort, 'core2', [('__id__', 'record:0037')])
-    #     sleepWheel(2)
-    #     header, body = getRequest(port=self.solrPort, path='/solr/records/select', arguments={'q': '__all__:history', 'fl': '*,score'}, parse=True)
-    #     self.assertEquals(['record:0001', 'record:0019', 'record:0037', 'record:0025'], xpath(body, '//result[@name="response"]/doc/str[@name="__id__"]/text()'))
-    #     self.assertEquals(['0.7928962', '0.67962533', '0.56635445', '0.45308354'], xpath(body, '//result[@name="response"]/doc/float[@name="score"]/text()'))
+    def testFacetsWithJoinOnFromToFields(self):
+        self.postToCore('core2', [('__id__', 'ignoredid:0001'), ('foreignid.ref', 'record:0001'), ('field0', 'value'), ('field1', 'value2')])
+        self.postToCore('core2', [('__id__', 'ignoredid:0002'), ('foreignid.ref', 'record:0001'), ('field1', 'value2')])
+        self.postToCore('core2', [('__id__', 'ignoredid:0003'), ('foreignid.ref', 'record:0001'), ('field1', 'value4')])
 
-    #     header, body = getRequest(port=self.solrPort, path='/solr/records/select', arguments={'q': '__all__:history', 'fl': '*,score', 'join': '{!facetjoin core=core2}*:*'}, parse=True)
-    #     print tostring(body)
-    #     self.assertEquals(['record:0001', 'record:0019', 'record:0037', 'record:0025'], xpath(body, '//result[@name="response"]/doc/str[@name="__id__"]/text()'))
-    #     self.assertEquals(['0.7928962', '0.67962533', '0.56635445', '0.45308354'], xpath(body, '//result[@name="response"]/doc/float[@name="score"]/text()'))
+        self.postToCore('core2', [('__id__', 'ignoredid:0004'), ('foreignid.ref', 'record:0002'), ('field1', 'value3')])
+        self.postToCore('core3', [('__id__', 'ignoredid:0005'), ('foreignid.otherref', 'record:0001'), ('field2', 'value3')])
+        sleepWheel(2)
+        header, body = getRequest(port=self.solrPort, path='/solr/records/select', arguments={
+                'q': '*:*',
+                'fq': [
+                    '{!join fromIndex=core2 from=foreignid.ref to=__id__}*:*',
+                    '{!join fromIndex=core3 from=foreignid.otherref to=__id__}foreignid.otherref:record\:0001'
+                ],
+                'facet': 'on',
+                'facet.field': '__id__',
+                'facet.mincount': 1,
+                'joinFacet.field': [
+                    '{!facetjoin core=core2 from=foreignid.ref to=__id__}field0',
+                    '{!facetjoin core=core2 from=foreignid.ref to=__id__}field1',
+                    '{!facetjoin core=core3 from=foreignid.otherref to=__id__}field2']
+            }, parse=True)
 
-    # def testJoinResultList(self):
-    #     postToCore(self.solrPort, 'core2', [('__id__', 'record:0001')])
-    #     postToCore(self.solrPort, 'core2', [('__id__', 'record:0019')])
-    #     postToCore(self.solrPort, 'core2', [('__id__', 'record:0025')])
-    #     postToCore(self.solrPort, 'core2', [('__id__', 'record:0037')])
-    #     sleepWheel(2)
-    #     header, body = getRequest(port=self.solrPort, path='/solr/records/select', arguments={'q': '__all__:history', 'fl': '*,score', 'rows': '1'}, parse=True)
-    #     self.assertEquals(1, len(xpath(body, '//result[@name="response"]/doc/str[@name="__id__"]/text()')))
+        print tostring(body, pretty_print=True)
+        self.assertEquals(['record:0001'], xpath(body, '//result[@name="response"]/doc/str[@name="__id__"]/text()'))
+        self.assertEquals('record:0001', xpathFirst(body, '//lst[@name="facet_counts"]//lst[@name="__id__"]/int/@name'))
 
-    #     header, body = getRequest(port=self.solrPort, path='/solr/records/select', arguments={'q': '__all__:history', 'fl': '*,score', 'rows': '1', 'join': '{!facetjoin core=core2}*:*'}, parse=True)
-    #     self.assertEquals(1, len(xpath(body, '//result[@name="response"]/doc/str[@name="__id__"]/text()')))
+        self.assertEquals(['value'], sorted(xpath(body, '//lst[@name="facet_counts"]//lst[@name="field0"]/int/@name')))
+        self.assertEquals('1', xpathFirst(body, '//lst[@name="facet_counts"]//lst[@name="field0"]/int[@name="value"]/text()'))
 
-def postToCore(port, core, fields):
-    postRequest(port=port, 
-        path='/solr/%s/update' % core, 
-        data="""<add xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><doc>%s</doc></add>""" % ''.join('<field name="%s">%s</field>' % (f, v) for f, v in fields),
-        contentType='text/xml')
+        self.assertEquals(['value2', 'value4'], sorted(xpath(body, '//lst[@name="facet_counts"]//lst[@name="field1"]/int/@name')))
 
+        self.assertEquals('1', xpathFirst(body, '//lst[@name="facet_counts"]//lst[@name="field1"]/int[@name="value2"]/text()'))
+
+        self.assertEquals(['value3'], sorted(xpath(body, '//lst[@name="facet_counts"]//lst[@name="field2"]/int/@name')))
+        self.assertEquals('1', xpathFirst(body, '//lst[@name="facet_counts"]//lst[@name="field2"]/int[@name="value3"]/text()'))
+
+
+    def postToCore(self, core, fields):
+        self._adds.append((core, fields))
+        postRequest(port=self.solrPort,
+            path='/solr/%s/update' % core,
+            data="""<add xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><doc>%s</doc></add>""" % ''.join('<field name="%s">%s</field>' % (f, v) for f, v in fields),
+            contentType='text/xml')
+
+    def _removeFromCore(self, core, id):
+        header, body = postRequest(port=self.solrPort,
+            path='/solr/%s/update' % core,
+            data="""<delete xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><id>%s</id></delete>""" % id,
+            contentType='text/xml', parse=False)

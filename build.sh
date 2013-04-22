@@ -28,8 +28,6 @@
 
 VERSION=$1
 
-
-SOLRWAR=/usr/share/java/webapps/apache-solr-4.0.0.war
 BUILDDIR=./build
 LIBDIR=usr-share/solr-data/lib
 TARGET=meresco-solr.jar
@@ -40,11 +38,7 @@ fi
 test -d $BUILDDIR && rm -r $BUILDDIR
 mkdir $BUILDDIR
 
-SOLRWAR_DIR=$BUILDDIR/$(basename $SOLRWAR)
-unzip -q -d $SOLRWAR_DIR $SOLRWAR
-SOLRJARS=$(find $SOLRWAR_DIR/WEB-INF/lib -type f -name "*.jar")
-
-CP="$(echo $SOLRJARS | tr ' ' ':')"
+CP=$(./_solr_classpath.sh ${BUILDDIR})
 javaFiles=$(find src/java -name "*.java")
 echo "compiling" $javaFiles
 javac -d $BUILDDIR -cp $CP $javaFiles

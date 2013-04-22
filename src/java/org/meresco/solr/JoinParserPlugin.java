@@ -40,8 +40,8 @@ import org.apache.lucene.queryparser.classic.ParseException;
 
 
 public class JoinParserPlugin extends QParserPlugin {
-    //Copied from JoinQParserPlugin
     public static String NAME = "facetjoin";
+    public static String DEFAULT_JOIN_FIELD = "__id__";
 
     @Override
     public void init(NamedList args) {
@@ -52,17 +52,25 @@ public class JoinParserPlugin extends QParserPlugin {
         return new QParser(qstr, localParams, params, req) {
             public Query parse() throws ParseException {
                 String otherCoreName = getParam("core");
+                String fromField = getParam("from");
+                if (fromField == null) {
+                	fromField = DEFAULT_JOIN_FIELD;
+                }
+                String toField = getParam("to");
+                if (toField == null) {
+                	toField = DEFAULT_JOIN_FIELD;
+                }
                 String localQueryString = localParams.get("v");
 
                 CoreDescriptor coreDescriptor = req.getCore().getCoreDescriptor();
-                if (!otherCoreName.equals(coreDescriptor.getName()) ) {
+                if (!otherCoreName.equals(coreDescriptor.getName())) {
                     CoreContainer container = coreDescriptor.getCoreContainer();
                     final SolrCore otherCore = container.getCore(otherCoreName);
                     if (otherCore == null) {
                         throw new SolrException(SolrException.ErrorCode.BAD_REQUEST, "Cross-core join: no such core " + otherCoreName);
                     }
                 }
-                return new JoinQuery(otherCoreName, localQueryString);
+                return new JoinQuery(otherCoreName, fromField, toField, localQueryString);
             }
         };
     }
@@ -71,15 +79,21 @@ public class JoinParserPlugin extends QParserPlugin {
 
 class JoinQuery extends Query {
 	String coreName;
+	String fromField;
+	String toField;
     String localQueryString;
 
-    public JoinQuery(String coreName, String localQueryString) {
+    public JoinQuery(String coreName, String fromField, String toField, String localQueryString) {
         this.coreName = coreName;
+        this.fromField = fromField;
+        this.toField = toField;
         this.localQueryString = localQueryString;
     }
 
     @Override
     public String toString(String arg0) {
-       return coreName + ":" + this.localQueryString;
+       return String.format(
+    		   "{!%s core=%s from=%s to=%s}%s", 
+    		   JoinParserPlugin.NAME, coreName, fromField, toField, localQueryString);
     }   
 }

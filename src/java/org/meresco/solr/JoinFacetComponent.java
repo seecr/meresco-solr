@@ -92,7 +92,7 @@ public class JoinFacetComponent extends SearchComponent {
 		        try {
 		        	DocSet docSet = coreDocSets.get(coreName);
 		        	if (docSet == null) {
-		        		docSet = docSetForCore(rb, coreName, coreSearcher.get());
+		        		docSet = docSetForJoin(rb, parsedJoinFacetField, coreSearcher.get());
 		        		coreDocSets.put(coreName, docSet);
 		        	}
 					SimpleFacets f = new JoinSimpleFacets(
@@ -119,20 +119,15 @@ public class JoinFacetComponent extends SearchComponent {
 	    }
 	}
 
-	private DocSet docSetForCore(ResponseBuilder rb, String coreName, SolrIndexSearcher coreSearcher) throws IOException {
-		DocSet docSet = null;
+	private DocSet docSetForJoin(ResponseBuilder rb, JoinQuery parsedJoinFacetField, SolrIndexSearcher coreSearcher) throws IOException {
 		DocSet givenDocSet = rb.getResults().docSet;
-		if (givenDocSet instanceof JoinDocSet) {
-			docSet = ((JoinDocSet) givenDocSet).getOtherCoreDocSet(coreName);
-		}
-		if (docSet == null) {
-            DocSet otherDocSet = coreSearcher.getDocSet(new MatchAllDocsQuery());
-            IdSet otherIdSet = IdSet.idSetFromDocSet(otherDocSet, coreSearcher);
-            IdSet givenDocSetIds = IdSet.idSetFromDocSet(givenDocSet, rb.req.getSearcher());
-            otherIdSet.retainAll(givenDocSetIds);
-            docSet = otherIdSet.makeDocSet();
-		}
-		return docSet;
+        IdSet givenDocSetIds = IdSet.idSetFromDocSet(givenDocSet, rb.req.getSearcher(), parsedJoinFacetField.toField);
+		
+		DocSet otherDocSet = coreSearcher.getDocSet(new MatchAllDocsQuery());
+        IdSet otherIdSet = IdSet.idSetFromDocSet(otherDocSet, coreSearcher, parsedJoinFacetField.fromField);
+
+        otherIdSet.retainAll(givenDocSetIds);
+        return otherIdSet.makeDocSet();
 	}
 
 	private void updateCounts(NamedList<Object> counts, NamedList<Object> newCounts) {

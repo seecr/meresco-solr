@@ -30,9 +30,30 @@ set -o errexit
 export LANG=en_US.UTF-8
 export PYTHONPATH=.:"$PYTHONPATH"
 
-(
-    cd ..
-    ./build.sh
-)
-python2.6 _alltests.py "$@"
+tests="client server"
+option=$1
+if [ "$option" == "--client" ]; then
+    tests="client"
+    shift
+elif [ "$option" == "--server" ]; then
+    tests="server"
+    shift
+fi
 
+for type in $tests; do
+    if [ "$type" == "client" ]; then
+        echo 'Meresco-Solr Client test'
+        python2.6 _alltests.py "$@"
+    fi
+    if [ "$type" == "server" ]; then
+        echo 'Meresco-Solr Server test'
+        (
+            cd ..
+            ./build.sh
+        )
+        (
+            cd ../src/test
+            ./alltests.sh "$@"
+        )
+    fi
+done

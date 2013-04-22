@@ -42,26 +42,28 @@ import org.apache.solr.search.SolrIndexSearcher;
 
 
 public class IdSet {
+	private String idFieldName;
+	private Set<String> idFieldSet;
 	private Set<Integer> ids = new HashSet<Integer>();
 	private Map<Integer, Integer> id2docId = new HashMap<Integer, Integer>();
-	private static final Set<String> ID_FIELDS = new HashSet<String>() {{ this.add("__id__"); }};
-
-	public static IdSet idSetFromDocSet(DocSet docSet, SolrIndexSearcher searcher) {
+	
+	private IdSet(DocSet docSet, SolrIndexSearcher searcher, final String idFieldName) {
+		System.out.println("nieuw IdSet: " + idFieldName);
+		this.idFieldName = idFieldName;
+		this.idFieldSet = new HashSet<String>() {{ this.add(idFieldName); }};
+		for (DocIterator iterator = docSet.iterator(); iterator.hasNext();) {
+			int docId = (int) iterator.nextDoc();
+			int id = idForDocId(docId, searcher);
+			ids.add(id);
+			id2docId.put(id, docId);
+		}	
+	}
+	
+	public static IdSet idSetFromDocSet(DocSet docSet, SolrIndexSearcher searcher, String idFieldName) {
 		if (docSet instanceof JoinDocSet) {
 			return ((JoinDocSet) docSet).getIdSet();
 		}
-		IdSet idSet = new IdSet();
-		DocIterator iter = docSet.iterator();
-		while (iter.hasNext()) {
-			int docId = iter.nextDoc();
-			idSet.add(IdSet.idForDocId(docId, searcher), docId);
-		}
-		return idSet;
-	}	
-	
-	public void add(int id, int docId) {
-		ids.add(id);
-		id2docId.put(id, docId);
+		return new IdSet(docSet, searcher, idFieldName);
 	}
 	
 	public int getDocId(int id) {
@@ -91,10 +93,10 @@ public class IdSet {
 		return makeDocSet(this);
 	}
 
-	private static int idForDocId(int docId, SolrIndexSearcher searcher) {
+	private int idForDocId(int docId, SolrIndexSearcher searcher) {
 		try {
-			Document doc = searcher.doc(docId, IdSet.ID_FIELDS);
-			return doc.get("__id__").hashCode();
+			Document doc = searcher.doc(docId, idFieldSet);
+			return doc.get(idFieldName).hashCode();  // FIXME: hash is not yet unique enough!!
 		} catch (IOException e) {
 			throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, e);
 		}

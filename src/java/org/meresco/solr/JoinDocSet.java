@@ -28,7 +28,6 @@ package org.meresco.solr;
 
 import java.util.HashMap;
 
-import org.apache.commons.lang.NotImplementedException;
 import org.apache.lucene.search.Filter;
 import org.apache.lucene.util.OpenBitSet;
 import org.apache.solr.search.DocIterator;
@@ -55,12 +54,12 @@ class JoinDocSet implements DocSet {
 	
 	@Override
 	public void add(int doc) {
-		throw new NotImplementedException();
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public void addUnique(int doc) {
-		throw new NotImplementedException();
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -130,6 +129,6 @@ class JoinDocSet implements DocSet {
 
 	@Override
 	public void setBitsOn(OpenBitSet target) {
-		throw new NotImplementedException();
+		throw new UnsupportedOperationException();
 	}
 }
