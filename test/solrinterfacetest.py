@@ -364,8 +364,8 @@ class SolrInterfaceTest(SeecrTestCase):
         self.assertQueryArguments("q=*&fq={!join fromIndex=aCore from=field0 to=field1}aQuery&start=0&rows=10&wt=json", body)
 
     def testJoinFacets(self):
-        response, (path, body) = self.executeQueryResponse("*", joinFacets=[dict(core='aCore', field='field0')], response=JSON_RESPONSE % "")
-        self.assertQueryArguments("q=*&facet=on&facet.mincount=1&joinFacet.field={!facetjoin core=aCore}field0&start=0&rows=10&wt=json", body)
+        response, (path, body) = self.executeQueryResponse("*", joinFacets=[dict(core='aCore', fromField='field0', toField='field1', facetField='field2')], response=JSON_RESPONSE % "")
+        self.assertQueryArguments("q=*&facet=on&facet.mincount=1&joinFacet.field={!facetjoin core=aCore from=field0 to=field1}field2&start=0&rows=10&wt=json", body)
 
 
     def executeQueryResponse(self, query, response, solrInterface=None, **kwargs):

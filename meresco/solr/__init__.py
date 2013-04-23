@@ -28,4 +28,5 @@ from fields2solrdoc import Fields2SolrDoc
 from cql2solrlucenequery import Cql2SolrLuceneQuery
 
 UNTOKENIZED_PREFIX = 'untokenized.'
+FOREIGNID_PREFIX = 'foreignid.'
 SORTED_PREFIX = 'sorted.'

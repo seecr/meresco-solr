@@ -106,7 +106,11 @@ public class IdSet {
 	private int idForDocId(int docId, SolrIndexSearcher searcher) {
 		try {
 			Document doc = searcher.doc(docId, idFieldSet);
-			return doc.get(idFieldName).hashCode();  // FIXME: hash is not yet unique enough!!
+			String value = doc.get(idFieldName);
+			if (value == null) {
+				throw new SolrException(SolrException.ErrorCode.BAD_REQUEST, "'from' field " + idFieldName + " is unknown or not stored.");
+			}
+			return value.hashCode();  // FIXME: hash is not yet unique enough!!
 		} catch (IOException e) {
 			throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, e);
 		}

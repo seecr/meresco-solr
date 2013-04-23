@@ -1,28 +1,28 @@
 ## begin license ##
-# 
+#
 # "Meresco Solr" is a set of components and tools
-#  to integrate Solr into "Meresco." 
-# 
+#  to integrate Solr into "Meresco."
+#
 # Copyright (C) 2011-2013 Seecr (Seek You Too B.V.) http://seecr.nl
 # Copyright (C) 2012-2013 SURF http://www.surf.nl
 # Copyright (C) 2012 Stichting Bibliotheek.nl (BNL) http://www.bibliotheek.nl
-# 
+#
 # This file is part of "Meresco Solr"
-# 
+#
 # "Meresco Solr" is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
-# 
+#
 # "Meresco Solr" is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with "Meresco Solr"; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-# 
+#
 ## end license ##
 
 from urllib import urlencode
@@ -70,9 +70,9 @@ class SolrInterface(Observable):
         if not luceneQueryString:
             raise ValueError("Empty luceneQueryString not allowed.")
         arguments = dict(
-                q=luceneQueryString, 
-                start=start, 
-                rows=stop-start, 
+                q=luceneQueryString,
+                start=start,
+                rows=stop-start,
                 wt='json'
             )
         if sortKeys:
@@ -96,7 +96,7 @@ class SolrInterface(Observable):
         identifiers = [doc.values()[0] for doc in jsonResponse['response']['docs']]
         qtime = jsonResponse['responseHeader']['QTime']
         response = SolrResponse(total=recordCount, hits=identifiers, queryTime=qtime)
-        if not facets is None:
+        if 'facet_counts' in jsonResponse:
              _updateResponseWithDrilldownData(arguments, jsonResponse['facet_counts'], response)
         if suggestionsCount > 0 and suggestionsQuery and 'spellcheck' in jsonResponse:
             _updateResponseWithSuggestionData(arguments, jsonResponse['spellcheck']['suggestions'], response)
@@ -193,7 +193,7 @@ def _facetArguments(facets, joinFacets):
                     facetLimit(f)
                     facetSort(f)
         for joinFacet in joinFacets:
-            arguments['joinFacet.field'].append('{!facetjoin core=%(core)s}%(field)s' % joinFacet)
+            arguments['joinFacet.field'].append('{!facetjoin core=%(core)s from=%(fromField)s to=%(toField)s}%(facetField)s' % joinFacet)
     return arguments
 
 

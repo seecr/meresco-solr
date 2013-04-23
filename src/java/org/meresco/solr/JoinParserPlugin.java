@@ -70,7 +70,10 @@ public class JoinParserPlugin extends QParserPlugin {
                         throw new SolrException(SolrException.ErrorCode.BAD_REQUEST, "Cross-core join: no such core " + otherCoreName);
                     }
                 }
-                return new JoinQuery(otherCoreName, fromField, toField, localQueryString);
+                Query query = new JoinQuery(otherCoreName, fromField, toField, localQueryString);
+                System.out.println("query: " + query);
+                System.out.flush();
+                return query;
             }
         };
     }
