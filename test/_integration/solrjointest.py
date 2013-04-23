@@ -113,10 +113,11 @@ class SolrJoinTest(IntegrationTestCase):
                 'joinFacet.field': [
                     '{!facetjoin core=core2 from=foreignid.ref to=__id__}field0',
                     '{!facetjoin core=core2 from=foreignid.ref to=__id__}field1',
-                    '{!facetjoin core=core3 from=foreignid.otherref to=__id__}field2']
+                    '{!facetjoin core=core3 from=foreignid.otherref to=__id__}field2'
+                ]
             }, parse=True)
 
-        print tostring(body, pretty_print=True)
+        #print tostring(body, pretty_print=True)
         self.assertEquals(['record:0001'], xpath(body, '//result[@name="response"]/doc/str[@name="__id__"]/text()'))
         self.assertEquals('record:0001', xpathFirst(body, '//lst[@name="facet_counts"]//lst[@name="__id__"]/int/@name'))
 
@@ -125,7 +126,7 @@ class SolrJoinTest(IntegrationTestCase):
 
         self.assertEquals(['value2', 'value4'], sorted(xpath(body, '//lst[@name="facet_counts"]//lst[@name="field1"]/int/@name')))
 
-        self.assertEquals('1', xpathFirst(body, '//lst[@name="facet_counts"]//lst[@name="field1"]/int[@name="value2"]/text()'))
+        self.assertEquals('2', xpathFirst(body, '//lst[@name="facet_counts"]//lst[@name="field1"]/int[@name="value2"]/text()'))
 
         self.assertEquals(['value3'], sorted(xpath(body, '//lst[@name="facet_counts"]//lst[@name="field2"]/int/@name')))
         self.assertEquals('1', xpathFirst(body, '//lst[@name="facet_counts"]//lst[@name="field2"]/int[@name="value3"]/text()'))

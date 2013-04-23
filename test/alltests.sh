@@ -48,12 +48,9 @@ for type in $tests; do
     if [ "$type" == "server" ]; then
         echo 'Meresco-Solr Server test'
         (
-            cd ..
-            ./build.sh
-        )
-        (
-            cd ../src/test
-            ./alltests.sh "$@"
+            echo 'No unit tests yet for server Java code'
+#            cd ../src/test
+#            ./alltests.sh "$@"
         )
     fi
 done

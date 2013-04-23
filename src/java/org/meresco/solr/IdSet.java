@@ -27,9 +27,11 @@
 package org.meresco.solr;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -45,7 +47,8 @@ public class IdSet {
 	private String idFieldName;
 	private Set<String> idFieldSet;
 	private Set<Integer> ids = new HashSet<Integer>();
-	private Map<Integer, Integer> id2docId = new HashMap<Integer, Integer>();
+	private Map<Integer, List<Integer>> id2docIds = new HashMap<Integer, List<Integer>>();
+	private int numberOfDocIds = 0;
 	
 	private IdSet(DocSet docSet, SolrIndexSearcher searcher, final String idFieldName) {
 		System.out.println("nieuw IdSet: " + idFieldName);
@@ -55,7 +58,13 @@ public class IdSet {
 			int docId = (int) iterator.nextDoc();
 			int id = idForDocId(docId, searcher);
 			ids.add(id);
-			id2docId.put(id, docId);
+			List<Integer> l = id2docIds.get(id);
+			if (l == null) {
+				l = new ArrayList<Integer>();
+				id2docIds.put(id, l);
+			}
+			l.add(docId);
+			numberOfDocIds++;
 		}	
 	}
 	
@@ -66,8 +75,8 @@ public class IdSet {
 		return new IdSet(docSet, searcher, idFieldName);
 	}
 	
-	public int getDocId(int id) {
-		return id2docId.get(id);
+	public List<Integer> getDocIds(int id) {
+		return id2docIds.get(id);
 	}
 
 	public Set<Integer> ids() {
@@ -79,14 +88,15 @@ public class IdSet {
 	}
 
 	public DocSet makeDocSet(IdSet mapping) {
-		int length = ids.size();
-    	int[] docIds = new int[length];
+    	int[] docIds = new int[mapping.numberOfDocIds];
     	int docs = 0;
-    	Iterator<Integer> iter = ids.iterator();
-    	while (iter.hasNext()) {
-    		docIds[docs++] = mapping.getDocId(iter.next());
+    	Iterator<Integer> idsIter = ids.iterator();
+    	while (idsIter.hasNext()) {
+    		for (Iterator<Integer> docIdsIter = mapping.getDocIds(idsIter.next()).iterator(); docIdsIter.hasNext();) {
+    			docIds[docs++] = docIdsIter.next();
+			}
     	}
-		return new HashDocSet(docIds, 0, length);
+		return new HashDocSet(docIds, 0, docs);
 	}
 
 	public DocSet makeDocSet() {
