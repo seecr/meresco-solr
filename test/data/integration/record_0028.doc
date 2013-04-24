@@ -10,7 +10,7 @@
   <field name="__all__">Reinwald, Ignaz</field>
   <field name="__all__">47 p</field>
   <field name="__all__">in-8</field>
-  <field name="__all__">Eerst verschenen in: Die Pfälzische Landesbibliothek 1921-1971. - 1971</field>
+  <field name="__all__">Eerst verschenen in: Die Pf&#228;lzische Landesbibliothek 1921-1971. - 1971</field>
   <field name="__all__">http://localhost:43343/oai</field>
   <field name="__all__">803431570</field>
   <field name="dc:creator">Reinwald, Ignaz</field>
@@ -26,4 +26,4 @@
   <field name="dc:format">47 p</field>
   <field name="sorted.dc:creator">reinwald</field>
   <field name="sorted.dc:date">1972</field>
-</doc>
+<field name="joinhash.__id__">-4616637296767960906</field></doc>

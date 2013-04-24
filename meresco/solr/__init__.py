@@ -23,10 +23,6 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 # 
 ## end license ##
-from solrinterface import SolrInterface
+from solrinterface import SolrInterface, JOINHASH_PREFIX, UNTOKENIZED_PREFIX, SORTED_PREFIX
 from fields2solrdoc import Fields2SolrDoc
 from cql2solrlucenequery import Cql2SolrLuceneQuery
-
-UNTOKENIZED_PREFIX = 'untokenized.'
-FOREIGNID_PREFIX = 'foreignid.'
-SORTED_PREFIX = 'sorted.'

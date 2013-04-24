@@ -26,25 +26,15 @@
 #
 ## end license ##
 
-from os.path import isdir, join, abspath, dirname, basename, isfile
-from os import makedirs
-from sys import path as systemPath
-from time import sleep, time 
+from os.path import join, abspath, dirname, basename
+from time import sleep, time
 from traceback import print_exc
-from uuid import uuid4
-from simplejson import dump
 from glob import glob
-from xml.sax.saxutils import escape as xmlEscape
-from escaping import unescapeFilename
-from lxml.etree import parse
-from meresco.components import lxmltostring
-from urllib import urlopen
-from shutil import copyfile
 from simplejson import dumps
 
 from seecr.test.integrationtestcase import IntegrationState as _IntegrationState
 from seecr.test.portnumbergenerator import PortNumberGenerator
-from seecr.test.utils import postRequest, sleepWheel
+from seecr.test.utils import postRequest
 
 mydir = dirname(abspath(__file__))
 projectDir = dirname(dirname(mydir))
@@ -62,7 +52,7 @@ class IntegrationState(_IntegrationState):
         self.solrCore = "records"
         self.config = {
                 self.solrCore: {
-                    'autocomplete': True, 
+                    'autocomplete': True,
                     'suggestions': {'field': '__all__'},
                     'autoCommit': {'autoCommitMaxTime': 500}
                 },
@@ -80,7 +70,7 @@ class IntegrationState(_IntegrationState):
         self._startMerescoSolrInterfaceServer()
         self._startSolrServer()
         self._createDatabase()
-   
+
     def _startSolrServer(self):
         self._startServer('solr', self.binPath('start-solr'), 'http://localhost:%s/solr/%s/admin/ping' % (self.solrPort, self.solrCore), port=self.solrPort, stateDir=self.solrStatePath, config=self.configPath)
 
@@ -112,5 +102,5 @@ class IntegrationState(_IntegrationState):
             )
             header, body = postRequest(port=self.solrClientPort, path='/add', data=dumps(addKwargs), parse=False)
             assert '' == body, 'Something bad happened:\n' + body
-               
+
 

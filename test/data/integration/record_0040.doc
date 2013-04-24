@@ -2,21 +2,21 @@
   <field name="__id__">record:0040</field>
   <field name="prov.source">http://localhost:43343/oai</field>
   <field name="untokenized.dc:language">urn:iso:std:iso:639:-2:ger</field>
-  <field name="sorted.dc:title">erschrö</field>
+  <field name="sorted.dc:title">erschr&#246;</field>
   <field name="untokenized.dc:date">1971</field>
   <field name="__all__">TEXT</field>
-  <field name="__all__">Erschröckliche und warhafftige Wunderzeichen, 1543-1586</field>
+  <field name="__all__">Erschr&#246;ckliche und warhafftige Wunderzeichen, 1543-1586</field>
   <field name="__all__">1971</field>
   <field name="__all__">Weber, Bruno</field>
   <field name="__all__">2 dl</field>
   <field name="__all__">in-8 en fol</field>
-  <field name="__all__">Facsimiledruck von Einblattdrucken aus der Sammlung Wikiana in der Zentralbibliothek Zürich</field>
+  <field name="__all__">Facsimiledruck von Einblattdrucken aus der Sammlung Wikiana in der Zentralbibliothek Z&#252;rich</field>
   <field name="__all__">Titel van de Kommentarband: Wunderzeichen und Winkeldrucker 1543-1586</field>
   <field name="__all__">http://localhost:43343/oai</field>
   <field name="__all__">810032996</field>
   <field name="dc:creator">Weber, Bruno</field>
   <field name="untokenized.prov.source">http://localhost:43343/oai</field>
-  <field name="dc:title">Erschröckliche und warhafftige Wunderzeichen, 1543-1586</field>
+  <field name="dc:title">Erschr&#246;ckliche und warhafftige Wunderzeichen, 1543-1586</field>
   <field name="ppn">810032996</field>
   <field name="untokenized.dc:creator">Weber, Bruno</field>
   <field name="untokenized.rdf:type">http://dbpedia.org/ontology/Book</field>
@@ -26,4 +26,4 @@
   <field name="dc:format">2 dl</field>
   <field name="sorted.dc:creator">weber</field>
   <field name="sorted.dc:date">1971</field>
-</doc>
+<field name="joinhash.__id__">-4616637296773961016</field></doc>

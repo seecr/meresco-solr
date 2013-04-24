@@ -5,17 +5,17 @@
   <field name="sorted.dc:title">watteau</field>
   <field name="untokenized.dc:date">1975</field>
   <field name="__all__">TEXT</field>
-  <field name="__all__">De Watteau à David</field>
+  <field name="__all__">De Watteau &#224; David</field>
   <field name="__all__">1975</field>
   <field name="__all__">209 p</field>
   <field name="__all__">22 cm</field>
-  <field name="__all__">peintures et dessins des musées de province français</field>
+  <field name="__all__">peintures et dessins des mus&#233;es de province fran&#231;ais</field>
   <field name="__all__">Catalog of exposition held Sept. 27-Nov. 30, 1975</field>
   <field name="__all__">At head of title: Europalia 75 France</field>
   <field name="__all__">http://localhost:43343/oai</field>
   <field name="__all__">782843964</field>
   <field name="untokenized.prov.source">http://localhost:43343/oai</field>
-  <field name="dc:title">De Watteau à David</field>
+  <field name="dc:title">De Watteau &#224; David</field>
   <field name="ppn">782843964</field>
   <field name="dc:format">22 cm</field>
   <field name="dc:format">209 p</field>
@@ -23,4 +23,4 @@
   <field name="dc:date">1975</field>
   <field name="untokenized.lh:holder">urn:iln:2</field>
   <field name="sorted.dc:date">1975</field>
-</doc>
+<field name="joinhash.__id__">-4616637296770961023</field></doc>

@@ -5,18 +5,18 @@
   <field name="sorted.dc:title">l'impri</field>
   <field name="untokenized.dc:date">1868</field>
   <field name="__all__">TEXT</field>
-  <field name="__all__">L'imprimerie à Toulouse au XVe, XVIe et XVIIe siècles</field>
+  <field name="__all__">L'imprimerie &#224; Toulouse au XVe, XVIe et XVIIe si&#232;cles</field>
   <field name="__all__">1868</field>
   <field name="__all__">Desbarreaux-Bernard, Tibulle</field>
   <field name="__all__">148, 17 p</field>
   <field name="__all__">in-8</field>
-  <field name="__all__">Alleen aanwezig dl. 1: Catalogue raisonné des livres imprimés au XVe siècle</field>
+  <field name="__all__">Alleen aanwezig dl. 1: Catalogue raisonn&#233; des livres imprim&#233;s au XVe si&#232;cle</field>
   <field name="__all__">1e uitg.: 1865</field>
   <field name="__all__">http://localhost:43343/oai</field>
   <field name="__all__">810017768</field>
   <field name="dc:creator">Desbarreaux-Bernard, Tibulle</field>
   <field name="untokenized.prov.source">http://localhost:43343/oai</field>
-  <field name="dc:title">L'imprimerie à Toulouse au XVe, XVIe et XVIIe siècles</field>
+  <field name="dc:title">L'imprimerie &#224; Toulouse au XVe, XVIe et XVIIe si&#232;cles</field>
   <field name="ppn">810017768</field>
   <field name="untokenized.dc:creator">Desbarreaux-Bernard, Tibulle</field>
   <field name="untokenized.rdf:type">http://dbpedia.org/ontology/Book</field>
@@ -26,4 +26,4 @@
   <field name="dc:format">148, 17 p</field>
   <field name="sorted.dc:creator">desbarreaux-bernard</field>
   <field name="sorted.dc:date">1868</field>
-</doc>
+<field name="joinhash.__id__">-4616637296768960904</field></doc>

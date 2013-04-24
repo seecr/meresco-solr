@@ -5,7 +5,7 @@
   <field name="sorted.dc:title">die leh</field>
   <field name="untokenized.dc:date">1815</field>
   <field name="__all__">TEXT</field>
-  <field name="__all__">Die Lehre von der Verjährung durch fortgesetzten Besitz</field>
+  <field name="__all__">Die Lehre von der Verj&#228;hrung durch fortgesetzten Besitz</field>
   <field name="__all__">1815</field>
   <field name="__all__">Unterholzner, Karl August Dominikus</field>
   <field name="__all__">472 p</field>
@@ -14,7 +14,7 @@
   <field name="__all__">810361515</field>
   <field name="dc:creator">Unterholzner, Karl August Dominikus</field>
   <field name="untokenized.prov.source">http://localhost:43343/oai</field>
-  <field name="dc:title">Die Lehre von der Verjährung durch fortgesetzten Besitz</field>
+  <field name="dc:title">Die Lehre von der Verj&#228;hrung durch fortgesetzten Besitz</field>
   <field name="ppn">810361515</field>
   <field name="untokenized.dc:creator">Unterholzner, Karl August Dominikus</field>
   <field name="untokenized.rdf:type">http://dbpedia.org/ontology/Book</field>
@@ -26,4 +26,4 @@
   <field name="dc:format">472 p</field>
   <field name="sorted.dc:creator">unterholzner</field>
   <field name="sorted.dc:date">1815</field>
-</doc>
+<field name="joinhash.__id__">-4616637296768960899</field></doc>

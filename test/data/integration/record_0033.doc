@@ -5,7 +5,7 @@
   <field name="sorted.dc:title">verzeic</field>
   <field name="untokenized.dc:date">1790</field>
   <field name="__all__">TEXT</field>
-  <field name="__all__">Verzeichnisz alter Druckdenkmale der Bibliothek des uralten Benediktinerstifts zum H. Mang in Füeszen</field>
+  <field name="__all__">Verzeichnisz alter Druckdenkmale der Bibliothek des uralten Benediktinerstifts zum H. Mang in F&#252;eszen</field>
   <field name="__all__">1790</field>
   <field name="__all__">Helmschrott, Joseph Maria</field>
   <field name="__all__">in-4</field>
@@ -14,7 +14,7 @@
   <field name="__all__">803431384</field>
   <field name="dc:creator">Helmschrott, Joseph Maria</field>
   <field name="untokenized.prov.source">http://localhost:43343/oai</field>
-  <field name="dc:title">Verzeichnisz alter Druckdenkmale der Bibliothek des uralten Benediktinerstifts zum H. Mang in Füeszen</field>
+  <field name="dc:title">Verzeichnisz alter Druckdenkmale der Bibliothek des uralten Benediktinerstifts zum H. Mang in F&#252;eszen</field>
   <field name="ppn">803431384</field>
   <field name="untokenized.dc:creator">Helmschrott, Joseph Maria</field>
   <field name="untokenized.rdf:type">http://dbpedia.org/ontology/Book</field>
@@ -23,4 +23,4 @@
   <field name="dc:format">in-4</field>
   <field name="sorted.dc:creator">helmschrott</field>
   <field name="sorted.dc:date">1790</field>
-</doc>
+<field name="joinhash.__id__">-4616637296768960902</field></doc>

@@ -166,7 +166,7 @@ class SolrInterfaceTest(IntegrationTestCase):
     def testFieldnames(self):
         response = self.solrRequest(path='/fieldnames')
         fields = response['hits']
-        self.assertEquals(28, len(fields))
+        self.assertEquals(29, len(fields))
         self.assertTrue('__all__' in fields, fields)
 
     def testSuggestions(self):

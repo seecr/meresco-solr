@@ -2,12 +2,12 @@
   <field name="__id__">record:0063</field>
   <field name="dc:source">seecr</field>
   <field name="untokenized.dc:language">urn:iso:std:iso:639:-2:dut</field>
-  <field name="sorted.dc:title">sacrém</field>
-  <field name="__all__">Sacrément</field>
+  <field name="sorted.dc:title">sacre&#769;m</field>
+  <field name="__all__">Sacre&#769;ment</field>
   <field name="__all__">seecr</field>
   <field name="__all__">seecr</field>
   <field name="prov.source">seecr</field>
   <field name="untokenized.prov.source">seecr</field>
-  <field name="dc:title">Sacrément</field>
+  <field name="dc:title">Sacre&#769;ment</field>
   <field name="untokenized.rdf:type">http://dbpedia.org/resource/Manuscript</field>
-</doc>
+<field name="joinhash.__id__">-4616637296771961023</field></doc>

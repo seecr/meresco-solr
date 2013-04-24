@@ -10,7 +10,7 @@
   <field name="__all__">239 p</field>
   <field name="__all__">21 cm</field>
   <field name="__all__">Studien zur Kunst der Donauschule. (Schriftleitung: Kurt Holter und Otto Wutzel)</field>
-  <field name="__all__">A symposium organized by the Oberösterreichische Musealverein</field>
+  <field name="__all__">A symposium organized by the Ober&#246;sterreichische Musealverein</field>
   <field name="__all__">http://localhost:43343/oai</field>
   <field name="__all__">783032536</field>
   <field name="untokenized.prov.source">http://localhost:43343/oai</field>
@@ -22,4 +22,4 @@
   <field name="dc:date">1967</field>
   <field name="untokenized.lh:holder">urn:iln:2</field>
   <field name="sorted.dc:date">1967</field>
-</doc>
+<field name="joinhash.__id__">-4616637296770961024</field></doc>

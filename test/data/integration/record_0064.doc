@@ -9,4 +9,4 @@
   <field name="prov.source">seecr</field>
   <field name="untokenized.prov.source">seecr</field>
   <field name="untokenized.rdf:type">http://dbpedia.org/ontology/Book</field>
-</doc>
+<field name="joinhash.__id__">-4616637296771961018</field></doc>

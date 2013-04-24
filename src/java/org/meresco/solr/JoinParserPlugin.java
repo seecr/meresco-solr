@@ -41,7 +41,7 @@ import org.apache.lucene.queryparser.classic.ParseException;
 
 public class JoinParserPlugin extends QParserPlugin {
     public static String NAME = "facetjoin";
-    public static String DEFAULT_JOIN_FIELD = "__id__";
+    public static String DEFAULT_JOIN_FIELD = "joinhash.__id__";
 
     @Override
     public void init(NamedList args) {

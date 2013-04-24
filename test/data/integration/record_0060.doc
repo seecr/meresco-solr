@@ -2,9 +2,9 @@
   <field name="__id__">record:0060</field>
   <field name="prov.source">http://data.bibliotheek.nl/winklerprins</field>
   <field name="untokenized.dc:language">urn:iso:std:iso:639:-2:dut</field>
-  <field name="sorted.dc:title">saka’s</field>
-  <field name="__all__">Saka’s</field>
-  <field name="__all__">Saka’s</field>
+  <field name="sorted.dc:title">saka&#8217;s</field>
+  <field name="__all__">Saka&#8217;s</field>
+  <field name="__all__">Saka&#8217;s</field>
   <field name="__all__">-189341</field>
   <field name="__all__">http://www.winklerprins.com/online/?id=-100003227</field>
   <field name="__all__">, samenvattende Indische naam voor </field>
@@ -13,7 +13,7 @@
   <field name="__all__">http://data.bibliotheek.nl/winklerprins</field>
   <field name="dc:identifier">-189341</field>
   <field name="untokenized.prov.source">http://data.bibliotheek.nl/winklerprins</field>
-  <field name="dc:title">Saka’s</field>
+  <field name="dc:title">Saka&#8217;s</field>
   <field name="untokenized.rdf:type">http://www.w3.org/2004/02/skos/core#Concept</field>
   <field name="dc:description">, samenvattende Indische naam voor </field>
-</doc>
+<field name="joinhash.__id__">-4616637296771961022</field></doc>

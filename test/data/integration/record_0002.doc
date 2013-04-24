@@ -5,7 +5,7 @@
   <field name="sorted.dc:title">graded</field>
   <field name="untokenized.dc:date">1971</field>
   <field name="__all__">TEXT</field>
-  <field name="__all__">Graded lessons in macramé, knotting and netting</field>
+  <field name="__all__">Graded lessons in macram&#233;, knotting and netting</field>
   <field name="__all__">1971</field>
   <field name="__all__">Walker, Louisa</field>
   <field name="__all__">xiv, 254 p</field>
@@ -15,7 +15,7 @@
   <field name="__all__">0486227545</field>
   <field name="dc:creator">Walker, Louisa</field>
   <field name="untokenized.prov.source">http://localhost:43343/oai</field>
-  <field name="dc:title">Graded lessons in macramé, knotting and netting</field>
+  <field name="dc:title">Graded lessons in macram&#233;, knotting and netting</field>
   <field name="ppn">781010179</field>
   <field name="untokenized.dc:creator">Walker, Louisa</field>
   <field name="untokenized.rdf:type">http://dbpedia.org/ontology/Book</field>
@@ -27,4 +27,4 @@
   <field name="dc:format">xiv, 254 p</field>
   <field name="sorted.dc:creator">walker</field>
   <field name="sorted.dc:date">1971</field>
-</doc>
+<field name="joinhash.__id__">-4616637296769961018</field></doc>

@@ -33,6 +33,10 @@ from simplejson import loads
 
 from solrresponse import SolrResponse
 
+UNTOKENIZED_PREFIX = 'untokenized.'
+JOINHASH_PREFIX = 'joinhash.'
+SORTED_PREFIX = 'sorted.'
+
 
 class SolrInterface(Observable):
     COUNT = 'count'

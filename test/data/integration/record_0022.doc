@@ -2,19 +2,19 @@
   <field name="__id__">record:0022</field>
   <field name="prov.source">http://localhost:43343/oai</field>
   <field name="untokenized.dc:language">urn:iso:std:iso:639:-2:fre</field>
-  <field name="sorted.dc:title">établis</field>
+  <field name="sorted.dc:title">&#233;tablis</field>
   <field name="untokenized.dc:date">1875</field>
   <field name="__all__">TEXT</field>
-  <field name="__all__">Établissement de l'imprimerie dans la province de Languedoc</field>
+  <field name="__all__">&#201;tablissement de l'imprimerie dans la province de Languedoc</field>
   <field name="__all__">1875</field>
   <field name="__all__">Desbarreaux-Bernard, Tibulle</field>
   <field name="__all__">in-8</field>
-  <field name="__all__">Eerst verschenen in: Histoire générale de Languedoc, dl. 7</field>
+  <field name="__all__">Eerst verschenen in: Histoire g&#233;n&#233;rale de Languedoc, dl. 7</field>
   <field name="__all__">http://localhost:43343/oai</field>
   <field name="__all__">803160569</field>
   <field name="dc:creator">Desbarreaux-Bernard, Tibulle</field>
   <field name="untokenized.prov.source">http://localhost:43343/oai</field>
-  <field name="dc:title">Établissement de l'imprimerie dans la province de Languedoc</field>
+  <field name="dc:title">&#201;tablissement de l'imprimerie dans la province de Languedoc</field>
   <field name="ppn">803160569</field>
   <field name="untokenized.dc:creator">Desbarreaux-Bernard, Tibulle</field>
   <field name="untokenized.rdf:type">http://dbpedia.org/ontology/Book</field>
@@ -23,4 +23,4 @@
   <field name="dc:format">in-8</field>
   <field name="sorted.dc:creator">desbarreaux-bernard</field>
   <field name="sorted.dc:date">1875</field>
-</doc>
+<field name="joinhash.__id__">-4616637296767960900</field></doc>

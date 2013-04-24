@@ -28,6 +28,7 @@
 from meresco.core import Observable
 from xml.sax.saxutils import escape as escapeXml
 from itertools import chain
+from solrinterface import JOINHASH_PREFIX
 
 class Fields2SolrDoc(Observable):
     def __init__(self, transactionName, partname="solr", singularValueFields=None, isSingularValueField=None):
@@ -63,6 +64,7 @@ class Fields2SolrDoc(Observable):
         recordIdentifier = tx.locals["id"]
         specialFields = [
             ('__id__', recordIdentifier), 
+            (JOINHASH_PREFIX + '__id__', str(hash(recordIdentifier))), 
         ] 
         def fieldStatement(key, value):
             return '<field name="%s">%s</field>' % (escapeXml(key), escapeXml(value))

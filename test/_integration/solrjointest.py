@@ -94,26 +94,26 @@ class SolrJoinTest(IntegrationTestCase):
         self.assertEquals(0, len(xpath(body, '//lst[@name="field:value:other"]/str')))
 
     def testFacetsWithJoinOnFromToFields(self):
-        self.postToCore('core2', [('__id__', 'ignoredid:0001'), ('foreignid.ref', 'record:0001'), ('field0', 'value'), ('field1', 'value2')])
-        self.postToCore('core2', [('__id__', 'ignoredid:0002'), ('foreignid.ref', 'record:0001'), ('field1', 'value2')])
-        self.postToCore('core2', [('__id__', 'ignoredid:0003'), ('foreignid.ref', 'record:0001'), ('field1', 'value4')])
+        self.postToCore('core2', [('__id__', 'ignoredid:0001'), ('joinhash.ref', str(hash('record:0001'))), ('field0', 'value'), ('field1', 'value2')])
+        self.postToCore('core2', [('__id__', 'ignoredid:0002'), ('joinhash.ref', str(hash('record:0001'))), ('field1', 'value2')])
+        self.postToCore('core2', [('__id__', 'ignoredid:0003'), ('joinhash.ref', str(hash('record:0001'))), ('field1', 'value4')])
 
-        self.postToCore('core2', [('__id__', 'ignoredid:0004'), ('foreignid.ref', 'record:0002'), ('field1', 'value3')])
-        self.postToCore('core3', [('__id__', 'ignoredid:0005'), ('foreignid.otherref', 'record:0001'), ('field2', 'value3')])
+        self.postToCore('core2', [('__id__', 'ignoredid:0004'), ('joinhash.ref', str(hash('record:0002'))), ('field1', 'value3')])
+        self.postToCore('core3', [('__id__', 'ignoredid:0005'), ('joinhash.otherref', str(hash('record:0001'))), ('otherref', 'record:0001'), ('field2', 'value3')])
         sleepWheel(2)
         header, body = getRequest(port=self.solrPort, path='/solr/records/select', arguments={
                 'q': '*:*',
                 'fq': [
-                    '{!join fromIndex=core2 from=foreignid.ref to=__id__}*:*',
-                    '{!join fromIndex=core3 from=foreignid.otherref to=__id__}foreignid.otherref:record\:0001'
+                    '{!join fromIndex=core2 from=joinhash.ref to=joinhash.__id__}*:*',
+                    '{!join fromIndex=core3 from=joinhash.otherref to=joinhash.__id__}otherref:record\:0001'
                 ],
                 'facet': 'on',
                 'facet.field': '__id__',
                 'facet.mincount': 1,
                 'joinFacet.field': [
-                    '{!facetjoin core=core2 from=foreignid.ref to=__id__}field0',
-                    '{!facetjoin core=core2 from=foreignid.ref to=__id__}field1',
-                    '{!facetjoin core=core3 from=foreignid.otherref to=__id__}field2'
+                    '{!facetjoin core=core2 from=joinhash.ref to=joinhash.__id__}field0',
+                    '{!facetjoin core=core2 from=joinhash.ref to=joinhash.__id__}field1',
+                    '{!facetjoin core=core3 from=joinhash.otherref to=joinhash.__id__}field2'
                 ]
             }, parse=True)
 
@@ -134,6 +134,8 @@ class SolrJoinTest(IntegrationTestCase):
 
     def postToCore(self, core, fields):
         self._adds.append((core, fields))
+        __id__ = [v for f, v in fields if f == '__id__'][0]
+        fields.append(('joinhash.__id__', str(hash(__id__))))
         postRequest(port=self.solrPort,
             path='/solr/%s/update' % core,
             data="""<add xmlns="" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><doc>%s</doc></add>""" % ''.join('<field name="%s">%s</field>' % (f, v) for f, v in fields),
