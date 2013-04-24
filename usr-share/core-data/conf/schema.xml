@@ -18,6 +18,7 @@
 <schema name="meresco-corename" version="1.5">
   <types>
     <fieldType name="string" class="solr.StrField" sortMissingLast="true" omitNorms="true" indexed="true" stored="false" multiValued="false"/>
+    <fieldType name="joinhash" class="solr.TrieLongField" omitNorms="true" indexed="true" stored="true" multiValued="false"/>
 
     <fieldType name="text_ws" class="solr.TextField" positionIncrementGap="100" omitNorms="false" multiValued="true" indexed="true" stored="false">
       <analyzer>
@@ -44,7 +45,7 @@
    <dynamicField name="range.double.*" type="trie_double"/>
    <dynamicField name="sorted.*" type="sorted_string" />
    <dynamicField name="untokenized.*" type="untokenized_string" />
-   <dynamicField name="foreignid.*" type="untokenized_string" stored="true" />
+   <dynamicField name="joinhash.*" type="joinhash" />
    <dynamicField name="meta.*" type="untokenized_string" />
    <dynamicField name="*" type="text_ws" />
  </fields>

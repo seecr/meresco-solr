@@ -34,20 +34,20 @@ from seecr.test.utils import getRequest
 
 
 class JoinPerformanceTest(IntegrationTestCase): 
-    def testJoin(self):
-        #header, body = getRequest(port=self.solrPort, path='/solr/core1/join', arguments={'q': '*:* AND field1:value'}, parse=False)
+    def xxxtestJoin(self):
+        #header, body = getRequest(port=self.solrPort, path='/solr/core1/select', arguments={'q': '*:* AND field1:value'}, parse=False)
         #body = XML(body)
         #t = qtime(body)
         t = 42
         print 'baseline (intersection within 1 core):', t
 
-        header, body = getRequest(port=self.solrPort, path='/solr/core1/join', arguments={'q': '*:*', 'fq': ['{!join fromIndex=core2 from=__id__ to=__id__}*:*']}, parse=False)
+        header, body = getRequest(port=self.solrPort, path='/solr/core1/select', arguments={'q': '*:*', 'fq': ['{!join fromIndex=core2 from=__id__ to=__id__}*:*']}, parse=False)
         body = XML(body)
         t = qtime(body)
         #t = 63
         print '1 intersect over 2 cores:', t
 
-        header, body = getRequest(port=self.solrPort, path='/solr/core1/join', arguments={'q': '*:*', 'fq': ['{!join fromIndex=core2 from=__id__ to=__id__}*:*', '{!join fromIndex=core3 from=__id__ to=__id__}*:*']}, parse=False)
+        header, body = getRequest(port=self.solrPort, path='/solr/core1/select', arguments={'q': '*:*', 'fq': ['{!join fromIndex=core2 from=__id__ to=__id__}*:*', '{!join fromIndex=core3 from=__id__ to=__id__}*:*']}, parse=False)
         self.assertTrue('200 OK' in header, header + body)
         body = XML(body)
         t = qtime(body)
@@ -55,6 +55,20 @@ class JoinPerformanceTest(IntegrationTestCase):
         #self.assertTiming(200, t, 500)
         # self.assertEquals('477', xpathFirst(body, '//result/@numFound'))
 
+    def testFacetJoin(self):
+        def queryWithFacet(n):
+            totalT = 0
+            for i in xrange(0, n):
+                header, body = getRequest(port=self.solrPort, path='/solr/core1/select', arguments={'q': '*:*', 'facet': 'on', 'joinFacet.field': '{!facetjoin core=core2 from=joinhash.__id__ to=joinhash.__id__}field2'}, parse=False)
+                self.assertTrue('200 OK' in header, header + body)
+                #print body
+                body = XML(body)
+                totalT += int(qtime(body))
+            print 'facet join over 2 cores (%sx):' % n, (totalT / n)
+        queryWithFacet(1)
+        queryWithFacet(3)
+        queryWithFacet(25)
+        queryWithFacet(100)
 
 def qtime(body):
     return int(xpathFirst(body, '//int[@name="QTime"]/text()'))

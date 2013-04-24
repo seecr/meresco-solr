@@ -71,8 +71,6 @@ public class JoinParserPlugin extends QParserPlugin {
                     }
                 }
                 Query query = new JoinQuery(otherCoreName, fromField, toField, localQueryString);
-                System.out.println("query: " + query);
-                System.out.flush();
                 return query;
             }
         };
