@@ -37,6 +37,7 @@ import java.util.Set;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexableField;
+import org.apache.lucene.search.FieldCache;
 import org.apache.solr.common.SolrException;
 import org.apache.solr.search.DocIterator;
 import org.apache.solr.search.DocSet;
@@ -105,18 +106,15 @@ public class IdSet {
 
 	private long idForDocId(int docId, SolrIndexSearcher searcher) {
 		try {
-			Document doc = searcher.doc(docId, idFieldSet);
-			IndexableField value = doc.getField(idFieldName);
-			if (value == null) {
-				throw new SolrException(SolrException.ErrorCode.BAD_REQUEST, "'from' field " + idFieldName + " is unknown or not stored.");
-			}
-			Number number = value.numericValue();
-			if (number == null) {
+			long value = FieldCache.DEFAULT.getLongs(searcher.getAtomicReader(), idFieldName, true)[docId];
+			if (value == 0) {
 				throw new SolrException(SolrException.ErrorCode.BAD_REQUEST, "'from' field " + idFieldName + " is not a numeric field.");
 			}
-			return number.longValue();
+			return value;
 		} catch (IOException e) {
 			throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, e);
+		} catch (NumberFormatException e) {
+			throw new SolrException(SolrException.ErrorCode.BAD_REQUEST, "'from' field " + idFieldName + " is unknown or not a long field.");
 		}
 	}
 }
