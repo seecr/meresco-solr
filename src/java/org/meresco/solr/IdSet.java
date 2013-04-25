@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -55,7 +56,7 @@ public class IdSet {
 	public long makeDocSetTime = 0;
 	public long docSetNextTime = 0;
 	
-	private IdSet(DocSet docSet, SolrIndexSearcher searcher, final String idFieldName) {
+	public IdSet(DocSet docSet, SolrIndexSearcher searcher, final String idFieldName) {
 		try {
 			//long t0 = System.currentTimeMillis();
 			idFieldValues = FieldCache.DEFAULT.getLongs(searcher.getAtomicReader(), idFieldName, true);
@@ -66,34 +67,52 @@ public class IdSet {
 			throw new SolrException(SolrException.ErrorCode.BAD_REQUEST, "'from' field " + idFieldName + " is unknown or not a long field.");
 		}		
 		
-		for (DocIterator iterator = docSet.iterator(); iterator.hasNext();) {
-			//long t0 = System.currentTimeMillis();
-			int docId = (int) iterator.nextDoc();
-			long value = idFieldValues[docId];
-			if (value == 0) {
-				throw new SolrException(SolrException.ErrorCode.BAD_REQUEST, "'from' field " + idFieldName + " is not a numeric field.");
+		if (docSet != null) {
+			for (DocIterator iterator = docSet.iterator(); iterator.hasNext();) {
+				//long t0 = System.currentTimeMillis();
+				int docId = (int) iterator.nextDoc();
+				long value = idFieldValues[docId];
+				if (value == 0) {
+					throw new SolrException(SolrException.ErrorCode.BAD_REQUEST, "'from' field " + idFieldName + " is not a numeric field.");
+				}
+				//docSetNextTime += System.currentTimeMillis() - t0;
+				addDocIdForValue(docId, value);
 			}
-			//docSetNextTime += System.currentTimeMillis() - t0;			
-			
-			//t0 = System.currentTimeMillis();
-			List<Integer> l = id2docIds.get(value);
-			if (l == null) {
-				l = new ArrayList<Integer>();
-				id2docIds.put(value, l);
+		}
+		else {
+			for (int docId=0; docId < idFieldValues.length; docId++) {
+				long value = idFieldValues[docId];
+				if (value == 0) {
+					continue;
+				}
+				addDocIdForValue(docId, value);				
 			}
-			l.add(docId);
-			numberOfDocIds++;
-			//dataStructureTime += System.currentTimeMillis() - t0;
 		}
 		//long t0 = System.currentTimeMillis();		
 		ids = id2docIds.keySet();
 		//dataStructureTime += System.currentTimeMillis() - t0;		
 	}
-	
-	public static IdSet idSetFromDocSet(DocSet docSet, SolrIndexSearcher searcher, String idFieldName) {
-		return new IdSet(docSet, searcher, idFieldName);
+
+	private void addDocIdForValue(int docId, long value) {
+		//t0 = System.currentTimeMillis();
+		List<Integer> l = id2docIds.get(value);
+		if (l == null) {
+			l = new ArrayList<Integer>();
+			id2docIds.put(value, l);
+		}
+		l.add(docId);
+		numberOfDocIds++;
+		//dataStructureTime += System.currentTimeMillis() - t0;
 	}
 	
+	public IdSet(SolrIndexSearcher searcher, final String idFieldName) {
+		this(null, searcher, idFieldName);
+	}
+	
+	private IdSet() {
+		idFieldValues = new long[0];
+	}
+
 	public List<Integer> getDocIds(long id) {
 		return id2docIds.get(id);
 	}
@@ -125,5 +144,17 @@ public class IdSet {
 
 	public DocSet makeDocSet() {
 		return makeDocSet(this);
+	}
+
+	public IdSet intersectDocSet(DocSet givenDocSet) {
+		IdSet newIdSet = new IdSet();
+		for (long id: ids) {
+			for (int docId: id2docIds.get(id)) {
+				if (givenDocSet.exists(docId)) {
+					newIdSet.addDocIdForValue(docId, id);
+				}
+			}
+		}
+		return newIdSet;
 	}
 }

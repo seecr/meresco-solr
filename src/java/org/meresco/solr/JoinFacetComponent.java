@@ -49,6 +49,7 @@ import org.apache.solr.util.RefCounted;
 
 public class JoinFacetComponent extends SearchComponent {
 	public int count = 0;
+	private IdSet thisCoreIdSet = null;
 	private Map<String, Long> lastSearcherOpenTimes = new HashMap<String, Long>();
 	private Map<String, IdSet> otherIdSets = new HashMap<String, IdSet>();
 	
@@ -126,7 +127,12 @@ public class JoinFacetComponent extends SearchComponent {
 
 	private DocSet docSetForJoin(ResponseBuilder rb, JoinQuery parsedJoinFacetField, SolrIndexSearcher coreSearcher) throws IOException {
 		DocSet givenDocSet = rb.getResults().docSet;
-        IdSet givenIdSet = IdSet.idSetFromDocSet(givenDocSet, rb.req.getSearcher(), parsedJoinFacetField.toField);
+
+// Experiment to be continued
+//		IdSet thisCoreIdSet = determineAllDocsIdSet(rb.req.getSearcher(), parsedJoinFacetField);
+//		IdSet givenIdSet = thisCoreIdSet.intersectDocSet(givenDocSet);
+		
+        IdSet givenIdSet = new IdSet(givenDocSet, rb.req.getSearcher(), parsedJoinFacetField.toField);
         System.out.println("given fetchValuesTime " + givenIdSet.fetchValuesTime);
         System.out.println("given docSetNext time " + givenIdSet.docSetNextTime);
         System.out.println("given datastructureTime " + givenIdSet.dataStructureTime);
@@ -140,6 +146,15 @@ public class JoinFacetComponent extends SearchComponent {
         return docSet;
 	}
 
+	private IdSet determineAllDocsIdSet(SolrIndexSearcher searcher, JoinQuery parsedJoinFacetField) {
+		// TODO: check same searcher (openTime)
+		if (thisCoreIdSet != null) {
+			return thisCoreIdSet;
+		}
+        thisCoreIdSet = new IdSet(searcher, parsedJoinFacetField.toField);
+        return thisCoreIdSet;
+	}
+	
 	private IdSet makeOtherDocSet(JoinQuery parsedJoinFacetField,
 			SolrIndexSearcher coreSearcher) throws IOException {
 		String coreName = parsedJoinFacetField.coreName;
@@ -148,8 +163,7 @@ public class JoinFacetComponent extends SearchComponent {
 		if (previousOpenTime != null && previousOpenTime == searcherOpenTime) {
 			return otherIdSets.get(coreName);
 		}
-		DocSet otherDocSet = coreSearcher.getDocSet(new MatchAllDocsQuery());
-        IdSet otherIdSet = IdSet.idSetFromDocSet(otherDocSet, coreSearcher, parsedJoinFacetField.fromField);
+        IdSet otherIdSet = new IdSet(coreSearcher, parsedJoinFacetField.fromField);
         otherIdSets.put(coreName, otherIdSet);
         lastSearcherOpenTimes.put(coreName, searcherOpenTime);
         System.out.println("other fetchValuesTime " + otherIdSet.fetchValuesTime);
