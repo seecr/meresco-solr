@@ -48,12 +48,17 @@ import org.apache.solr.util.RefCounted;
 
 
 public class JoinFacetComponent extends SearchComponent {
+	public int count = 0;
+	private Map<String, Long> lastSearcherOpenTimes = new HashMap<String, Long>();
+	private Map<String, IdSet> otherIdSets = new HashMap<String, IdSet>();
+	
 	@Override
 	public void prepare(ResponseBuilder rb) throws IOException {
 	}
 
 	@Override
 	public void process(ResponseBuilder rb) throws IOException {
+		System.out.println("JoinFacetComponent.process[" + (count++) + "]");
 	    if (rb.doFacets) {
 	        SolrParams params = rb.req.getParams();
 	        
@@ -121,13 +126,36 @@ public class JoinFacetComponent extends SearchComponent {
 
 	private DocSet docSetForJoin(ResponseBuilder rb, JoinQuery parsedJoinFacetField, SolrIndexSearcher coreSearcher) throws IOException {
 		DocSet givenDocSet = rb.getResults().docSet;
-        IdSet givenDocSetIds = IdSet.idSetFromDocSet(givenDocSet, rb.req.getSearcher(), parsedJoinFacetField.toField);
-		
+        IdSet givenIdSet = IdSet.idSetFromDocSet(givenDocSet, rb.req.getSearcher(), parsedJoinFacetField.toField);
+        System.out.println("given fetchValuesTime " + givenIdSet.fetchValuesTime);
+        System.out.println("given docSetNext time " + givenIdSet.docSetNextTime);
+        System.out.println("given datastructureTime " + givenIdSet.dataStructureTime);
+        
+		IdSet otherIdSet = makeOtherDocSet(parsedJoinFacetField, coreSearcher);
+        
+        givenIdSet.retainAll(otherIdSet);
+        System.out.println("intersect time " + givenIdSet.intersectionTime);
+        DocSet docSet = givenIdSet.makeDocSet(otherIdSet);
+        System.out.println("makeDocSet time " + givenIdSet.makeDocSetTime);
+        return docSet;
+	}
+
+	private IdSet makeOtherDocSet(JoinQuery parsedJoinFacetField,
+			SolrIndexSearcher coreSearcher) throws IOException {
+		String coreName = parsedJoinFacetField.coreName;
+		long searcherOpenTime = coreSearcher.getOpenTime();
+		Long previousOpenTime = lastSearcherOpenTimes.get(coreName);
+		if (previousOpenTime != null && previousOpenTime == searcherOpenTime) {
+			return otherIdSets.get(coreName);
+		}
 		DocSet otherDocSet = coreSearcher.getDocSet(new MatchAllDocsQuery());
         IdSet otherIdSet = IdSet.idSetFromDocSet(otherDocSet, coreSearcher, parsedJoinFacetField.fromField);
-
-        otherIdSet.retainAll(givenDocSetIds);
-        return otherIdSet.makeDocSet();
+        otherIdSets.put(coreName, otherIdSet);
+        lastSearcherOpenTimes.put(coreName, searcherOpenTime);
+        System.out.println("other fetchValuesTime " + otherIdSet.fetchValuesTime);
+        System.out.println("other docSetNext time " + otherIdSet.docSetNextTime);
+        System.out.println("other datastructureTime " + otherIdSet.dataStructureTime);
+		return otherIdSet;
 	}
 
 	private void updateCounts(NamedList<Object> counts, NamedList<Object> newCounts) {

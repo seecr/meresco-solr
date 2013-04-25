@@ -67,7 +67,7 @@ class PerformanceState(_IntegrationState):
         self._createDatabase()
 
     def _startSolrServer(self):
-        self._startServer('solr', self.binPath('start-solr'), 'http://localhost:%s/solr/%s/admin/ping' % (self.solrPort, self.solrCore), port=self.solrPort, stateDir=self.solrStatePath, config=self.configPath)
+        self._startServer('solr', self.binPath('start-solr'), 'http://localhost:%s/solr/%s/admin/ping' % (self.solrPort, self.solrCore), port=self.solrPort, stateDir=self.solrStatePath, config=self.configPath, javaMX='2048M')
 
     def _createDatabase(self):
         if self.fastMode:
@@ -85,19 +85,25 @@ class PerformanceState(_IntegrationState):
             exit(1)
 
     def _uploadSolrData(self):
-        BIGNUM = 100000
+        BIGNUM = 1000000
         print 'uploading data to core1'
         for i in xrange(BIGNUM):
+            if i % 1000 == 0:
+                print i
             id = 'id%s' % i
             self.postToCore('core1', [('__id__', id), ('joinhash.__id__', hash(id)), ('field1', 'value')])
 
         print 'uploading data to core2'
         for i in xrange(0, BIGNUM, 3):
+            if i % 1000 == 0:
+                print i
             id = 'id%s' % i
             self.postToCore('core2', [('__id__', id), ('joinhash.__id__', hash(id)), ('field2', 'value%s' % (i % 5))])
 
         print 'uploading data to core3'
         for i in xrange(0, BIGNUM, 7):
+            if i % 1000 == 0:
+                print i
             id = 'id%s' % i
             self.postToCore('core3', [('__id__', id), ('joinhash.__id__', hash(id)), ('field3', 'value')])
 

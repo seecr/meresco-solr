@@ -59,7 +59,7 @@ class JoinPerformanceTest(IntegrationTestCase):
         def queryWithFacet(n):
             totalT = 0
             for i in xrange(0, n):
-                header, body = getRequest(port=self.solrPort, path='/solr/core1/select', arguments={'q': '*:*', 'facet': 'on', 'joinFacet.field': '{!facetjoin core=core2 from=joinhash.__id__ to=joinhash.__id__}field2'}, parse=False)
+                header, body = getRequest(port=self.solrPort, path='/solr/core1/select', arguments={'q': '*:*', 'facet': 'on', 'joinFacet.field': '{!facetjoin core=core2 from=joinhash.__id__ to=joinhash.__id__}field2'}, timeOutInSeconds=30, parse=False)
                 self.assertTrue('200 OK' in header, header + body)
                 #print body
                 body = XML(body)

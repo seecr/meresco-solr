@@ -49,9 +49,17 @@ public class IdSet {
 	private Map<Long, List<Integer>> id2docIds = new HashMap<Long, List<Integer>>();
 	private int numberOfDocIds = 0;
 	
+	public long fetchValuesTime = 0;
+	public long dataStructureTime = 0;
+	public long intersectionTime = 0;
+	public long makeDocSetTime = 0;
+	public long docSetNextTime = 0;
+	
 	private IdSet(DocSet docSet, SolrIndexSearcher searcher, final String idFieldName) {
 		try {
+			//long t0 = System.currentTimeMillis();
 			idFieldValues = FieldCache.DEFAULT.getLongs(searcher.getAtomicReader(), idFieldName, true);
+			//fetchValuesTime += System.currentTimeMillis() - t0;
 		} catch (IOException e) {
 			throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, e);
 		} catch (NumberFormatException e) {
@@ -59,12 +67,15 @@ public class IdSet {
 		}		
 		
 		for (DocIterator iterator = docSet.iterator(); iterator.hasNext();) {
+			//long t0 = System.currentTimeMillis();
 			int docId = (int) iterator.nextDoc();
 			long value = idFieldValues[docId];
 			if (value == 0) {
 				throw new SolrException(SolrException.ErrorCode.BAD_REQUEST, "'from' field " + idFieldName + " is not a numeric field.");
 			}
-			ids.add(value);
+			//docSetNextTime += System.currentTimeMillis() - t0;			
+			
+			//t0 = System.currentTimeMillis();
 			List<Integer> l = id2docIds.get(value);
 			if (l == null) {
 				l = new ArrayList<Integer>();
@@ -72,13 +83,14 @@ public class IdSet {
 			}
 			l.add(docId);
 			numberOfDocIds++;
-		}	
+			//dataStructureTime += System.currentTimeMillis() - t0;
+		}
+		//long t0 = System.currentTimeMillis();		
+		ids = id2docIds.keySet();
+		//dataStructureTime += System.currentTimeMillis() - t0;		
 	}
 	
 	public static IdSet idSetFromDocSet(DocSet docSet, SolrIndexSearcher searcher, String idFieldName) {
-		if (docSet instanceof JoinDocSet) {
-			return ((JoinDocSet) docSet).getIdSet();
-		}
 		return new IdSet(docSet, searcher, idFieldName);
 	}
 	
@@ -91,10 +103,13 @@ public class IdSet {
 	}
 		
 	public void retainAll(IdSet idSet) {
+		//long t0 = System.currentTimeMillis();
 		ids.retainAll(idSet.ids());
+		//intersectionTime += System.currentTimeMillis() - t0;
 	}
 
 	public DocSet makeDocSet(IdSet mapping) {
+		//long t0 = System.currentTimeMillis();
     	int[] docIds = new int[mapping.numberOfDocIds];
     	int docs = 0;
     	Iterator<Long> idsIter = ids.iterator();
@@ -103,7 +118,9 @@ public class IdSet {
     			docIds[docs++] = docIdsIter.next();
 			}
     	}
-		return new HashDocSet(docIds, 0, docs);
+		HashDocSet docSet = new HashDocSet(docIds, 0, docs);
+		//makeDocSetTime += System.currentTimeMillis() - t0;
+		return docSet;
 	}
 
 	public DocSet makeDocSet() {
