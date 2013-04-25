@@ -35,8 +35,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.lucene.document.Document;
-import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.search.FieldCache;
 import org.apache.solr.common.SolrException;
 import org.apache.solr.search.DocIterator;
@@ -46,23 +44,31 @@ import org.apache.solr.search.SolrIndexSearcher;
 
 
 public class IdSet {
-	private String idFieldName;
-	private Set<String> idFieldSet;
+	private long[] idFieldValues;
 	private Set<Long> ids = new HashSet<Long>();
 	private Map<Long, List<Integer>> id2docIds = new HashMap<Long, List<Integer>>();
 	private int numberOfDocIds = 0;
 	
 	private IdSet(DocSet docSet, SolrIndexSearcher searcher, final String idFieldName) {
-		this.idFieldName = idFieldName;
-		this.idFieldSet = new HashSet<String>() {{ this.add(idFieldName); }};
+		try {
+			idFieldValues = FieldCache.DEFAULT.getLongs(searcher.getAtomicReader(), idFieldName, true);
+		} catch (IOException e) {
+			throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, e);
+		} catch (NumberFormatException e) {
+			throw new SolrException(SolrException.ErrorCode.BAD_REQUEST, "'from' field " + idFieldName + " is unknown or not a long field.");
+		}		
+		
 		for (DocIterator iterator = docSet.iterator(); iterator.hasNext();) {
 			int docId = (int) iterator.nextDoc();
-			long id = idForDocId(docId, searcher);
-			ids.add(id);
-			List<Integer> l = id2docIds.get(id);
+			long value = idFieldValues[docId];
+			if (value == 0) {
+				throw new SolrException(SolrException.ErrorCode.BAD_REQUEST, "'from' field " + idFieldName + " is not a numeric field.");
+			}
+			ids.add(value);
+			List<Integer> l = id2docIds.get(value);
 			if (l == null) {
 				l = new ArrayList<Integer>();
-				id2docIds.put(id, l);
+				id2docIds.put(value, l);
 			}
 			l.add(docId);
 			numberOfDocIds++;
@@ -102,19 +108,5 @@ public class IdSet {
 
 	public DocSet makeDocSet() {
 		return makeDocSet(this);
-	}
-
-	private long idForDocId(int docId, SolrIndexSearcher searcher) {
-		try {
-			long value = FieldCache.DEFAULT.getLongs(searcher.getAtomicReader(), idFieldName, true)[docId];
-			if (value == 0) {
-				throw new SolrException(SolrException.ErrorCode.BAD_REQUEST, "'from' field " + idFieldName + " is not a numeric field.");
-			}
-			return value;
-		} catch (IOException e) {
-			throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, e);
-		} catch (NumberFormatException e) {
-			throw new SolrException(SolrException.ErrorCode.BAD_REQUEST, "'from' field " + idFieldName + " is unknown or not a long field.");
-		}
 	}
 }
