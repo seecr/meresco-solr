@@ -85,7 +85,7 @@ class PerformanceState(_IntegrationState):
             exit(1)
 
     def _uploadSolrData(self):
-        BIGNUM = 1000000
+        BIGNUM = 100000
         print 'uploading data to core1'
         for i in xrange(BIGNUM):
             if i % 1000 == 0:
