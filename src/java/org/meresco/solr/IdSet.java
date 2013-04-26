@@ -58,9 +58,9 @@ public class IdSet {
 	
 	public IdSet(DocSet docSet, SolrIndexSearcher searcher, final String idFieldName) {
 		try {
-			//long t0 = System.currentTimeMillis();
+			long t0 = System.currentTimeMillis();
 			idFieldValues = FieldCache.DEFAULT.getLongs(searcher.getAtomicReader(), idFieldName, true);
-			//fetchValuesTime += System.currentTimeMillis() - t0;
+			fetchValuesTime += System.currentTimeMillis() - t0;
 		} catch (IOException e) {
 			throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, e);
 		} catch (NumberFormatException e) {
@@ -68,16 +68,16 @@ public class IdSet {
 		}		
 		
 		if (docSet != null) {
+			long t0 = System.currentTimeMillis();			
 			for (DocIterator iterator = docSet.iterator(); iterator.hasNext();) {
-				//long t0 = System.currentTimeMillis();
 				int docId = (int) iterator.nextDoc();
 				long value = idFieldValues[docId];
-				if (value == 0) {
-					throw new SolrException(SolrException.ErrorCode.BAD_REQUEST, "'from' field " + idFieldName + " is not a numeric field.");
-				}
-				//docSetNextTime += System.currentTimeMillis() - t0;
+				//if (value == 0) {
+				//	throw new SolrException(SolrException.ErrorCode.BAD_REQUEST, "'from' field " + idFieldName + " is not a numeric field.");
+				//}
 				addDocIdForValue(docId, value);
 			}
+			docSetNextTime += System.currentTimeMillis() - t0;			
 		}
 		else {
 			for (int docId=0; docId < idFieldValues.length; docId++) {
@@ -88,13 +88,12 @@ public class IdSet {
 				addDocIdForValue(docId, value);				
 			}
 		}
-		//long t0 = System.currentTimeMillis();		
+		long t0 = System.currentTimeMillis();		
 		ids = id2docIds.keySet();
-		//dataStructureTime += System.currentTimeMillis() - t0;		
+		dataStructureTime += System.currentTimeMillis() - t0;		
 	}
 
-	private void addDocIdForValue(int docId, long value) {
-		//t0 = System.currentTimeMillis();
+	final private void addDocIdForValue(int docId, long value) {
 		List<Integer> l = id2docIds.get(value);
 		if (l == null) {
 			l = new ArrayList<Integer>();
@@ -102,15 +101,10 @@ public class IdSet {
 		}
 		l.add(docId);
 		numberOfDocIds++;
-		//dataStructureTime += System.currentTimeMillis() - t0;
 	}
 	
 	public IdSet(SolrIndexSearcher searcher, final String idFieldName) {
 		this(null, searcher, idFieldName);
-	}
-	
-	private IdSet() {
-		idFieldValues = new long[0];
 	}
 
 	public List<Integer> getDocIds(long id) {
@@ -122,13 +116,13 @@ public class IdSet {
 	}
 		
 	public void retainAll(IdSet idSet) {
-		//long t0 = System.currentTimeMillis();
+		long t0 = System.currentTimeMillis();
 		ids.retainAll(idSet.ids());
-		//intersectionTime += System.currentTimeMillis() - t0;
+		intersectionTime += System.currentTimeMillis() - t0;
 	}
 
 	public DocSet makeDocSet(IdSet mapping) {
-		//long t0 = System.currentTimeMillis();
+		long t0 = System.currentTimeMillis();
     	int[] docIds = new int[mapping.numberOfDocIds];
     	int docs = 0;
     	Iterator<Long> idsIter = ids.iterator();
@@ -138,23 +132,11 @@ public class IdSet {
 			}
     	}
 		HashDocSet docSet = new HashDocSet(docIds, 0, docs);
-		//makeDocSetTime += System.currentTimeMillis() - t0;
+		makeDocSetTime += System.currentTimeMillis() - t0;
 		return docSet;
 	}
 
 	public DocSet makeDocSet() {
 		return makeDocSet(this);
-	}
-
-	public IdSet intersectDocSet(DocSet givenDocSet) {
-		IdSet newIdSet = new IdSet();
-		for (long id: ids) {
-			for (int docId: id2docIds.get(id)) {
-				if (givenDocSet.exists(docId)) {
-					newIdSet.addDocIdForValue(docId, id);
-				}
-			}
-		}
-		return newIdSet;
 	}
 }

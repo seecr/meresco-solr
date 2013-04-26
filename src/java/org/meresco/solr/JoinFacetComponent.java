@@ -49,7 +49,6 @@ import org.apache.solr.util.RefCounted;
 
 public class JoinFacetComponent extends SearchComponent {
 	public int count = 0;
-	private IdSet thisCoreIdSet = null;
 	private Map<String, Long> lastSearcherOpenTimes = new HashMap<String, Long>();
 	private Map<String, IdSet> otherIdSets = new HashMap<String, IdSet>();
 	
@@ -127,11 +126,6 @@ public class JoinFacetComponent extends SearchComponent {
 
 	private DocSet docSetForJoin(ResponseBuilder rb, JoinQuery parsedJoinFacetField, SolrIndexSearcher coreSearcher) throws IOException {
 		DocSet givenDocSet = rb.getResults().docSet;
-
-// Experiment to be continued
-//		IdSet thisCoreIdSet = determineAllDocsIdSet(rb.req.getSearcher(), parsedJoinFacetField);
-//		IdSet givenIdSet = thisCoreIdSet.intersectDocSet(givenDocSet);
-		
         IdSet givenIdSet = new IdSet(givenDocSet, rb.req.getSearcher(), parsedJoinFacetField.toField);
         System.out.println("given fetchValuesTime " + givenIdSet.fetchValuesTime);
         System.out.println("given docSetNext time " + givenIdSet.docSetNextTime);
@@ -144,15 +138,6 @@ public class JoinFacetComponent extends SearchComponent {
         DocSet docSet = givenIdSet.makeDocSet(otherIdSet);
         System.out.println("makeDocSet time " + givenIdSet.makeDocSetTime);
         return docSet;
-	}
-
-	private IdSet determineAllDocsIdSet(SolrIndexSearcher searcher, JoinQuery parsedJoinFacetField) {
-		// TODO: check same searcher (openTime)
-		if (thisCoreIdSet != null) {
-			return thisCoreIdSet;
-		}
-        thisCoreIdSet = new IdSet(searcher, parsedJoinFacetField.toField);
-        return thisCoreIdSet;
 	}
 	
 	private IdSet makeOtherDocSet(JoinQuery parsedJoinFacetField,
