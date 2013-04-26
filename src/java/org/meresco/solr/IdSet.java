@@ -72,9 +72,9 @@ public class IdSet {
 			for (DocIterator iterator = docSet.iterator(); iterator.hasNext();) {
 				int docId = (int) iterator.nextDoc();
 				long value = idFieldValues[docId];
-				//if (value == 0) {
-				//	throw new SolrException(SolrException.ErrorCode.BAD_REQUEST, "'from' field " + idFieldName + " is not a numeric field.");
-				//}
+				if (value == 0) {
+					throw new SolrException(SolrException.ErrorCode.BAD_REQUEST, "'from' field " + idFieldName + " is not a numeric field.");
+				}
 				addDocIdForValue(docId, value);
 			}
 			docSetNextTime += System.currentTimeMillis() - t0;			
