@@ -77,11 +77,11 @@ class SolrJoinTest(IntegrationTestCase):
     def testJoinOnInvalidField(self):
         header, body = getRequest(port=self.solrPort, path='/solr/records/select', arguments={'q': '*:*', 'facet': 'on', 'joinFacet.field': '{!facetjoin from=__id__ to=__id__ core=core2}field0'}, parse=False)
         self.assertTrue('400 Bad Request' in header, header + body)
-        self.assertTrue("'from' field __id__ is unknown or not a long field" in body, body)
+        self.assertTrue("Field __id__ is unknown or not a long field" in body, body)
 
         header, body = getRequest(port=self.solrPort, path='/solr/records/select', arguments={'q': '*:*', 'facet': 'on', 'joinFacet.field': '{!facetjoin from=unknown_field to=unknown_field core=core2}field0'}, parse=False)
         self.assertTrue('400 Bad Request' in header, header + body)
-        self.assertTrue("'from' field unknown_field is not a numeric field." in body, body)
+        self.assertTrue("Field unknown_field is not a numeric field." in body, body)
 
 
     def testFacetJoinWithoutJoinQuery(self):

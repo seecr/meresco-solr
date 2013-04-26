@@ -29,10 +29,11 @@ package org.meresco.solr;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.lucene.queryparser.classic.ParseException;
-import org.apache.lucene.search.MatchAllDocsQuery;
+import org.apache.lucene.search.FieldCache;
 import org.apache.solr.common.SolrException;
 import org.apache.solr.common.params.MultiMapSolrParams;
 import org.apache.solr.common.params.SolrParams;
@@ -42,15 +43,16 @@ import org.apache.solr.handler.component.ResponseBuilder;
 import org.apache.solr.handler.component.SearchComponent;
 import org.apache.solr.request.SimpleFacets;
 import org.apache.solr.request.SolrQueryRequest;
+import org.apache.solr.search.DocIterator;
 import org.apache.solr.search.DocSet;
+import org.apache.solr.search.HashDocSet;
 import org.apache.solr.search.SolrIndexSearcher;
 import org.apache.solr.util.RefCounted;
 
 
 public class JoinFacetComponent extends SearchComponent {
-	public int count = 0;
 	private Map<String, Long> lastSearcherOpenTimes = new HashMap<String, Long>();
-	private Map<String, IdSet> otherIdSets = new HashMap<String, IdSet>();
+	private Map<String, Uid2DocIdsMap> uid2DocIdsMaps = new HashMap<String, Uid2DocIdsMap>();
 	
 	@Override
 	public void prepare(ResponseBuilder rb) throws IOException {
@@ -58,7 +60,6 @@ public class JoinFacetComponent extends SearchComponent {
 
 	@Override
 	public void process(ResponseBuilder rb) throws IOException {
-		System.out.println("JoinFacetComponent.process[" + (count++) + "]");
 	    if (rb.doFacets) {
 	        SolrParams params = rb.req.getParams();
 	        
@@ -81,7 +82,7 @@ public class JoinFacetComponent extends SearchComponent {
 	        }
 	        NamedList<Object> responseValues = rb.rsp.getValues(); 
 	        NamedList<Object> facet_counts = (NamedList<Object>) responseValues.get("facet_counts");
-	        Map<String, DocSet> coreDocSets = new HashMap<String, DocSet>();
+	        Map<String, DocSet> joinCoreDocSets = new HashMap<String, DocSet>();
 	        for (String joinFacetField: joinFacetFields) {
 	        	JoinQuery parsedJoinFacetField = null;
 		        try {
@@ -92,13 +93,15 @@ public class JoinFacetComponent extends SearchComponent {
 		        paramsMap.put("facet.field", new String[] {parsedJoinFacetField.localQueryString});
 
 		        String coreName = parsedJoinFacetField.coreName;
-				SolrCore core = Utils.getCoreByName(rb.req, coreName);
+        		String joinKey = coreName + "###" + parsedJoinFacetField.fromField + ":" + parsedJoinFacetField.toField;
+		        SolrCore core = Utils.getCoreByName(rb.req, coreName);
 		        RefCounted<SolrIndexSearcher> coreSearcher = Utils.getSearcher(core);
 		        try {
-		        	DocSet docSet = coreDocSets.get(coreName);
+		        	DocSet docSet = joinCoreDocSets.get(joinKey);
 		        	if (docSet == null) {
-		        		docSet = docSetForJoin(rb, parsedJoinFacetField, coreSearcher.get());
-		        		coreDocSets.put(coreName, docSet);
+		        		Uid2DocIdsMap uid2DocIdsMap = uid2DocIdsMap(coreName, parsedJoinFacetField.fromField, coreSearcher.get());
+						docSet = mapToOtherCore(rb.getResults().docSet, parsedJoinFacetField.toField, rb.req.getSearcher(), uid2DocIdsMap);
+						joinCoreDocSets.put(joinKey, docSet);
 		        	}
 					SimpleFacets f = new JoinSimpleFacets(
 		        		rb.req,
@@ -124,37 +127,43 @@ public class JoinFacetComponent extends SearchComponent {
 	    }
 	}
 
-	private DocSet docSetForJoin(ResponseBuilder rb, JoinQuery parsedJoinFacetField, SolrIndexSearcher coreSearcher) throws IOException {
-		DocSet givenDocSet = rb.getResults().docSet;
-        IdSet givenIdSet = new IdSet(givenDocSet, rb.req.getSearcher(), parsedJoinFacetField.toField);
-        System.out.println("given fetchValuesTime " + givenIdSet.fetchValuesTime);
-        System.out.println("given docSetNext time " + givenIdSet.docSetNextTime);
-        System.out.println("given datastructureTime " + givenIdSet.dataStructureTime);
-        
-		IdSet otherIdSet = makeOtherDocSet(parsedJoinFacetField, coreSearcher);
-        
-        givenIdSet.retainAll(otherIdSet);
-        System.out.println("intersect time " + givenIdSet.intersectionTime);
-        DocSet docSet = givenIdSet.makeDocSet(otherIdSet);
-        System.out.println("makeDocSet time " + givenIdSet.makeDocSetTime);
-        return docSet;
-	}
-	
-	private IdSet makeOtherDocSet(JoinQuery parsedJoinFacetField,
-			SolrIndexSearcher coreSearcher) throws IOException {
-		String coreName = parsedJoinFacetField.coreName;
+	private Uid2DocIdsMap uid2DocIdsMap(String coreName, String fromField, SolrIndexSearcher coreSearcher) throws IOException {
+		String key = coreName + "###" + fromField;
 		long searcherOpenTime = coreSearcher.getOpenTime();
-		Long previousOpenTime = lastSearcherOpenTimes.get(coreName);
+		Long previousOpenTime = lastSearcherOpenTimes.get(key);
 		if (previousOpenTime != null && previousOpenTime == searcherOpenTime) {
-			return otherIdSets.get(coreName);
+			return uid2DocIdsMaps.get(key);
 		}
-        IdSet otherIdSet = new IdSet(coreSearcher, parsedJoinFacetField.fromField);
-        otherIdSets.put(coreName, otherIdSet);
-        lastSearcherOpenTimes.put(coreName, searcherOpenTime);
-        System.out.println("other fetchValuesTime " + otherIdSet.fetchValuesTime);
-        System.out.println("other docSetNext time " + otherIdSet.docSetNextTime);
-        System.out.println("other datastructureTime " + otherIdSet.dataStructureTime);
-		return otherIdSet;
+        Uid2DocIdsMap uid2DocIdsMap = new Uid2DocIdsMap(coreSearcher, fromField);
+        uid2DocIdsMaps.put(key, uid2DocIdsMap);
+        lastSearcherOpenTimes.put(key, searcherOpenTime);
+		return uid2DocIdsMap;
+	}	
+	
+	private DocSet mapToOtherCore(DocSet docSet, String toField, SolrIndexSearcher searcher, Uid2DocIdsMap uid2DocIdsMap) {
+    	int[] docIds = new int[uid2DocIdsMap.numberOfDocIds];
+    	int docs = 0;
+		try {
+			long[] uidFieldValues = FieldCache.DEFAULT.getLongs(searcher.getAtomicReader(), toField, true);
+			for (DocIterator iterator = docSet.iterator(); iterator.hasNext();) {
+				int docId = (int) iterator.nextDoc();
+				long uid = uidFieldValues[docId];
+				if (uid == 0) {
+					throw new SolrException(SolrException.ErrorCode.BAD_REQUEST, "Field " + toField + " is not a numeric field.");
+				}
+	    		List<Integer> mappingDocIds = uid2DocIdsMap.uid2docIds.get(uid);
+	    		if (mappingDocIds != null) {
+	    			for (Iterator<Integer> docIdsIter = mappingDocIds.iterator(); docIdsIter.hasNext();) {
+	    				docIds[docs++] = docIdsIter.next();
+	    			}
+	    		}
+			}
+    		return new HashDocSet(docIds, 0, docs);
+		} catch (IOException e) {
+			throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, e);
+		} catch (NumberFormatException e) {
+			throw new SolrException(SolrException.ErrorCode.BAD_REQUEST, "Field " + toField + " is unknown or not a long field.");
+		}
 	}
 
 	private void updateCounts(NamedList<Object> counts, NamedList<Object> newCounts) {
