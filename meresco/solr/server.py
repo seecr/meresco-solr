@@ -56,6 +56,8 @@ class Server(object):
                 currentMatchVersion = parse(open(join(self.stateDir, 'cores', coreDir, 'conf', 'solrconfig.xml'))).xpath("//luceneMatchVersion/text()")[0]
                 if currentMatchVersion != newMatchVersion:
                     raise ValueError("LuceneMatchVersion in core '%s' does not match the new configuration. Remove the old index." % coreDir)
+            rmtree(join(self.stateDir, 'lib'))
+            copytree(join(usrShareDir, 'solr-data', 'lib'), join(self.stateDir, 'lib'))
 
         self._setupJettyXml()
         self._setupStartConfig()
