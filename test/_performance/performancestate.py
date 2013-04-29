@@ -85,23 +85,23 @@ class PerformanceState(_IntegrationState):
             exit(1)
 
     def _uploadSolrData(self):
-        BIGNUM = 100000
+        self.BIGNUM = 10000
         print 'uploading data to core1'
-        for i in xrange(BIGNUM):
+        for i in xrange(self.BIGNUM):
             if i % 1000 == 0:
                 print i
             id = 'id%s' % i
             self.postToCore('core1', [('__id__', id), ('joinhash.__id__', hash(id)), ('field1', 'value')])
 
         print 'uploading data to core2'
-        for i in xrange(0, BIGNUM, 3):
+        for i in xrange(self.BIGNUM, 0, -3):
             if i % 1000 == 0:
                 print i
             id = 'id%s' % i
             self.postToCore('core2', [('__id__', id), ('joinhash.__id__', hash(id)), ('field2', 'value%s' % (i % 5))])
 
         print 'uploading data to core3'
-        for i in xrange(0, BIGNUM, 7):
+        for i in xrange(0, self.BIGNUM, 7):
             if i % 1000 == 0:
                 print i
             id = 'id%s' % i

@@ -25,15 +25,17 @@
 #
 ## end license ##
 
+from math import floor
+
 from lxml.etree import XML
 
-from meresco.xml import xpathFirst
+from meresco.xml import xpathFirst, xpath
 
 from seecr.test import IntegrationTestCase
 from seecr.test.utils import getRequest
 
 
-class JoinPerformanceTest(IntegrationTestCase): 
+class JoinPerformanceTest(IntegrationTestCase):
     def xxxtestJoin(self):
         #header, body = getRequest(port=self.solrPort, path='/solr/core1/select', arguments={'q': '*:* AND field1:value'}, parse=False)
         #body = XML(body)
@@ -61,7 +63,11 @@ class JoinPerformanceTest(IntegrationTestCase):
             for i in xrange(0, n):
                 header, body = getRequest(port=self.solrPort, path='/solr/core1/select', arguments={'q': '*:*', 'facet': 'on', 'joinFacet.field': '{!facetjoin core=core2 from=joinhash.__id__ to=joinhash.__id__}field2'}, timeOutInSeconds=30, parse=False)
                 self.assertTrue('200 OK' in header, header + body)
+                #if i ==0:
+                #    print body
                 body = XML(body)
+                self.assertEquals(set(['value0', 'value1', 'value2', 'value3', 'value4']), set(xpath(body, '//lst[@name="facet_fields"]/lst[@name="field2"]/int/@name')))
+                self.assertEquals(int(floor(self.BIGNUM / 3.0 / 5.0)), int(xpathFirst(body, '//lst[@name="field2"]/int[@name="value0"]/text()')))
                 totalT += int(qtime(body))
             print 'facet join over 2 cores (%sx):' % n, (totalT / n)
         queryWithFacet(1)
