@@ -30,6 +30,7 @@ from xml.sax.saxutils import escape as escapeXml
 from weightless.http import httpget, httppost
 from meresco.core import Observable
 from simplejson import loads
+from os.path import join, dirname, abspath
 
 from solrresponse import SolrResponse
 
@@ -37,6 +38,10 @@ UNTOKENIZED_PREFIX = 'untokenized.'
 JOINHASH_PREFIX = 'joinhash.'
 SORTED_PREFIX = 'sorted.'
 
+CORES_PATH = "/solr/admin/cores"
+
+USR_SHARE_DIR = "/usr/share/meresco-solr"
+USR_SHARE_DIR = join(dirname(dirname(dirname(abspath(__file__)))), "usr-share")   #DO_NOT_DISTRIBUTE
 
 class SolrInterface(Observable):
     COUNT = 'count'
@@ -124,6 +129,25 @@ class SolrInterface(Observable):
         qtime = jsonResponse['responseHeader']['QTime']
         response = SolrResponse(total=len(fieldnames), hits=fieldnames, queryTime=qtime)
         raise StopIteration(response)
+
+    def listCores(self):
+        response = yield self._read(CORES_PATH, arguments=dict(action="STATUS", wt="json"))
+        json = loads(response)
+        raise StopIteration(SolrResponse(cores=[core['name'] for core in json['status'].values()]))
+
+    def createCore(self, name):
+        response = yield self._read(CORES_PATH, arguments=dict(
+            action="CREATE", 
+            name=name, 
+            instanceDir="cores/%s" % name, wt="json",
+            config=join(USR_SHARE_DIR, "core-data", "conf", "solrconfig.xml"),
+            schema=join(USR_SHARE_DIR, "core-data", "conf", "schema.xml")))
+
+    def deleteCore(self, name):
+        response = yield self._read(CORES_PATH, arguments=dict(
+            action='UNLOAD',
+            core=name,
+            deleteDataDir="true"))
 
     def _send(self, path, body, contentType="text/xml"):
         headers = None

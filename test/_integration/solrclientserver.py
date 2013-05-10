@@ -53,7 +53,7 @@ class _HelperHandler(Observable):
         message = [p for p in path.split('/') if p][0]
         yield okPlainText
         try:
-            if message in ['add', 'delete']:
+            if message in ['add', 'delete', 'createCore', 'deleteCore']:
                 yield self.all.unknown(message, **methodKwargs)
             else:
                 response = yield self.any.unknown(message, **methodKwargs)

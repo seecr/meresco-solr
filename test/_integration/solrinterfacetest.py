@@ -176,6 +176,22 @@ class SolrInterfaceTest(IntegrationTestCase):
         response = self.solrRequest(path='/executeQuery', luceneQueryString="*:*", suggestionsQuery='callenge', suggestionsCount=5)
         self.assertEquals([0, 8, ['challenge', 'college', 'vallen', 'alleen', 'gallery']], response['suggestions']['callenge'])
 
+    def testListCores(self):
+        response = self.solrRequest(path='/listCores')
+        self.assertEquals(['core2', 'records', 'core3'], response['cores'])
+
+    def testAddDeleteCore(self):
+        response = self.solrRequest(path='/listCores')
+        currentCores = response['cores']
+
+        header, body = postRequest(port=self.solrClientPort, path='/createCore', data=dumps(dict(name="freshly_added")), parse=False)
+        response = self.solrRequest(path='/listCores')
+        self.assertEquals(set(currentCores + ['freshly_added']), set(response['cores']))
+
+        header, body = postRequest(port=self.solrClientPort, path='/deleteCore', data=dumps(dict(name="freshly_added")), parse=False)
+        response = self.solrRequest(path='/listCores')
+        self.assertEquals(currentCores, response['cores'])
+
     def solrRequest(self, path="/executeQuery", **queryKwargs):
         header, body = postRequest(port=self.solrClientPort, path=path, data=dumps(queryKwargs), parse=False)
         responseType, responseDict = body.split(': ', 1)

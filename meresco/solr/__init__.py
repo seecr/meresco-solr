@@ -24,5 +24,6 @@
 # 
 ## end license ##
 from solrinterface import SolrInterface, JOINHASH_PREFIX, UNTOKENIZED_PREFIX, SORTED_PREFIX
+from solrresponse import SolrResponse
 from fields2solrdoc import Fields2SolrDoc
 from cql2solrlucenequery import Cql2SolrLuceneQuery
