@@ -31,19 +31,34 @@ export LANG=en_US.UTF-8
 export PYTHONPATH=.:"$PYTHONPATH"
 
 tests="client server"
-option=$1
-if [ "$option" == "--client" ]; then
-    tests="client"
-    shift
-elif [ "$option" == "--server" ]; then
-    tests="server"
-    shift
+pyversions="python2.6"
+if [ -e /usr/bin/python2.7 ]; then
+    pyversions="$pyversions python2.7"
 fi
+for option in $1 $2; do
+    if [ "$option" == "--client" ]; then
+        tests="client"
+        shift
+    elif [ "$option" == "--server" ]; then
+        tests="server"
+        shift
+    fi
+    if [ "${option:0:10}" == "--python2." ]; then
+        shift
+        pyversions="${option:2}"
+    fi
+done
+
+
 
 for type in $tests; do
     if [ "$type" == "client" ]; then
         echo 'Meresco-Solr Client test'
-        python2.6 _alltests.py "$@"
+        echo Found Python versions: $pyversions
+        for pycmd in $pyversions; do
+            echo "================ $pycmd _alltests.py $@ ================"
+            $pycmd _alltests.py "$@"
+        done
     fi
     if [ "$type" == "server" ]; then
         echo 'Meresco-Solr Server test'
