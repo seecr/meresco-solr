@@ -32,6 +32,17 @@ export PYTHONPATH=.:$PYTHONPATH
 
 (
     cd ..
-    ./build.sh
+    ./build.sh  #DO_NOT_DISTRIBUTE
 )
-python2.6 _performancetest.py "$@"
+pycmd="python2.6"
+if [ -e /usr/bin/python2.7 ]; then
+    pycmd="python2.7"
+fi
+option=$1
+if [ "${option:0:10}" == "--python2." ]; then
+    shift
+    pycmd="${option:2}"
+fi
+echo Using Python version: $pycmd
+echo "================ $pycmd _performancetest.py $@ ================"
+$pycmd _performancetest.py "$@"
