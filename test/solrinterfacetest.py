@@ -1,28 +1,28 @@
 ## begin license ##
-# 
+#
 # "Meresco Solr" is a set of components and tools
-#  to integrate Solr into "Meresco." 
-# 
-# Copyright (C) 2011-2012 Seecr (Seek You Too B.V.) http://seecr.nl
+#  to integrate Solr into "Meresco."
+#
+# Copyright (C) 2011-2013 Seecr (Seek You Too B.V.) http://seecr.nl
 # Copyright (C) 2012 SURF http://www.surf.nl
-# Copyright (C) 2012 Stichting Bibliotheek.nl (BNL) http://www.bibliotheek.nl
-# 
+# Copyright (C) 2012-2013 Stichting Bibliotheek.nl (BNL) http://www.bibliotheek.nl
+#
 # This file is part of "Meresco Solr"
-# 
+#
 # "Meresco Solr" is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
-# 
+#
 # "Meresco Solr" is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with "Meresco Solr"; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-# 
+#
 ## end license ##
 
 from cgi import parse_qs
@@ -334,7 +334,7 @@ class SolrInterfaceTest(SeecrTestCase):
         self.assertEquals(6, response.queryTime)
 
     def testSolrGivesSpellCheckResults(self):
-        response, (path, body) = self.executeQueryResponse(query="__all__:aap AND __all__:bo", response=JSON_RESPONSE % JSON_SUGGESTIONS, suggestionsCount=2, suggestionsQuery="aap AND bo")
+        response, (path, body) = self.executeQueryResponse(query="__all__:aap AND __all__:bo", response=JSON_RESPONSE % JSON_SUGGESTIONS, suggestionRequest=dict(count=2, query="aap AND bo"))
         self.assertQueryArguments('spellcheck.count=2&rows=10&spellcheck=true&spellcheck.q=aap+AND+bo&q=__all__%3Aaap+AND+__all__%3Abo&start=0&wt=json', body)
         self.assertEquals(['1','3','5'], response.hits)
         self.assertEquals({'aap': (0, 3, ['aapje', 'raap']), 'bo': (8, 10, ['bio', 'bon'])}, response.suggestions)

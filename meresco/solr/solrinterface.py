@@ -5,7 +5,7 @@
 #
 # Copyright (C) 2011-2013 Seecr (Seek You Too B.V.) http://seecr.nl
 # Copyright (C) 2012-2013 SURF http://www.surf.nl
-# Copyright (C) 2012 Stichting Bibliotheek.nl (BNL) http://www.bibliotheek.nl
+# Copyright (C) 2012-2013 Stichting Bibliotheek.nl (BNL) http://www.bibliotheek.nl
 #
 # This file is part of "Meresco Solr"
 #
@@ -70,7 +70,7 @@ class SolrInterface(Observable):
         path = self._path('update')
         yield self._send(path=path, body="<delete><id>%s</id></delete>" % escapeXml(identifier))
 
-    def executeQuery(self, luceneQueryString, start=0, stop=10, sortKeys=None, suggestionsCount=0, suggestionsQuery=None, filterQueries=None, joinQueries=None, facets=None, joinFacets=None, **kwargs):
+    def executeQuery(self, luceneQueryString, start=0, stop=10, sortKeys=None, suggestionRequest=None, filterQueries=None, joinQueries=None, facets=None, joinFacets=None, **kwargs):
         if not luceneQueryString:
             raise ValueError("Empty luceneQueryString not allowed.")
         arguments = dict(
@@ -88,10 +88,10 @@ class SolrInterface(Observable):
             arguments['fq'] = filterQueries
 
         arguments.update(_facetArguments(facets, joinFacets))
-        if suggestionsCount > 0 and suggestionsQuery:
+        if suggestionRequest:
             arguments["spellcheck"] = 'true'
-            arguments["spellcheck.count"] = suggestionsCount
-            arguments["spellcheck.q"] = suggestionsQuery
+            arguments["spellcheck.count"] = suggestionRequest['count']
+            arguments["spellcheck.q"] = suggestionRequest['query']
 
         path = self._path('select')
         body = yield self._send(path, urlencode(arguments, doseq=True), contentType='application/x-www-form-urlencoded')
@@ -102,7 +102,7 @@ class SolrInterface(Observable):
         response = SolrResponse(total=recordCount, hits=identifiers, queryTime=qtime)
         if 'facet_counts' in jsonResponse:
              _updateResponseWithDrilldownData(arguments, jsonResponse['facet_counts'], response)
-        if suggestionsCount > 0 and suggestionsQuery and 'spellcheck' in jsonResponse:
+        if suggestionRequest and 'spellcheck' in jsonResponse:
             _updateResponseWithSuggestionData(arguments, jsonResponse['spellcheck']['suggestions'], response)
         raise StopIteration(response)
 
