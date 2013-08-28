@@ -1,5 +1,5 @@
 python-meresco-components (>= 4.8)
-python-meresco-components (<< 4.9)
+python-meresco-components (<< 4.10)
 python-meresco-core (>= 4.0.3)
 python-meresco-core (<< 4.1)
 python-cqlparser (>= 1.7)
