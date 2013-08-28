@@ -43,7 +43,6 @@ class SolrShardingTest(IntegrationTestCase):
                 arguments= { "q": 'zadel OR stuur OR wiel OR ketting', 'fl': '__id__,score',
                     "shards": 'localhost:%s/solr/records,localhost:%s/solr/records' % (self.solr1.solrPort, self.solr2.solrPort)})
         self.assertEquals(['record:0004', 'record:0003', 'record:0002', 'record:0001'], body.xpath('//doc/str[@name="__id__"]/text()'))
-        # self.assertEquals(['0.57226515', '0.18706693', '0.051650114', '0.0150798615'], body.xpath('//doc/float[@name="score"]/text()'))
         self.assertEquals(['1.0', '0.75', '0.5', '0.25'], body.xpath('//doc/float[@name="score"]/text()'))
 
     def testTryToGetScoresOnCoordinationFactorOnlyAndNotTFIDF(self):
