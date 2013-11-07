@@ -7,6 +7,7 @@
 # Copyright (C) 2012 SURF http://www.surf.nl
 # Copyright (C) 2012-2013 Seecr (Seek You Too B.V.) http://seecr.nl
 # Copyright (C) 2012-2013 Stichting Bibliotheek.nl (BNL) http://www.bibliotheek.nl
+# Copyright (C) 2013 Stichting Kennisnet http://www.kennisnet.nl
 #
 # This file is part of "Meresco Solr"
 #
@@ -30,10 +31,6 @@ set -o errexit
 export LANG=en_US.UTF-8
 export PYTHONPATH=.:$PYTHONPATH
 
-(
-    cd ..
-    ./build.sh                  #DO_NOT_DISTRIBUTE
-)
 pycmd="python2.6"
 if [ -e /usr/bin/python2.7 ]; then
     pycmd="python2.7"

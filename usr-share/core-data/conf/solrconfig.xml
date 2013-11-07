@@ -68,14 +68,10 @@
 
   <searchComponent name="suggestions" class="solr.SpellCheckComponent"/>
 
-  <queryParser name="facetjoin" class="org.meresco.solr.JoinParserPlugin" />
-  <searchComponent name="joinFacet" class="org.meresco.solr.JoinFacetComponent"/>
-
   <requestHandler name="/select" class="solr.SearchHandler">
     <arr name="components">
       <str>query</str>
       <str>facet</str>
-      <str>joinFacet</str>
       <str>mlt</str>
       <str>highlight</str>
       <str>debug</str>

@@ -6,6 +6,7 @@
 # Copyright (C) 2011-2013 Seecr (Seek You Too B.V.) http://seecr.nl
 # Copyright (C) 2012 SURF http://www.surf.nl
 # Copyright (C) 2012-2013 Stichting Bibliotheek.nl (BNL) http://www.bibliotheek.nl
+# Copyright (C) 2013 Stichting Kennisnet http://www.kennisnet.nl
 #
 # This file is part of "Meresco Solr"
 #
@@ -358,15 +359,6 @@ class SolrInterfaceTest(SeecrTestCase):
         self.assertQueryArguments("q=*&fq=field:value&start=0&rows=10&wt=json", body)
         response, (path, body) = self.executeQueryResponse("*", filterQueries=["field:http\://host.nl"], response=JSON_RESPONSE % "") 
         self.assertQueryArguments("q=*&fq=field:http\://host.nl&start=0&rows=10&wt=json", body)
-
-    def testJoinQueries(self):
-        response, (path, body) = self.executeQueryResponse("*", joinQueries=[dict(core='aCore', fromField='field0', toField='field1', query='aQuery')], response=JSON_RESPONSE % "")
-        self.assertQueryArguments("q=*&fq={!join fromIndex=aCore from=field0 to=field1}aQuery&start=0&rows=10&wt=json", body)
-
-    def testJoinFacets(self):
-        response, (path, body) = self.executeQueryResponse("*", joinFacets=[dict(core='aCore', fromField='field0', toField='field1', facetField='field2')], response=JSON_RESPONSE % "")
-        self.assertQueryArguments("q=*&facet=on&facet.mincount=1&joinFacet.field={!facetjoin core=aCore from=field0 to=field1}field2&start=0&rows=10&wt=json", body)
-
 
     def executeQueryResponse(self, query, response, solrInterface=None, **kwargs):
         if solrInterface is None:

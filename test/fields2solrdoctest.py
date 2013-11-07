@@ -3,9 +3,9 @@
 # "Meresco Solr" is a set of components and tools
 #  to integrate Solr into "Meresco."
 #
-# Copyright (C) 2011-2012 Seecr (Seek You Too B.V.) http://seecr.nl
+# Copyright (C) 2011-2013 Seecr (Seek You Too B.V.) http://seecr.nl
 # Copyright (C) 2012 SURF http://www.surf.nl
-# Copyright (C) 2012 Stichting Kennisnet http://www.kennisnet.nl
+# Copyright (C) 2012-2013 Stichting Kennisnet http://www.kennisnet.nl
 #
 # This file is part of "Meresco Solr"
 #
@@ -29,7 +29,6 @@ from seecr.test import SeecrTestCase, CallTrace
 
 from meresco.core import Observable, TransactionScope, Transaction
 from meresco.solr.fields2solrdoc import Fields2SolrDoc
-from meresco.solr import JOINHASH_PREFIX
 from weightless.core import be, compose
 from StringIO import StringIO
 from lxml.etree import parse
@@ -57,7 +56,7 @@ class Fields2SolrDocTest(SeecrTestCase):
         list(compose(self.fxf.commit(self.fxf.ctx.tx.getId())))
         self.assertEquals(["add"], [m.name for m in self.observer.calledMethods])
         kwargs = self.observer.calledMethods[0].kwargs
-        self.assertEquals({'__id__':['iden&tifier'], 'field_one':['valueOne', 'anotherValueOne'], 'field_two': ['value<Two>'], JOINHASH_PREFIX + '__id__': [str(hash('iden&tifier'))]}, todict(kwargs['data']))
+        self.assertEquals({'__id__':['iden&tifier'], 'field_one':['valueOne', 'anotherValueOne'], 'field_two': ['value<Two>']}, todict(kwargs['data']))
 
     def testWorksWithRealTransactionScope(self):
         intercept = CallTrace('Intercept', ignoredAttributes=['begin', 'commit', 'rollback'], methods={'add': add})
@@ -90,9 +89,9 @@ class Fields2SolrDocTest(SeecrTestCase):
         self.assertEquals((), method.args)
         self.assertEquals('an:identifier', method.kwargs['identifier'])
         self.assertEquals('fields-partname', method.kwargs['partname'])
-        self.assertEquals({'__id__': ['an:identifier'], 'field.name':['MyName', 'AnotherName'], 'field.title': ['MyDocument'], JOINHASH_PREFIX + '__id__': [str(hash('an:identifier'))]}, todict(method.kwargs['data']))
+        self.assertEquals({'__id__': ['an:identifier'], 'field.name':['MyName', 'AnotherName'], 'field.title': ['MyDocument']}, todict(method.kwargs['data']))
 
-        expectedXml = """<doc xmlns=''><field name="__id__">an:identifier</field><field name="joinhash.__id__">%s</field><field name="field.title">MyDocument</field><field name="field.name">MyName</field><field name="field.name">AnotherName</field></doc>""" % hash('an:identifier')
+        expectedXml = """<doc xmlns=''><field name="__id__">an:identifier</field><field name="field.title">MyDocument</field><field name="field.name">MyName</field><field name="field.name">AnotherName</field></doc>"""
         self.assertEquals(expectedXml, method.kwargs['data'])
 
     def testSingularValueFields(self):
@@ -108,7 +107,7 @@ class Fields2SolrDocTest(SeecrTestCase):
         fxf.addField('twice', 'two')
         list(compose(fxf.commit(__callstack_var_tx__.getId())))
         method = observer.calledMethods[0]
-        self.assertEquals({'__id__': ['identifier'], 'once':['one'], 'twice': ['one', 'two'], JOINHASH_PREFIX + '__id__': [str(hash('identifier'))]}, todict(method.kwargs['data']))
+        self.assertEquals({'__id__': ['identifier'], 'once':['one'], 'twice': ['one', 'two']}, todict(method.kwargs['data']))
 
     def testIsSingularValueField(self):
         __callstack_var_tx__ = Transaction('name')
@@ -123,7 +122,7 @@ class Fields2SolrDocTest(SeecrTestCase):
         fxf.addField('twice', 'two')
         list(compose(fxf.commit(__callstack_var_tx__.getId())))
         method = observer.calledMethods[0]
-        self.assertEquals({'__id__': ['identifier'], 'once':['one'], 'twice': ['one', 'two'], JOINHASH_PREFIX + '__id__': [str(hash('identifier'))]}, todict(method.kwargs['data']))
+        self.assertEquals({'__id__': ['identifier'], 'once':['one'], 'twice': ['one', 'two']}, todict(method.kwargs['data']))
 
     def testChooseSingularValueFieldsOrIsSingularValueField(self):
         self.assertRaises(ValueError, lambda: Fields2SolrDoc('name', singularValueFields=['fields'], isSingularValueField=lambda name: False))

@@ -6,6 +6,7 @@
 # Copyright (C) 2011-2013 Seecr (Seek You Too B.V.) http://seecr.nl
 # Copyright (C) 2012-2013 SURF http://www.surf.nl
 # Copyright (C) 2012-2013 Stichting Bibliotheek.nl (BNL) http://www.bibliotheek.nl
+# Copyright (C) 2013 Stichting Kennisnet http://www.kennisnet.nl
 #
 # This file is part of "Meresco Solr"
 #
@@ -34,7 +35,6 @@ from simplejson import loads
 from solrresponse import SolrResponse
 
 UNTOKENIZED_PREFIX = 'untokenized.'
-JOINHASH_PREFIX = 'joinhash.'
 SORTED_PREFIX = 'sorted.'
 
 
@@ -70,7 +70,7 @@ class SolrInterface(Observable):
         path = self._path('update')
         yield self._send(path=path, body="<delete><id>%s</id></delete>" % escapeXml(identifier))
 
-    def executeQuery(self, luceneQueryString, start=0, stop=10, sortKeys=None, suggestionRequest=None, filterQueries=None, joinQueries=None, facets=None, joinFacets=None, **kwargs):
+    def executeQuery(self, luceneQueryString, start=0, stop=10, sortKeys=None, suggestionRequest=None, filterQueries=None, facets=None, **kwargs):
         if not luceneQueryString:
             raise ValueError("Empty luceneQueryString not allowed.")
         arguments = dict(
@@ -83,11 +83,10 @@ class SolrInterface(Observable):
             arguments["sort"] = ','.join("%s %s" % (sortKey['sortBy'], 'desc' if sortKey['sortDescending'] else 'asc') for sortKey in sortKeys)
 
         filterQueries = filterQueries or []
-        filterQueries.extend(_joinQueriesAsFilterQueries(joinQueries))
         if filterQueries:
             arguments['fq'] = filterQueries
 
-        arguments.update(_facetArguments(facets, joinFacets))
+        arguments.update(_facetArguments(facets))
         if suggestionRequest:
             arguments["spellcheck"] = 'true'
             arguments["spellcheck.count"] = suggestionRequest['count']
@@ -157,14 +156,7 @@ class SolrInterface(Observable):
     def _solrServer(self):
         return (self._host, self._port) if self._host else self.call.solrServer()
 
-
-def _joinQueriesAsFilterQueries(joinQueries):
-    joinQueries = joinQueries or []
-    for joinQuery in joinQueries:
-        yield '{!join fromIndex=%(core)s from=%(fromField)s to=%(toField)s}%(query)s' % joinQuery
-
-
-def _facetArguments(facets, joinFacets):
+def _facetArguments(facets):
     def facetLimit(facet):
         maxTerms = facet.get('maxTerms', None)
         arguments.setdefault('f.%s.facet.limit' % facet['fieldname'], []).append(maxTerms if maxTerms else -1)
@@ -177,14 +169,12 @@ def _facetArguments(facets, joinFacets):
             arguments.setdefault('f.%s.facet.sort' % facet['fieldname'], []).append(sortBy)
 
     facets = facets or []
-    joinFacets = joinFacets or []
     arguments = {}
-    if facets or joinFacets:
+    if facets:
         arguments['facet'] = "on"
         arguments['facet.mincount'] = "1"
         arguments['facet.field'] = []
         arguments['facet.pivot'] = []
-        arguments['joinFacet.field'] = []
         for facet in facets:
             if isinstance(facet, dict):
                 arguments['facet.field'].append(facet['fieldname'])
@@ -196,8 +186,6 @@ def _facetArguments(facets, joinFacets):
                 for f in facet:
                     facetLimit(f)
                     facetSort(f)
-        for joinFacet in joinFacets:
-            arguments['joinFacet.field'].append('{!facetjoin core=%(core)s from=%(fromField)s to=%(toField)s}%(facetField)s' % joinFacet)
     return arguments
 
 

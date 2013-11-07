@@ -6,6 +6,7 @@
 # Copyright (C) 2011-2013 Seecr (Seek You Too B.V.) http://seecr.nl
 # Copyright (C) 2012 SURF http://www.surf.nl
 # Copyright (C) 2013 Stichting Bibliotheek.nl (BNL) http://www.bibliotheek.nl
+# Copyright (C) 2013 Stichting Kennisnet http://www.kennisnet.nl
 #
 # This file is part of "Meresco Solr"
 #
@@ -71,9 +72,6 @@ class Cql2SolrLuceneQueryTest(TestCase):
 
     def testBraces(self):
         self.assertConversion(['term'], '(term)')
-
-    def testJoinQueries(self):
-        self.assertConversion(['term2', 'term1'], query='term1', joinQueries=[dict(someKey='someValue', query=parseString('term2'))])
 
     def testFilterQueries(self):
         self.assertConversion(['term2', 'term1'], query='term1', filterQueries=[parseString('term2')])

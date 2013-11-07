@@ -8,6 +8,7 @@
 # Copyright (C) 2012 SURF http://www.surf.nl
 # Copyright (C) 2012-2013 Seecr (Seek You Too B.V.) http://seecr.nl
 # Copyright (C) 2013 Stichting Bibliotheek.nl (BNL) http://www.bibliotheek.nl
+# Copyright (C) 2013 Stichting Kennisnet http://www.kennisnet.nl
 #
 # This file is part of "Meresco Solr"
 #
@@ -52,7 +53,6 @@ if __name__ == '__main__':
     IntegrationState(
         "default", 
         tests=[
-            '_integration.solrjointest.SolrJoinTest',
             '_integration.solrservertest.SolrServerTest',
             '_integration.solrinterfacetest.SolrInterfaceTest',
         ],

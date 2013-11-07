@@ -6,6 +6,7 @@
 # Copyright (C) 2011-2013 Seecr (Seek You Too B.V.) http://seecr.nl
 # Copyright (C) 2012 SURF http://www.surf.nl
 # Copyright (C) 2013 Stichting Bibliotheek.nl (BNL) http://www.bibliotheek.nl
+# Copyright (C) 2013 Stichting Kennisnet http://www.kennisnet.nl
 #
 # This file is part of "Meresco Solr"
 #
@@ -38,9 +39,6 @@ class Cql2SolrLuceneQuery(Observable, Logger):
         self._cqlComposer = SolrLuceneQueryComposer(unqualifiedFields)
 
     def executeQuery(self, cqlAbstractSyntaxTree, *args, **kwargs):
-        joinQueries = kwargs.get('joinQueries', [])
-        for jq in joinQueries:
-            jq['query'] = self._convert(jq['query'])
         filterQueries = kwargs.get('filterQueries', [])
         filterQueries = [self._convert(fq) for fq in filterQueries]
         response = yield self.any.executeQuery(luceneQueryString=self._convert(cqlAbstractSyntaxTree), *args, **kwargs)

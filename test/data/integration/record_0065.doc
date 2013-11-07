@@ -9,4 +9,4 @@
   <field name="untokenized.prov.source">seecr</field>
   <field name="issn">12345678x</field>
   <field name="untokenized.rdf:type">http://dbpedia.org/ontology/Magazine</field>
-<field name="joinhash.__id__">-4616637296771961017</field></doc>
+</doc>
