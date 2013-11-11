@@ -7,12 +7,14 @@ example/etc/webdefault.xml -> usr-share/solr-data/etc/webdefault.xml
 example/example-DIH/solr/solr.xml -> usr-share/solr-data/solr.xml
  - Remove core elements
 
+Extract example/start.jar
+
 example/org/eclipse/jetty/start/start.config -> solr-data/start.config
  - Handmatige diff; Keep explaining comments; Add jetty.webapps; Add dummy jetty.home; Fix jetty classpath
  - replace ('$(jetty.home)/lib', '$(jetty.lib)')
  - Voeg jetty.lib=/some/location toe (wordt overschreven in solrconfig.py)
 
-zelf verzonnen iets -> solr-data/contexts/solr.xml 
+zelf verzonnen iets -> solr-data/contexts/solr.xml
 zelf verzonnen iets (kijk uit voor version) -> core-data/conf/schema.xml
 
 example/solr/conf/solrconfig.xml -> core-data/conf/solrconfig.xml (Copy changes using meld!!! (Too many changes))

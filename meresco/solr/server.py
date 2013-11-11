@@ -1,28 +1,29 @@
 ## begin license ##
-# 
+#
 # "Meresco Solr" is a set of components and tools
-#  to integrate Solr into "Meresco." 
-# 
+#  to integrate Solr into "Meresco."
+#
 # Copyright (C) 2012 SURF http://www.surf.nl
-# Copyright (C) 2012 Seecr (Seek You Too B.V.) http://seecr.nl
+# Copyright (C) 2012-2013 Seecr (Seek You Too B.V.) http://seecr.nl
 # Copyright (C) 2012 Stichting Bibliotheek.nl (BNL) http://www.bibliotheek.nl
-# 
+# Copyright (C) 2013 Stichting Kennisnet http://www.kennisnet.nl
+#
 # This file is part of "Meresco Solr"
-# 
+#
 # "Meresco Solr" is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
-# 
+#
 # "Meresco Solr" is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with "Meresco Solr"; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-# 
+#
 ## end license ##
 
 from os import makedirs, listdir, system, execvp
@@ -37,7 +38,7 @@ from simplejson import load as jsonLoad
 mydir = dirname(abspath(__file__))
 usrShareDir = '/usr/share/meresco-solr'
 usrShareDir = join(dirname(dirname(mydir)), 'usr-share') # DO_NOT_DISTRIBUTE
-SOLR_VERSION = "4.0.0"
+SOLR_VERSION = "4.5.1"
 
 
 class Server(object):
@@ -147,16 +148,16 @@ class Server(object):
         open(startConfigPath, 'w').write(startConfig)
 
     def _setupSolrXml(self):
-        system(r"""sed -e "s,<Set name=\"war\">.*</Set>,<Set name=\"war\">/usr/share/java/webapps/apache-solr-%s.war</Set>," -i %s/contexts/solr.xml""" % (SOLR_VERSION, self.stateDir))
+        system(r"""sed -e "s,<Set name=\"war\">.*</Set>,<Set name=\"war\">/usr/share/java/webapps/solr-%s.war</Set>," -i %s/contexts/solr.xml""" % (SOLR_VERSION, self.stateDir))
 
     def start(self, javaMX):
         self._execvp(
             'java', [
                 'java',
-                '-Xmx%s' % javaMX, 
+                '-Xmx%s' % javaMX,
                 '-Djetty.port=%s' % self.port,
                 '-DSTART=%s/start.config' % self.stateDir,
-                '-Dsolr.solr.home=%s' % self.stateDir, 
+                '-Dsolr.solr.home=%s' % self.stateDir,
                 '-jar', '/usr/share/java/solr%s/start.jar' % SOLR_VERSION,
             ])
 

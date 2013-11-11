@@ -7,6 +7,7 @@
 # Copyright (C) 2012 SURF http://www.surf.nl
 # Copyright (C) 2012-2013 Seecr (Seek You Too B.V.) http://seecr.nl
 # Copyright (C) 2012-2013 Stichting Bibliotheek.nl (BNL) http://www.bibliotheek.nl
+# Copyright (C) 2013 Stichting Kennisnet http://www.kennisnet.nl
 #
 # This file is part of "Meresco Solr"
 #
@@ -37,13 +38,13 @@ from meresco.solr.server import Server
 from seecr.test import SeecrTestCase
 
 mydir = dirname(abspath(__file__))
-version = "4.0.0"
+version = "4.5.1"
 
 class ServerTest(SeecrTestCase):
     def testSetupSolrConfig(self):
         solrDataDir = join(self.tempdir, 'solr-data')
         self._createServer(stateDir=solrDataDir, port=8042, config={'core1': {}, 'córë2': {}})
-        self.assertEquals(set(['lib', 'contexts', 'cores', 'start.config', 'solr.xml', 'etc']), set(listdir(solrDataDir)))
+        self.assertEquals(set(['lib', 'contexts', 'cores', 'start.config', 'solr.xml', 'etc', 'resources']), set(listdir(solrDataDir)))
         self.assertEquals(set(['webdefault.xml', 'jetty.xml']), set(listdir(join(solrDataDir, 'etc'))))
         jetty_xml = parse(open(join(solrDataDir, 'etc', 'jetty.xml')))
         self.assertEquals(['8042'], jetty_xml.xpath('//SystemProperty[@name="jetty.port"]/@default'))
@@ -56,10 +57,10 @@ class ServerTest(SeecrTestCase):
             self.fail("No jetty.home line found")
         f.close()
         self.assertEquals('jetty.home=%s\n' % solrDataDir, line)
-        self.assertTrue('jetty.lib=/usr/share/java/solr4.0.0' in open(join(solrDataDir, 'start.config')).read())
+        self.assertTrue('jetty.lib=/usr/share/java/solr4.5.1' in open(join(solrDataDir, 'start.config')).read())
 
         context_solr_xml = parse(open(join(solrDataDir, 'contexts', 'solr.xml')))
-        self.assertEquals(['/usr/share/java/webapps/apache-solr-%s.war' % version], context_solr_xml.xpath('//Set[@name="war"]/text()'))
+        self.assertEquals(['/usr/share/java/webapps/solr-%s.war' % version], context_solr_xml.xpath('//Set[@name="war"]/text()'))
 
         self.assertEquals(set(['core1', 'córë2']), set(listdir(join(solrDataDir, 'cores'))))
         solr_xml = parse(open(join(solrDataDir, 'solr.xml')))
@@ -78,7 +79,7 @@ class ServerTest(SeecrTestCase):
         makedirs(join(solrDataDir, 'cores', 'core1', 'data'))
         self.assertEquals(set(['data', 'conf']), set(listdir(join(solrDataDir, 'cores', 'core1'))))
         self._createServer(stateDir=solrDataDir, port=8042, config={'core1': {}, 'córë2': {}})
-        self.assertEquals(set(['lib', 'contexts', 'cores', 'start.config', 'solr.xml', 'etc']), set(listdir(solrDataDir)))
+        self.assertEquals(set(['lib', 'contexts', 'cores', 'start.config', 'solr.xml', 'etc', 'resources']), set(listdir(solrDataDir)))
         self.assertEquals(set(['webdefault.xml', 'jetty.xml']), set(listdir(join(solrDataDir, 'etc'))))
         jetty_xml = parse(open(join(solrDataDir, 'etc', 'jetty.xml')))
         self.assertEquals(['8042'], jetty_xml.xpath('//SystemProperty[@name="jetty.port"]/@default'))
@@ -91,10 +92,10 @@ class ServerTest(SeecrTestCase):
             self.fail("No jetty.home line found")
         f.close()
         self.assertEquals('jetty.home=%s\n' % solrDataDir, line)
-        self.assertTrue('jetty.lib=/usr/share/java/solr4.0.0' in open(join(solrDataDir, 'start.config')).read())
+        self.assertTrue('jetty.lib=/usr/share/java/solr4.5.1' in open(join(solrDataDir, 'start.config')).read())
 
         context_solr_xml = parse(open(join(solrDataDir, 'contexts', 'solr.xml')))
-        self.assertEquals(['/usr/share/java/webapps/apache-solr-%s.war' % version], context_solr_xml.xpath('//Set[@name="war"]/text()'))
+        self.assertEquals(['/usr/share/java/webapps/solr-%s.war' % version], context_solr_xml.xpath('//Set[@name="war"]/text()'))
 
         self.assertEquals(set(['core1', 'córë2']), set(listdir(join(solrDataDir, 'cores'))))
         solr_xml = parse(open(join(solrDataDir, 'solr.xml')))
@@ -204,8 +205,8 @@ class ServerTest(SeecrTestCase):
         solrServer.start(javaMX="1234M")
         self.assertEquals(1, len(execCalled))
         self.assertEquals((
-            'java', 
-            ['java', '-Xmx1234M', '-Djetty.port=1423', '-DSTART=%s/the/state/dir/start.config' % self.tempdir, '-Dsolr.solr.home=%s/the/state/dir' % self.tempdir, '-jar', '/usr/share/java/solr4.0.0/start.jar'],
+            'java',
+            ['java', '-Xmx1234M', '-Djetty.port=1423', '-DSTART=%s/the/state/dir/start.config' % self.tempdir, '-Dsolr.solr.home=%s/the/state/dir' % self.tempdir, '-jar', '/usr/share/java/solr4.5.1/start.jar'],
         ), execCalled[0][0])
         self.assertEquals({}, execCalled[0][1])
 
@@ -221,5 +222,5 @@ class ServerTest(SeecrTestCase):
         solrConfFile = join(self.tempdir, 'solr.conf')
         jsonDump(config, open(solrConfFile, 'w'))
         return Server(stateDir, port, solrConfFile)
-        
+
 
