@@ -33,7 +33,7 @@ export PYTHONPATH=.:"$PYTHONPATH"
 tests="client server"
 pyversions="python2.6"
 if [ -e /usr/bin/python2.7 ]; then
-    pyversions="$pyversions python2.7"
+    pyversions="python2.7"
 fi
 for option in $1 $2; do
     if [ "$option" == "--client" ]; then
