@@ -30,7 +30,6 @@ from os.path import abspath, dirname                #DO_NOT_DISTRIBUTE
 from os import system                               #DO_NOT_DISTRIBUTE
 from glob import glob                               #DO_NOT_DISTRIBUTE
 from sys import path as systemPath, exit            #DO_NOT_DISTRIBUTE
-from subprocess import Popen                        #DO_NOT_DISTRIBUTE
 parentdir = dirname(dirname(abspath(__file__)))     #DO_NOT_DISTRIBUTE
 system('find .. -name "*.pyc" | xargs rm -f')       #DO_NOT_DISTRIBUTE
 for path in glob(parentdir+'/deps.d/*'):            #DO_NOT_DISTRIBUTE
@@ -41,6 +40,7 @@ from sys import argv
 from os import listdir
 from os.path import join
 from optparse import OptionParser, Option
+from subprocess import Popen
 
 from meresco.solr.server import Server, usrShareDir
 
