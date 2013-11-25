@@ -43,7 +43,7 @@ class SolrInterfaceTest(IntegrationTestCase):
             )
         header, body = postRequest(port=self.solrClientPort, path='/add', data=dumps(addKwargs), parse=False)
         self.assertEquals('', body)
-        sleep(1)
+        sleep(2)
         
         response = self.solrRequest(luceneQueryString='__id__:record\:testAddQueryDelete')
         self.assertEquals(1, response['total'])
@@ -51,7 +51,7 @@ class SolrInterfaceTest(IntegrationTestCase):
 
         header, body = postRequest(port=self.solrClientPort, path='/delete', data=dumps(dict(identifier='record:testAddQueryDelete')), parse=False)
         self.assertEquals('', body)
-        sleep(1)
+        sleep(2)
 
         response = self.solrRequest(luceneQueryString='__id__:record\:testAddQueryDelete')
         self.assertEquals(0, response['total'])

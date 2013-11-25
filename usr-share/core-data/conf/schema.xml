@@ -40,6 +40,7 @@
    <field name="__id__" type="string" stored="true" required="true" />
    <field name="__all__" type="text_ws" />
    <field name="__timestamp__" type="datetime" indexed="true" stored="false" default="NOW" sortMissingLast="true" omitNorms="true" multiValued="false" />
+   <dynamicField name="_timestamp_.*" type="datetime"/>
    <dynamicField name="range.double.*" type="trie_double"/>
    <dynamicField name="sorted.*" type="sorted_string" />
    <dynamicField name="untokenized.*" type="untokenized_string" />
