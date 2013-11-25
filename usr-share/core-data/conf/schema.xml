@@ -30,7 +30,7 @@
 
     <fieldType name="sorted_string" class="solr.StrField" sortMissingLast="true" omitNorms="true" multiValued="false" indexed="true" stored="false" />
 
-    <fieldType name="datetime" class="solr.TrieDateField" omitNorms="true" precisionStep="0" positionIncrementGap="0"/>
+    <fieldType name="datetime" class="solr.TrieDateField" omitNorms="true" precisionStep="0" positionIncrementGap="0" stored="false" sortMissingLast="true"/>
 
     <fieldType name="trie_double" class="solr.TrieDoubleField" multiValued="true" omitNorms="true" indexed="true" stored="false"/>
  </types>
@@ -39,7 +39,7 @@
  <fields>
    <field name="__id__" type="string" stored="true" required="true" />
    <field name="__all__" type="text_ws" />
-   <field name="__timestamp__" type="datetime" indexed="true" stored="false" default="NOW" sortMissingLast="true" omitNorms="true" multiValued="false" />
+   <field name="__timestamp__" type="datetime" indexed="true" default="NOW" multiValued="false" />
    <dynamicField name="_timestamp_.*" type="datetime"/>
    <dynamicField name="range.double.*" type="trie_double"/>
    <dynamicField name="sorted.*" type="sorted_string" />
