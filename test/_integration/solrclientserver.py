@@ -32,7 +32,6 @@ from meresco.core import Observable
 
 from weightless.core import be, compose
 from weightless.io import Reactor
-from sys import argv
 from simplejson import loads, dumps
 
 from meresco.components.http.utils import okPlainText
@@ -57,7 +56,11 @@ class _HelperHandler(Observable):
                 yield self.all.unknown(message, **methodKwargs)
             else:
                 response = yield self.any.unknown(message, **methodKwargs)
-                yield "%s: %s" % (type(response).__name__, dumps(vars(response)))
+                d = vars(response)
+                print d
+                from sys import stdout; stdout.flush()
+                d['hits'] = [getattr(hit, 'id', hit) for hit in d['hits']]
+                yield "%s: %s" % (type(response).__name__, dumps(d))
         except:
             yield format_exc()
 
