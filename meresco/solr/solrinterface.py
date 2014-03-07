@@ -33,10 +33,14 @@ from simplejson import loads
 
 from solrresponse import SolrResponse
 
+
 UNTOKENIZED_PREFIX = 'untokenized.'
 JOINHASH_PREFIX = 'joinhash.'
 SORTED_PREFIX = 'sorted.'
 
+class Hit(object):
+    def __init__(self, id):
+        self.id = id
 
 class SolrInterface(Observable):
     COUNT = 'count'
@@ -97,9 +101,9 @@ class SolrInterface(Observable):
         body = yield self._send(path, urlencode(arguments, doseq=True), contentType='application/x-www-form-urlencoded')
         jsonResponse = loads(body)
         recordCount = jsonResponse['response']['numFound']
-        identifiers = [doc.values()[0] for doc in jsonResponse['response']['docs']]
+        hits = [Hit(doc.values()[0]) for doc in jsonResponse['response']['docs']]
         qtime = jsonResponse['responseHeader']['QTime']
-        response = SolrResponse(total=recordCount, hits=identifiers, queryTime=qtime)
+        response = SolrResponse(total=recordCount, hits=hits, queryTime=qtime)
         if 'facet_counts' in jsonResponse:
              _updateResponseWithDrilldownData(arguments, jsonResponse['facet_counts'], response)
         if suggestionRequest and 'spellcheck' in jsonResponse:

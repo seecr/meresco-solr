@@ -26,9 +26,8 @@
 ## end license ##
 
 from seecr.test import IntegrationTestCase
-from seecr.test.utils import postRequest
+from seecr.test.utils import postRequest, sleepWheel
 from simplejson import dumps, loads
-from time import sleep
 
 
 class SolrInterfaceTest(IntegrationTestCase):
@@ -42,7 +41,7 @@ class SolrInterfaceTest(IntegrationTestCase):
             )
         header, body = postRequest(port=self.solrClientPort, path='/add', data=dumps(addKwargs), parse=False)
         self.assertEquals('', body)
-        sleep(1)
+        sleepWheel(2)
         
         response = self.solrRequest(luceneQueryString='__id__:record\:testAddQueryDelete')
         self.assertEquals(1, response['total'])
@@ -50,7 +49,7 @@ class SolrInterfaceTest(IntegrationTestCase):
 
         header, body = postRequest(port=self.solrClientPort, path='/delete', data=dumps(dict(identifier='record:testAddQueryDelete')), parse=False)
         self.assertEquals('', body)
-        sleep(1)
+        sleepWheel(2)
 
         response = self.solrRequest(luceneQueryString='__id__:record\:testAddQueryDelete')
         self.assertEquals(0, response['total'])
@@ -170,10 +169,10 @@ class SolrInterfaceTest(IntegrationTestCase):
         self.assertTrue('__all__' in fields, fields)
 
     def testSuggestions(self):
-        response = self.solrRequest(path='/executeQuery', luceneQueryString="*:*", suggestionsQuery='*', suggestionsCount=5)
+        response = self.solrRequest(path='/executeQuery', luceneQueryString="*:*", suggestionRequest=dict(query='*', count=5))
         self.assertFalse('suggestions' in response, response)
 
-        response = self.solrRequest(path='/executeQuery', luceneQueryString="*:*", suggestionsQuery='callenge', suggestionsCount=5)
+        response = self.solrRequest(path='/executeQuery', luceneQueryString="*:*", suggestionRequest=dict(query='callenge', count=5))
         self.assertEquals([0, 8, ['challenge', 'college', 'vallen', 'alleen', 'gallery']], response['suggestions']['callenge'])
 
     def solrRequest(self, path="/executeQuery", **queryKwargs):

@@ -28,6 +28,7 @@
 from seecr.test import IntegrationTestCase
 from seecr.test.utils import getRequest
 
+
 class SolrServerTest(IntegrationTestCase):
     def testAdminPingInterface(self):
         header, body = getRequest(port=self.solrPort, path='/solr/records/admin/ping', parse=True)

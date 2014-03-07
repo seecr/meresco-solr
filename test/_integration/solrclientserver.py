@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.6
 ## begin license ##
 # 
 # "Meresco Solr" is a set of components and tools
@@ -57,7 +57,9 @@ class _HelperHandler(Observable):
                 yield self.all.unknown(message, **methodKwargs)
             else:
                 response = yield self.any.unknown(message, **methodKwargs)
-                yield "%s: %s" % (type(response).__name__, dumps(vars(response)))
+                d = vars(response)
+                d['hits'] = [getattr(hit, 'id', hit) for hit in d['hits']]
+                yield "%s: %s" % (type(response).__name__, dumps(d))
         except:
             yield format_exc()
 

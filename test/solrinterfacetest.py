@@ -119,7 +119,7 @@ class SolrInterfaceTest(SeecrTestCase):
         self.assertEquals("/solr/select", path)
         self.assertQueryArguments("q=meresco.exists%3Atrue&start=0&rows=10&wt=json", body)
         self.assertEquals(3, response.total)
-        self.assertEquals(['1','3','5'], response.hits)
+        self.assertEquals(['1','3','5'], [hit.id for hit in response.hits])
 
     def testPrefixSearch(self):
         response, (path, body) = self.executePrefixSearch(prefix="ho", fieldname="afield", response=TERMS_PREFIX_RESPONSE) 
@@ -142,21 +142,21 @@ class SolrInterfaceTest(SeecrTestCase):
         self.assertEquals("/solr/select", path)
         self.assertQueryArguments("q=meresco.exists%3Atrue&start=5&rows=5&sort=field+desc,anotherfield+asc&wt=json", body)
         self.assertEquals(3, response.total)
-        self.assertEquals(['1','3','5'], response.hits)
+        self.assertEquals(['1','3','5'], [hit.id for hit in response.hits])
 
     def testExecuteQuerySortAscending(self):
         response, (path, body) = self.executeQueryResponse("meresco.exists:true", start=0, stop=10, sortKeys=[dict(sortBy="field", sortDescending=False)], response=JSON_RESPONSE % "")
         self.assertEquals("/solr/select", path)
         self.assertQueryArguments("q=meresco.exists%3Atrue&start=0&rows=10&sort=field+asc&wt=json", body)
         self.assertEquals(3, response.total)
-        self.assertEquals(['1','3','5'], response.hits)
+        self.assertEquals(['1','3','5'], [hit.id for hit in response.hits])
 
     def testDrilldown(self):
         response, (path, body) = self.executeQueryResponse("meresco.exists:true", facets=[{'fieldname': '__all__', 'maxTerms': 5, "sortBy": "count"}, {'fieldname': '__other__', 'maxTerms': 5, 'sortBy': "index"}], response=JSON_RESPONSE % JSON_FACET_COUNTS)
         self.assertEquals("/solr/select", path)
         self.assertQueryArguments("wt=json&facet.mincount=1&q=meresco.exists%3Atrue&start=0&rows=10&facet=on&facet.field=__all__&f.__all__.facet.sort=count&f.__all__.facet.limit=5&facet.field=__other__&f.__other__.facet.limit=5&f.__other__.facet.sort=index", body)
         self.assertEquals(3, response.total)
-        self.assertEquals(['1', '3', '5'], response.hits)
+        self.assertEquals(['1', '3', '5'], [hit.id for hit in response.hits])
         self.assertEquals(['__all__', '__other__'], [f['fieldname'] for f in response.drilldownData])
         self.assertEquals([{'term': "term_0", 'count': 1}, {'term': "term_1", 'count': 2}], response.drilldownData[0]['terms'])
         self.assertEquals([{'term': "term_2", 'count': 3}, {'term': "term_3", 'count': 4}], response.drilldownData[1]['terms'])
@@ -168,7 +168,7 @@ class SolrInterfaceTest(SeecrTestCase):
         response, (path, body) = self.executeQueryResponse("meresco.exists:true", facets=[{'fieldname': '__all__', 'maxTerms': 5, "sortBy": "index"}, {'fieldname': '__all__', 'maxTerms': 5, 'sortBy': "index"}], response=JSON_RESPONSE % JSON_FACET_COUNTS_SAME_FIELD_TWICE)
         self.assertQueryArguments("wt=json&facet.mincount=1&q=meresco.exists%3Atrue&start=0&rows=10&facet=on&facet.field=__all__&f.__all__.facet.sort=index&f.__all__.facet.limit=5&facet.field=__all__&f.__all__.facet.limit=5&f.__all__.facet.sort=index", body)
         self.assertEquals(3, response.total)
-        self.assertEquals(['1', '3', '5'], response.hits)
+        self.assertEquals(['1', '3', '5'], [hit.id for hit in response.hits])
         self.assertEquals(1, len(response.drilldownData))
         self.assertEquals(['__all__'], [f['fieldname'] for f in response.drilldownData])
         self.assertEquals([{'term': "term_0", 'count': 1}, {'term': "term_1", 'count': 2}], response.drilldownData[0]['terms'])
@@ -336,7 +336,7 @@ class SolrInterfaceTest(SeecrTestCase):
     def testSolrGivesSpellCheckResults(self):
         response, (path, body) = self.executeQueryResponse(query="__all__:aap AND __all__:bo", response=JSON_RESPONSE % JSON_SUGGESTIONS, suggestionRequest=dict(count=2, query="aap AND bo"))
         self.assertQueryArguments('spellcheck.count=2&rows=10&spellcheck=true&spellcheck.q=aap+AND+bo&q=__all__%3Aaap+AND+__all__%3Abo&start=0&wt=json', body)
-        self.assertEquals(['1','3','5'], response.hits)
+        self.assertEquals(['1','3','5'], [hit.id for hit in response.hits])
         self.assertEquals({'aap': (0, 3, ['aapje', 'raap']), 'bo': (8, 10, ['bio', 'bon'])}, response.suggestions)
 
     def testFieldnames(self):
