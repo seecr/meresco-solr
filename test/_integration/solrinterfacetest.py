@@ -27,9 +27,8 @@
 ## end license ##
 
 from seecr.test import IntegrationTestCase
-from seecr.test.utils import postRequest
+from seecr.test.utils import postRequest, sleepWheel
 from simplejson import dumps, loads
-from time import sleep
 
 
 class SolrInterfaceTest(IntegrationTestCase):
@@ -43,7 +42,7 @@ class SolrInterfaceTest(IntegrationTestCase):
             )
         header, body = postRequest(port=self.solrClientPort, path='/add', data=dumps(addKwargs), parse=False)
         self.assertEquals('', body)
-        sleep(1)
+        sleepWheel(2)
         
         response = self.solrRequest(luceneQueryString='__id__:record\:testAddQueryDelete')
         self.assertEquals(1, response['total'])
@@ -51,7 +50,7 @@ class SolrInterfaceTest(IntegrationTestCase):
 
         header, body = postRequest(port=self.solrClientPort, path='/delete', data=dumps(dict(identifier='record:testAddQueryDelete')), parse=False)
         self.assertEquals('', body)
-        sleep(1)
+        sleepWheel(2)
 
         response = self.solrRequest(luceneQueryString='__id__:record\:testAddQueryDelete')
         self.assertEquals(0, response['total'])

@@ -27,14 +27,15 @@
 ## end license ##
 
 from os.path import join, abspath, dirname, basename
-from time import sleep, time
+from time import time
 from traceback import print_exc
 from glob import glob
 from simplejson import dumps
 
 from seecr.test.integrationtestcase import IntegrationState as _IntegrationState
 from seecr.test.portnumbergenerator import PortNumberGenerator
-from seecr.test.utils import postRequest
+from seecr.test.utils import postRequest, sleepWheel
+
 
 mydir = dirname(abspath(__file__))
 projectDir = dirname(dirname(mydir))
@@ -85,7 +86,7 @@ class IntegrationState(_IntegrationState):
         print "Creating database in", self.integrationTempdir
         try:
             self._uploadSolrData(join(self.testdataDir))
-            sleep(5)
+            sleepWheel(8)
             print "Finished creating database in %s seconds" % (time() - start)
         except Exception, e:
             print 'Error received while creating database for', self.stateName
