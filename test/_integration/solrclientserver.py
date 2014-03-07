@@ -57,8 +57,6 @@ class _HelperHandler(Observable):
             else:
                 response = yield self.any.unknown(message, **methodKwargs)
                 d = vars(response)
-                print d
-                from sys import stdout; stdout.flush()
                 d['hits'] = [getattr(hit, 'id', hit) for hit in d['hits']]
                 yield "%s: %s" % (type(response).__name__, dumps(d))
         except:
