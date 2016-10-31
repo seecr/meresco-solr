@@ -4,7 +4,7 @@ python-meresco-core (>= 4.0.8)
 python-meresco-core (<< 4.1)
 python-cqlparser (>= 1.7.5)
 python-cqlparser (<< 1.8)
-python-weightless-core (>= 0.10.9)
-python-weightless-core (<< 0.11)
+python-weightless-core (>= 0.9.35)
+python-weightless-core (<< 0.10)
 solr4.5.1
 python-lxml
