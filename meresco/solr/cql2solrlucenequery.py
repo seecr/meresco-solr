@@ -28,8 +28,8 @@
 
 from meresco.core import Observable
 
-from meresco.components.statistics import Logger
-from meresco.components.clausecollector import ClauseCollector
+from statistics import Logger
+from clausecollector import ClauseCollector
 from meresco.solr.solrlucenequerycomposer import SolrLuceneQueryComposer
 
 
